@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { Sede } from "@/types";
 
 export interface CartItem {
   id: string;
@@ -7,37 +9,64 @@ export interface CartItem {
   cantidad: number;
   imagen_url: string;
   sede_id: string;
+  notaPersonalizacion?: string;
 }
 
 interface CartState {
   items: CartItem[];
-  addItem: (item: CartItem) => void;
+  sedeActual: Sede | null;
+  addItem: (item: CartItem, sede: Sede) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, cantidad: number) => void;
+  updateNota: (id: string, nota: string) => void;
   clearCart: () => void;
 }
 
-export const useCartStore = create<CartState>((set) => ({
-  items: [],
-  addItem: (item) =>
-    set((state) => {
-      const existing = state.items.find((i) => i.id === item.id);
-      if (existing) {
-        return {
-          items: state.items.map((i) =>
-            i.id === item.id ? { ...i, cantidad: i.cantidad + item.cantidad } : i
-          ),
-        };
-      }
-      return { items: [...state.items, item] };
+export const useCartStore = create<CartState>()(
+  persist(
+    (set) => ({
+      items: [],
+      sedeActual: null,
+      addItem: (item, sede) =>
+        set((state) => {
+          // Si hay items en el carrito y la sede es diferente, vaciar el carrito
+          if (state.items.length > 0 && state.sedeActual?.id !== sede.id) {
+            console.warn(
+              `Cambiando de sede: ${state.sedeActual?.nombre} -> ${sede.nombre}. Vaciando carrito.`
+            );
+            return {
+              items: [item],
+              sedeActual: sede,
+            };
+          }
+
+          const existing = state.items.find((i) => i.id === item.id);
+          if (existing) {
+            return {
+              items: state.items.map((i) =>
+                i.id === item.id ? { ...i, cantidad: i.cantidad + item.cantidad } : i
+              ),
+              sedeActual: sede,
+            };
+          }
+          return { items: [...state.items, item], sedeActual: sede };
+        }),
+      removeItem: (id) =>
+        set((state) => ({
+          items: state.items.filter((i) => i.id !== id),
+        })),
+      updateQuantity: (id, cantidad) =>
+        set((state) => ({
+          items: state.items.map((i) => (i.id === id ? { ...i, cantidad } : i)),
+        })),
+      updateNota: (id, nota) =>
+        set((state) => ({
+          items: state.items.map((i) => (i.id === id ? { ...i, notaPersonalizacion: nota } : i)),
+        })),
+      clearCart: () => set({ items: [], sedeActual: null }),
     }),
-  removeItem: (id) =>
-    set((state) => ({
-      items: state.items.filter((i) => i.id !== id),
-    })),
-  updateQuantity: (id, cantidad) =>
-    set((state) => ({
-      items: state.items.map((i) => (i.id === id ? { ...i, cantidad } : i)),
-    })),
-  clearCart: () => set({ items: [] }),
-}));
+    {
+      name: "floristeria-cart",
+    }
+  )
+);
