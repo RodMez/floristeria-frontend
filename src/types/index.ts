@@ -30,3 +30,14 @@ export interface PedidoRequest {
   notasEntrega?: string;
   detalles: DetallePedidoRequest[];
 }
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  rol: string;
+  sedeId: number | null;
+}
