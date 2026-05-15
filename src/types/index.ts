@@ -41,3 +41,27 @@ export interface AuthResponse {
   rol: string;
   sedeId: number | null;
 }
+
+export interface InventarioResponse {
+  id: number;
+  productoNombre: string;
+  sedeNombre: string;
+  precio: number;
+  stock: number;
+  disponible: boolean;
+}
+
+export interface InventarioUpdateRequest {
+  precio: number;
+  stock: number;
+  disponible: boolean;
+}
+
+export interface PedidoResponse {
+  id: number;
+  clienteNombre: string;
+  clienteTelefono: string;
+  total: number;
+  estado: string;
+  creadoEn: string;
+}

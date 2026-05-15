@@ -2,13 +2,16 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, Package, ClipboardList } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { rol, logout, isAuthenticated } = useAuthStore();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -21,6 +24,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.push("/login");
   };
 
+  const navItems = [
+    { href: "/admin/inventario", label: "Inventario", icon: Package },
+    { href: "/admin/pedidos", label: "Pedidos", icon: ClipboardList },
+  ];
+
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
@@ -32,7 +40,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           )}
         </div>
         <nav className="flex-1 p-4">
-          {/* Espacio para menú de navegación */}
+          <ul className="space-y-2">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className={`flex items-center gap-2 hover:bg-stone-800 p-2 rounded transition-colors ${
+                      isActive ? "bg-stone-800" : ""
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </nav>
         <div className="p-4 border-t border-stone-800">
           <Button
