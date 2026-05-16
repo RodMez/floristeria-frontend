@@ -1,8 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { PedidoResponse } from "@/types";
+import Cookies from "js-cookie";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -16,13 +25,38 @@ import { Package } from "lucide-react";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function PedidosPage() {
-  const { data, error } = useSWR<PedidoResponse[]>(
+  const [filtroEstado, setFiltroEstado] = useState<string>("Todos");
+
+  const { data, error, mutate } = useSWR<PedidoResponse[]>(
     `${API_URL}/api/admin/pedidos`,
     fetcher,
     {
       revalidateOnFocus: false,
     }
   );
+
+  const handleStatusChange = async (pedidoId: number, nuevoEstado: string) => {
+    try {
+      const token = Cookies.get("token");
+      const response = await fetch(
+        `${API_URL}/api/admin/pedidos/${pedidoId}/estado`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ estado: nuevoEstado }),
+        }
+      );
+
+      if (response.ok) {
+        mutate();
+      }
+    } catch (error) {
+      console.error("Error updating order status:", error);
+    }
+  };
 
   if (error) {
     return (
@@ -63,24 +97,33 @@ export default function PedidosPage() {
     });
   };
 
-  const getStateColor = (estado: string) => {
-    const colors: Record<string, string> = {
-      pendiente: "bg-yellow-100 text-yellow-800",
-      confirmado: "bg-blue-100 text-blue-800",
-      "en-domicilio": "bg-purple-100 text-purple-800",
-      completado: "bg-green-100 text-green-800",
-      cancelado: "bg-red-100 text-red-800",
-    };
-    return colors[estado?.toLowerCase()] || "bg-stone-100 text-stone-800";
-  };
+  const pedidosFiltrados =
+    filtroEstado === "Todos"
+      ? [...(data ?? [])].sort((a, b) => b.id - a.id)
+      : [...(data ?? [])]
+          .filter((p) => p.estado === filtroEstado)
+          .sort((a, b) => b.id - a.id);
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-stone-900">Pedidos</h1>
-        <p className="text-stone-500 text-sm mt-1">
-          Administra y da seguimiento a los pedidos de tus clientes
-        </p>
+    <div>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-stone-900">Pedidos</h1>
+          <p className="text-stone-500 text-sm mt-1">
+            Administra y da seguimiento a los pedidos de tus clientes
+          </p>
+        </div>
+        <Select value={filtroEstado} onValueChange={(v) => { if (v !== null) setFiltroEstado(v); }}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Filtrar estado" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Todos">Todos</SelectItem>
+            <SelectItem value="Pendiente">Pendiente</SelectItem>
+            <SelectItem value="Completado">Completado</SelectItem>
+            <SelectItem value="Cancelado">Cancelado</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="bg-white rounded-lg shadow">
@@ -96,7 +139,7 @@ export default function PedidosPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((item) => (
+                      {pedidosFiltrados.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-mono text-sm">#{item.id}</TableCell>
                 <TableCell className="font-medium">{item.clienteNombre}</TableCell>
@@ -105,13 +148,19 @@ export default function PedidosPage() {
                   {formatCurrency(item.total)}
                 </TableCell>
                 <TableCell>
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStateColor(
-                      item.estado
-                    )}`}
+                  <Select
+                    value={item.estado}
+                    onValueChange={(value) => { if (value !== null) handleStatusChange(item.id, value); }}
                   >
-                    {item.estado}
-                  </span>
+                    <SelectTrigger className="w-[130px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pendiente">Pendiente</SelectItem>
+                      <SelectItem value="Completado">Completado</SelectItem>
+                      <SelectItem value="Cancelado">Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </TableCell>
                 <TableCell className="text-sm text-stone-600">
                   {formatDate(item.creadoEn)}

@@ -137,15 +137,15 @@ export default function CheckoutDialog({
               id="telefono"
               placeholder="Tu teléfono"
               value={clienteTelefono}
-              onChange={(e) => setClienteTelefono(e.target.value)}
+              onChange={(e) => setClienteTelefono(e.target.value.replace(/[^0-9+\s]/g, ''))}
               disabled={isLoading}
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="notas">Notas de entrega (opcional)</Label>
+            <Label htmlFor="notas">Dirección de entrega y detalles</Label>
             <Textarea
               id="notas"
-              placeholder="Dirección, referencias, etc."
+              placeholder="Ej: Calle 123 #45-67, Apto 201. Entregar en portería."
               value={notasEntrega}
               onChange={(e) => setNotasEntrega(e.target.value)}
               disabled={isLoading}

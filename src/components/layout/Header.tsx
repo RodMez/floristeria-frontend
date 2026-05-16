@@ -23,7 +23,7 @@ export default function Header() {
           href="/"
           className="text-xl font-semibold text-stone-800 hover:text-stone-600 transition-colors"
         >
-          Floristería El Yabo
+          Floristería 
         </Link>
 
         <div className="relative">

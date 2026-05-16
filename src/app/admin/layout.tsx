@@ -30,7 +30,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ];
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden bg-stone-50">
       {/* Sidebar */}
       <aside className="w-64 bg-stone-900 text-white flex flex-col">
         <div className="p-6 border-b border-stone-800">
@@ -60,7 +60,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             })}
           </ul>
         </nav>
-        <div className="p-4 border-t border-stone-800">
+        <div className="p-4 border-t border-stone-800 mt-auto">
           <Button
             variant="destructive"
             className="w-full"
@@ -73,7 +73,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Contenido principal */}
-      <main className="flex-1 bg-stone-100">
+      <main className="flex-1 overflow-y-auto p-8">
         {children}
       </main>
     </div>

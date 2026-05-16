@@ -66,14 +66,10 @@ export function EditInventarioDialog({ item, mutate }: EditInventarioDialogProps
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-sm bg-stone-200 hover:bg-stone-300 text-stone-900"
-        >
-          Editar
-        </Button>
+      <DialogTrigger
+        className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-stone-200 bg-white hover:bg-stone-100 hover:text-stone-900 h-8 px-3"
+      >
+        Editar
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

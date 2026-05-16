@@ -19,7 +19,7 @@ El Frontend está diseñado para maximizar el SEO público, minimizar los costos
 
 *   **[x] Fase 9: Frontend - Slice 1 (Setup & Core UI).** Inicializar Next.js, Tailwind, shadcn/ui, Zustand y Layout principal.
 *   **[x] Fase 9: Frontend - Slice 2 (Vitrina Pública).** Selector de Sede, fetching SSR de productos y catálogo.
-*   **[] Fase 9: Frontend - Slice 3 (Carrito & Checkout).** Lógica Zustand, Drawer del carrito y enlace a WhatsApp.
-*   **[] Fase 9: Frontend - Slice 4 (Auth & Seguridad).** Login, JWT en cookies, Middleware y Layout Admin.
+*   **[x] Fase 9: Frontend - Slice 3 (Carrito & Checkout).** Lógica Zustand, Drawer del carrito y enlace a WhatsApp.
+*   **[x] Fase 9: Frontend - Slice 4 (Auth & Seguridad).** Login, JWT en cookies, Middleware y Layout Admin.
 *   **[] Fase 9: Frontend - Slice 5 (Admin Sede).** Tabla de inventario local (SWR), mutaciones de precio/stock y vista de pedidos.
 *   **[] Fase 9: Frontend - Slice 6 (Superadmin).** Formulario maestro de productos, subida a ImageKit y gestión de usuarios/sedes.
