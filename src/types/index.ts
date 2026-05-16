@@ -57,6 +57,48 @@ export interface InventarioUpdateRequest {
   disponible: boolean;
 }
 
+export interface ProductoResponse {
+  id: number;
+  nombre: string;
+  descripcion: string;
+  imagenUrl: string;
+  categoriaId: number;
+  categoriaNombre: string;
+}
+
+export interface ProductoRequest {
+  nombre: string;
+  descripcion: string;
+  imagenUrl: string;
+  categoriaId: number;
+}
+
+export interface CategoriaResponse {
+  id: number;
+  nombre: string;
+}
+
+export interface CategoriaRequest {
+  nombre: string;
+}
+
+export interface UsuarioAdminResponse {
+  id: number;
+  nombre: string;
+  email: string;
+  rol: string;
+  sedeId: number | null;
+  sedeNombre: string | null;
+}
+
+export interface UsuarioAdminRequest {
+  email: string;
+  nombre: string;
+  password?: string;
+  rol: string;
+  sedeId: number | null;
+}
+
 export interface PedidoResponse {
   id: number;
   clienteNombre: string;
