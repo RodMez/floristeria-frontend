@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Floristería",
-  description: "E-Commerce Multisede de Floristería",
+  title: "🌸 Floristería | E-Commerce",
+  description: "Envía emociones y acorta distancias con nuestros hermosos arreglos florales.",
 };
 
 export default function RootLayout({
