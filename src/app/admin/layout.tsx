@@ -1,17 +1,29 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
-import { LogOut, Package, ClipboardList, Flower2, Tags, Building2, Users } from "lucide-react";
+import {
+  LogOut,
+  Package,
+  ClipboardList,
+  Flower2,
+  Tags,
+  Building2,
+  Users,
+  Menu,
+} from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { rol, logout, isAuthenticated } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const closeSidebar = () => setIsSidebarOpen(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -19,7 +31,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [isAuthenticated, router]);
 
+  // Cerrar sidebar al cambiar de ruta
+  useEffect(() => {
+    closeSidebar();
+  }, [pathname]);
+
   const handleLogout = () => {
+    closeSidebar();
     logout();
     router.push("/login");
   };
@@ -38,8 +56,39 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex h-screen overflow-hidden bg-stone-50">
+      {/* Mobile Header */}
+      <header className="md:hidden fixed top-0 left-0 right-0 z-30 bg-stone-900 text-white flex items-center justify-between p-4">
+        <h1 className="text-lg font-bold">Panel Admin</h1>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white hover:bg-stone-800"
+          onClick={() => setIsSidebarOpen(true)}
+        >
+          <Menu className="h-6 w-6" />
+          <span className="sr-only">Abrir menú</span>
+        </Button>
+      </header>
+
+      {/* Overlay - solo visible en móvil cuando sidebar está abierto */}
+      {isSidebarOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/50"
+          onClick={closeSidebar}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-stone-900 text-white flex flex-col">
+      <aside
+        className={`
+          w-64 bg-stone-900 text-white flex flex-col
+          fixed inset-y-0 left-0 z-50
+          transition-transform duration-300 ease-in-out
+          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          md:static md:translate-x-0 md:z-auto
+        `}
+      >
         <div className="p-6 border-b border-stone-800">
           <h1 className="text-xl font-bold">Panel Admin</h1>
           {rol && (
@@ -55,6 +104,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <li key={item.href}>
                   <Link
                     href={item.href}
+                    onClick={closeSidebar}
                     className={`flex items-center gap-2 hover:bg-stone-800 p-2 rounded transition-colors ${
                       isActive ? "bg-stone-800" : ""
                     }`}
@@ -73,6 +123,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <li key={item.href}>
                     <Link
                       href={item.href}
+                      onClick={closeSidebar}
                       className={`flex items-center gap-2 hover:bg-stone-800 p-2 rounded transition-colors ${
                         isActive ? "bg-stone-800" : ""
                       }`}
@@ -98,7 +149,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Contenido principal */}
-      <main className="flex-1 overflow-y-auto p-8">
+      <main className="flex-1 overflow-y-auto p-8 pt-20 md:pt-8">
         {children}
       </main>
     </div>

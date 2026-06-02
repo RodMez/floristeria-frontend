@@ -3,11 +3,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Sede } from "@/types";
 
 async function getSedes(): Promise<Sede[]> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/sedes`, {
-    cache: "no-store",
-  });
-  if (!res.ok) return [];
-  return res.json();
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/sedes`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
 }
 
 export default async function Home() {

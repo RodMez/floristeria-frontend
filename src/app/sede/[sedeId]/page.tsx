@@ -2,23 +2,31 @@ import { ProductoCatalogo, Sede } from "@/types";
 import ProductCard from "@/components/ProductCard";
 
 async function getCatalogo(sedeId: string): Promise<ProductoCatalogo[]> {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/catalogo/sede/${sedeId}`,
-    {
-      cache: "no-store",
-    }
-  );
-  if (!res.ok) return [];
-  return res.json();
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/catalogo/sede/${sedeId}`,
+      {
+        cache: "no-store",
+      }
+    );
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
 }
 
 async function getSede(sedeId: string): Promise<Sede | null> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/sedes`, {
-    cache: "no-store",
-  });
-  if (!res.ok) return null;
-  const sedes: Sede[] = await res.json();
-  return sedes.find((s) => s.id === Number(sedeId)) || null;
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/sedes`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const sedes: Sede[] = await res.json();
+    return sedes.find((s) => s.id === Number(sedeId)) || null;
+  } catch {
+    return null;
+  }
 }
 
 interface SedePageProps {
