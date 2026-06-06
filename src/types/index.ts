@@ -10,7 +10,10 @@ export interface ProductoCatalogo {
   nombre: string;
   descripcion: string;
   imagenUrl: string;
-  categoriaNombre: string;
+  categorias: { id: number; nombre: string }[];
+  // Compatibilidad con backend legacy
+  categoriasNombres?: string[];
+  categoriaNombre?: string;
   precio: number;
   stock: number;
   disponible: boolean;
@@ -62,15 +65,14 @@ export interface ProductoResponse {
   nombre: string;
   descripcion: string;
   imagenUrl: string;
-  categoriaId: number;
-  categoriaNombre: string;
+  categorias: { id: number; nombre: string }[];
 }
 
 export interface ProductoRequest {
   nombre: string;
   descripcion: string;
   imagenUrl: string;
-  categoriaId: number;
+  categoriaIds: number[];
 }
 
 export interface CategoriaResponse {

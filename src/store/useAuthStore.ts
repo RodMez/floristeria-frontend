@@ -1,5 +1,8 @@
+"use client";
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useEffect } from 'react';
 import Cookies from 'js-cookie';
 import { AuthResponse } from '../types';
 
@@ -8,6 +11,7 @@ interface AuthState {
   rol: string | null;
   sedeId: number | null;
   isAuthenticated: boolean;
+  isHydrated: boolean;
   setAuth: (data: AuthResponse) => void;
   logout: () => void;
 }
@@ -19,6 +23,7 @@ export const useAuthStore = create<AuthState>()(
       rol: null,
       sedeId: null,
       isAuthenticated: false,
+      isHydrated: false,
 
       setAuth: (data: AuthResponse) => {
         Cookies.set('token', data.token, { expires: 1 });
@@ -37,11 +42,41 @@ export const useAuthStore = create<AuthState>()(
           rol: null,
           sedeId: null,
           isAuthenticated: false,
+          isHydrated: true, // marcamos como hidratado
         });
       },
     }),
     {
       name: 'floristeria-auth',
+      onRehydrateStorage: () => (state) => {
+        // Marcar como hidratado cuando Zustand termine de restaurar
+        if (state) state.isHydrated = true;
+      },
     }
   )
 );
+
+/**
+ * Hook que sincroniza el store de auth con el evento
+ * `auth:session-expired` disparado por el fetcher.
+ *
+ * Cuando el fetcher detecta un 401/403, dispara un
+ * CustomEvent. Este hook lo escucha y ejecuta logout()
+ * en el store Zustand para limpiar el estado.
+ *
+ * DEBE usarse una sola vez en un componente raíz Client
+ * (ej. el layout del admin).
+ */
+export function useSessionExpiredSync(): void {
+  useEffect(() => {
+    const handler = () => {
+      useAuthStore.getState().logout();
+    };
+
+    window.addEventListener('auth:session-expired', handler);
+
+    return () => {
+      window.removeEventListener('auth:session-expired', handler);
+    };
+  }, []);
+}
