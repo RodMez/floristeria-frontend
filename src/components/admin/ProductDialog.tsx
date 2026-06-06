@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import Cookies from "js-cookie";
 import {
   Dialog,
@@ -11,14 +14,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ProductoResponse, CategoriaResponse, ProductoRequest } from "@/types";
+
+/** ─────────── Zod Schema ─────────── */
+const productoSchema = z.object({
+  nombre: z.string().min(1, "El nombre es obligatorio"),
+  descripcion: z.string().min(1, "La descripción es obligatoria"),
+  categoriaIds: z
+    .array(z.number())
+    .min(1, "Debe seleccionar al menos una categoría"),
+});
+
+/** ─────────── Types ─────────── */
+type ProductoFormData = z.infer<typeof productoSchema>;
 
 interface ProductDialogProps {
   isOpen: boolean;
@@ -30,6 +39,7 @@ interface ProductDialogProps {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
+/** ─────────── Component ─────────── */
 export function ProductDialog({
   isOpen,
   onClose,
@@ -37,31 +47,66 @@ export function ProductDialog({
   categorias,
   mutate,
 }: ProductDialogProps) {
-  const [nombre, setNombre] = useState("");
-  const [descripcion, setDescripcion] = useState("");
-  const [categoriaId, setCategoriaId] = useState<number>(0);
   const [imagenFile, setImagenFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const isEditing = producto !== null;
 
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<ProductoFormData>({
+    resolver: zodResolver(productoSchema),
+    defaultValues: {
+      nombre: "",
+      descripcion: "",
+      categoriaIds: [],
+    },
+  });
+
+  const selectedCategoriaIds = watch("categoriaIds") || [];
+
   useEffect(() => {
     if (isOpen) {
       if (producto) {
-        setNombre(producto.nombre);
-        setDescripcion(producto.descripcion);
-        setCategoriaId(producto.categoriaId);
+        reset({
+          nombre: producto.nombre,
+          descripcion: producto.descripcion,
+          categoriaIds: producto.categorias.map((c) => c.id),
+        });
       } else {
-        setNombre("");
-        setDescripcion("");
-        setCategoriaId(categorias.length > 0 ? categorias[0].id : 0);
+        reset({
+          nombre: "",
+          descripcion: "",
+          categoriaIds: [],
+        });
       }
       setImagenFile(null);
     }
-  }, [isOpen, producto, categorias]);
+  }, [isOpen, producto, reset]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  /** ── Category Toggle ── */
+  const handleCategoriaToggle = (catId: number) => {
+    const currentIds = watch("categoriaIds") || [];
+    if (currentIds.includes(catId)) {
+      setValue(
+        "categoriaIds",
+        currentIds.filter((id) => id !== catId),
+        { shouldValidate: true }
+      );
+    } else {
+      setValue("categoriaIds", [...currentIds, catId], {
+        shouldValidate: true,
+      });
+    }
+  };
+
+  /** ── Submit Handler ── */
+  const onSubmit = async (data: ProductoFormData) => {
     setIsLoading(true);
 
     try {
@@ -88,20 +133,20 @@ export function ProductDialog({
 
       // Paso 2: Guardar producto
       const payload: ProductoRequest = {
-        nombre,
-        descripcion,
+        nombre: data.nombre,
+        descripcion: data.descripcion,
         imagenUrl,
-        categoriaId,
+        categoriaIds: data.categoriaIds,
       };
 
       const endpoint = isEditing
-        ? `${API_URL}/api/superadmin/productos/${producto.id}`
+        ? `${API_URL}/api/superadmin/productos/${producto!.id}`
         : `${API_URL}/api/superadmin/productos`;
 
       const res = await fetch(endpoint, {
         method: isEditing ? "PUT" : "POST",
         headers: {
-            'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(payload),
@@ -120,58 +165,78 @@ export function ProductDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Editar Producto" : "Nuevo Producto"}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          {/* Nombre */}
           <div className="space-y-2">
-            <Label htmlFor="nombre">Nombre</Label>
+            <Label htmlFor="nombre">
+              Nombre <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="nombre"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
               placeholder="Nombre del producto"
               disabled={isLoading}
-              required
+              {...register("nombre")}
             />
+            {errors.nombre && (
+              <p className="text-xs text-red-500">{errors.nombre.message}</p>
+            )}
           </div>
 
+          {/* Descripción */}
           <div className="space-y-2">
-            <Label htmlFor="descripcion">Descripción</Label>
+            <Label htmlFor="descripcion">
+              Descripción <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="descripcion"
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
               placeholder="Descripción del producto"
               disabled={isLoading}
-              required
+              {...register("descripcion")}
             />
+            {errors.descripcion && (
+              <p className="text-xs text-red-500">
+                {errors.descripcion.message}
+              </p>
+            )}
           </div>
 
+          {/* Categorías — Grid de Checkboxes */}
           <div className="space-y-2">
-            <Label>Categoría</Label>
-            <Select
-              value={categoriaId.toString()}
-              onValueChange={(val: string | null) => {
-                if (val) setCategoriaId(Number(val));
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecciona una categoría" />
-              </SelectTrigger>
-              <SelectContent>
-                {categorias.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id.toString()}>
+            <Label>
+              Categorías <span className="text-red-500">*</span>
+            </Label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 rounded-md border p-4 bg-white">
+              {categorias.map((cat) => (
+                <div key={cat.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`cat-${cat.id}`}
+                    checked={selectedCategoriaIds.includes(cat.id)}
+                    onCheckedChange={() => handleCategoriaToggle(cat.id)}
+                    disabled={isLoading}
+                  />
+                  <Label
+                    htmlFor={`cat-${cat.id}`}
+                    className="cursor-pointer text-sm font-normal"
+                  >
                     {cat.nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  </Label>
+                </div>
+              ))}
+            </div>
+            {errors.categoriaIds && (
+              <p className="text-xs text-red-500">
+                {errors.categoriaIds.message}
+              </p>
+            )}
           </div>
 
+          {/* Imagen */}
           <div className="space-y-2">
             <Label htmlFor="imagen">Imagen</Label>
             <Input
@@ -181,13 +246,14 @@ export function ProductDialog({
               onChange={(e) => setImagenFile(e.target.files?.[0] ?? null)}
               disabled={isLoading}
             />
-            {isEditing && producto.imagenUrl && !imagenFile && (
+            {isEditing && producto?.imagenUrl && !imagenFile && (
               <p className="text-xs text-stone-500">
                 Imagen actual conservada. Selecciona una nueva para reemplazarla.
               </p>
             )}
           </div>
 
+          {/* Botones */}
           <div className="flex justify-end gap-2 pt-4">
             <Button
               type="button"

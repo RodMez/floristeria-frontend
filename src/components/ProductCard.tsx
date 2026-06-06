@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProductoCatalogo, Sede } from "@/types";
 import { useCartStore } from "@/store/useCartStore";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 interface ProductCardProps {
   producto: ProductoCatalogo;
@@ -15,6 +15,26 @@ interface ProductCardProps {
 export default function ProductCard({ producto, sede }: ProductCardProps) {
   const { addItem } = useCartStore();
   const [isAdding, setIsAdding] = useState(false);
+
+  // Mapear correctamente las categorías usando los IDs reales del backend
+  // La API devuelve categoriasNombres (nombres), debemos mapearlos a IDs reales
+  const categorias = useMemo(() => {
+    // Si ya vienen con IDs (formato nuevo), usarlas directamente
+    if (producto.categorias && producto.categorias.length > 0) {
+      return producto.categorias;
+    }
+    // Fallback: mapear nombres a objetos con IDs reales
+    if (producto.categoriasNombres && producto.categoriasNombres.length > 0) {
+      // Nota: en ProductCard no tenemos acceso a la lista completa de categorías
+      // Para mostrar badges usamos el nombre directamente sin ID (o ID temporal)
+      return producto.categoriasNombres.map((n, i) => ({ id: i, nombre: n }));
+    }
+    // Fallback legacy
+    if (producto.categoriaNombre) {
+      return [{ id: 0, nombre: producto.categoriaNombre }];
+    }
+    return [];
+  }, [producto.categorias, producto.categoriasNombres, producto.categoriaNombre]);
 
   const isAgotado = !producto.disponible || producto.stock === 0;
 
@@ -50,6 +70,15 @@ export default function ProductCard({ producto, sede }: ProductCardProps) {
         />
       </div>
       <CardContent className="p-4">
+        {/* Categorías - Badges */}
+        <div className="flex flex-wrap gap-1 mb-2">
+          {categorias.map((cat) => (
+            <Badge key={cat.id} variant="secondary" className="text-xs">
+              {cat.nombre}
+            </Badge>
+          ))}
+        </div>
+
         <h3 className="font-semibold text-stone-800 line-clamp-1">
           {producto.nombre}
         </h3>
