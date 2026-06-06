@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuthStore } from "@/store/useAuthStore";
+import { useAuthStore, useSessionExpiredSync } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
 import {
   LogOut,
@@ -18,18 +18,22 @@ import {
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { rol, logout, isAuthenticated } = useAuthStore();
+  const { rol, logout, isAuthenticated, isHydrated } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // Sincronizar con el evento de sesión expirada del fetcher
+  useSessionExpiredSync();
+
   const closeSidebar = () => setIsSidebarOpen(false);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/login");
+    // Solo redirigir si ya se hidrató el store y no está autenticado
+    if (isHydrated && !isAuthenticated) {
+      router.push("/tienda/login");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isHydrated, router]);
 
   // Cerrar sidebar al cambiar de ruta
   useEffect(() => {
@@ -39,7 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const handleLogout = () => {
     closeSidebar();
     logout();
-    router.push("/login");
+    router.push("/tienda/login");
   };
 
   const navItems = [

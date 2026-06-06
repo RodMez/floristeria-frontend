@@ -128,7 +128,18 @@ export default function ProductosPage() {
                   />
                 </TableCell>
                 <TableCell className="font-medium">{producto.nombre}</TableCell>
-                <TableCell>{producto.categoriaNombre}</TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-1">
+                    {producto.categorias.map((cat) => (
+                      <span
+                        key={cat.id}
+                        className="inline-flex items-center rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-800"
+                      >
+                        {cat.nombre}
+                      </span>
+                    ))}
+                  </div>
+                </TableCell>
                 <TableCell className="max-w-[200px] truncate">
                   {producto.descripcion}
                 </TableCell>
