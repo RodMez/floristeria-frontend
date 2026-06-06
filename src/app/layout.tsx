@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const inter = Inter({
@@ -21,6 +22,7 @@ export default function RootLayout({
     <html lang="es" className={`${inter.variable} antialiased`}>
       <body className="bg-stone-50 text-stone-900 min-h-screen">
         {children}
+        <Toaster position="top-right" richColors closeButton />
       </body>
     </html>
   );

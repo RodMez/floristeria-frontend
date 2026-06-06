@@ -45,7 +45,7 @@ export default async function Home() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sedes.map((sede) => (
-              <Link key={sede.id} href={`/sede/${sede.id}`}>
+              <Link key={sede.id} href={`/tienda/sede/${sede.id}`}>
                 <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
                   <CardContent className="p-6">
                     <h3 className="text-xl font-semibold text-stone-800 mb-2">
