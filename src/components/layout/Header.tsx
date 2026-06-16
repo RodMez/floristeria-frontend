@@ -23,20 +23,28 @@ export default function Header() {
           href="/"
           className="text-xl font-semibold text-stone-800 hover:text-stone-600 transition-colors"
         >
-          Floristería 
+          Floristería
         </Link>
 
-        <div className="relative">
-          <CartDrawer />
-          {isMounted && totalItems > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-2 -right-2 h-5 w-5 items-center justify-center p-0 text-xs"
-            >
-              {totalItems}
-            </Badge>
-          )}
-        </div>
+        <nav className="flex items-center gap-4">
+          <Link
+            href="/tienda/auth"
+            className="text-sm font-medium text-stone-700 hover:text-stone-900 transition-colors"
+          >
+            Iniciar sesión
+          </Link>
+          <div className="relative">
+            <CartDrawer />
+            {isMounted && totalItems > 0 && (
+              <Badge
+                variant="destructive"
+                className="absolute -top-2 -right-2 h-5 w-5 items-center justify-center p-0 text-xs"
+              >
+                {totalItems}
+              </Badge>
+            )}
+          </div>
+        </nav>
       </div>
     </header>
   );
