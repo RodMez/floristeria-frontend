@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Cookies from "js-cookie";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -52,13 +53,16 @@ export function EditInventarioDialog({ item, mutate }: EditInventarioDialogProps
       );
 
       if (!response.ok) {
-        throw new Error("Error al actualizar el inventario");
+        const errData = await response.json();
+        throw new Error(errData.message || "Error al actualizar el inventario");
       }
 
+      toast.success("Inventario actualizado correctamente");
       mutate();
       setOpen(false);
     } catch (error) {
       console.error("Error updating inventory:", error);
+      toast.error(`Error al actualizar: ${error instanceof Error ? error.message : "Error desconocido"}`);
     } finally {
       setIsLoading(false);
     }

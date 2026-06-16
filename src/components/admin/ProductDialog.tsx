@@ -5,6 +5,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Cookies from "js-cookie";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ProductoResponse, CategoriaResponse, ProductoRequest } from "@/types";
+import Image from "next/image";
 
 /** ─────────── Zod Schema ─────────── */
 const productoSchema = z.object({
@@ -152,12 +154,17 @@ export function ProductDialog({
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error("Error al guardar el producto");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Error al guardar el producto");
+      }
 
+      toast.success(isEditing ? "Producto actualizado correctamente" : "Producto creado correctamente");
       mutate();
       onClose();
     } catch (err) {
       console.error("Error saving product:", err);
+      toast.error(`Error al guardar: ${err instanceof Error ? err.message : "Error desconocido"}`);
     } finally {
       setIsLoading(false);
     }
@@ -247,9 +254,22 @@ export function ProductDialog({
               disabled={isLoading}
             />
             {isEditing && producto?.imagenUrl && !imagenFile && (
-              <p className="text-xs text-stone-500">
-                Imagen actual conservada. Selecciona una nueva para reemplazarla.
-              </p>
+              <div className="space-y-2">
+                <p className="text-xs text-stone-500">
+                  Imagen actual:
+                </p>
+                <div className="w-32 h-32 relative rounded overflow-hidden border border-stone-200">
+                  <Image
+                    src={producto.imagenUrl}
+                    alt={producto.nombre}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <p className="text-xs text-stone-500">
+                  Selecciona una nueva para reemplazarla.
+                </p>
+              </div>
             )}
           </div>
 
