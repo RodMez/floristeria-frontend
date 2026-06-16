@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { InventarioResponse } from "@/types";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -13,11 +15,22 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { EditInventarioDialog } from "@/components/admin/EditInventarioDialog";
-import { Package } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Package, Search } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function InventarioPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState<string>("Todos");
+
   const { data, error, mutate } = useSWR<InventarioResponse[]>(
     `${API_URL}/api/admin/inventario`,
     fetcher,
@@ -47,6 +60,22 @@ export default function InventarioPage() {
     );
   }
 
+  // Ordenamiento estable por ID descendente
+  const sortedData = data ? [...data].sort((a, b) => b.id - a.id) : [];
+
+  // Filtro de búsqueda local + filtro por estado
+  const inventarioFiltrado = sortedData.filter((item) => {
+    const matchesSearch =
+      item.productoNombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.sedeNombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.id.toString().includes(searchTerm);
+
+    const itemEstado = item.disponible && item.stock > 0 ? "Disponible" : "Agotado";
+    const matchesEstado = filtroEstado === "Todos" || itemEstado === filtroEstado;
+
+    return matchesSearch && matchesEstado;
+  });
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -56,10 +85,37 @@ export default function InventarioPage() {
         </p>
       </div>
 
+      <div className="mb-4 flex items-center justify-between gap-4 flex-wrap">
+        {/* Search Bar */}
+        <div className="relative max-w-md flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+          <Input
+            type="text"
+            placeholder="Buscar por producto, sede o ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        {/* Filtro por Estado */}
+        <Select value={filtroEstado} onValueChange={(v) => { if (v !== null) setFiltroEstado(v); }}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Filtrar estado" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Todos">Todos</SelectItem>
+            <SelectItem value="Disponible">Disponible</SelectItem>
+            <SelectItem value="Agotado">Agotado</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="bg-white rounded-lg shadow">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[60px]">ID</TableHead>
               <TableHead className="w-[250px]">Producto</TableHead>
               <TableHead>Sede</TableHead>
               <TableHead className="text-right">Precio</TableHead>
@@ -69,8 +125,9 @@ export default function InventarioPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((item) => (
+            {inventarioFiltrado.map((item) => (
               <TableRow key={item.id}>
+                <TableCell className="font-mono text-sm">{item.id}</TableCell>
                 <TableCell className="font-medium">{item.productoNombre}</TableCell>
                 <TableCell>{item.sedeNombre}</TableCell>
                 <TableCell className="text-right">

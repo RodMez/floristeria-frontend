@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { PedidoResponse } from "@/types";
 import Cookies from "js-cookie";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -20,12 +21,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Package } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Package, Search } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function PedidosPage() {
   const [filtroEstado, setFiltroEstado] = useState<string>("Todos");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data, error, mutate } = useSWR<PedidoResponse[]>(
     `${API_URL}/api/admin/pedidos`,
@@ -51,10 +54,15 @@ export default function PedidosPage() {
       );
 
       if (response.ok) {
+        toast.success("Estado del pedido actualizado correctamente");
         mutate();
+      } else {
+        const errData = await response.json();
+        throw new Error(errData.message || "Error al actualizar el estado");
       }
     } catch (error) {
       console.error("Error updating order status:", error);
+      toast.error(`Error al actualizar: ${error instanceof Error ? error.message : "Error desconocido"}`);
     }
   };
 
@@ -104,6 +112,13 @@ export default function PedidosPage() {
           .filter((p) => p.estado === filtroEstado)
           .sort((a, b) => b.id - a.id);
 
+  // Filtro de búsqueda local
+  const pedidosConBusqueda = pedidosFiltrados.filter((p) =>
+    p.clienteNombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.clienteTelefono.includes(searchTerm) ||
+    p.id.toString().includes(searchTerm)
+  );
+
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
@@ -126,6 +141,20 @@ export default function PedidosPage() {
         </Select>
       </div>
 
+      {/* Search Bar */}
+      <div className="mb-4">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+          <Input
+            type="text"
+            placeholder="Buscar por cliente, teléfono o ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg shadow">
         <Table>
           <TableHeader>
@@ -139,7 +168,7 @@ export default function PedidosPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-                      {pedidosFiltrados.map((item) => (
+                      {pedidosConBusqueda.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-mono text-sm">#{item.id}</TableCell>
                 <TableCell className="font-medium">{item.clienteNombre}</TableCell>

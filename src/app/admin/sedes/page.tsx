@@ -4,6 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { Sede } from "@/types";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -21,7 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Building2, Plus, Pencil, Trash2 } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Search } from "lucide-react";
 import Cookies from "js-cookie";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -39,16 +40,17 @@ const emptyForm: SedeForm = {
 };
 
 export default function SedesPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingSede, setEditingSede] = useState<Sede | null>(null);
+  const [form, setForm] = useState<SedeForm>(emptyForm);
+  const [isLoading, setIsLoading] = useState(false);
+
   const { data: sedes, error, mutate } = useSWR<Sede[]>(
     `${API_URL}/api/superadmin/sedes`,
     fetcher,
     { revalidateOnFocus: false }
   );
-
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingSede, setEditingSede] = useState<Sede | null>(null);
-  const [form, setForm] = useState<SedeForm>(emptyForm);
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleNew = () => {
     setEditingSede(null);
@@ -86,12 +88,17 @@ export default function SedesPage() {
         body: JSON.stringify(form),
       });
 
-      if (!res.ok) throw new Error("Error al guardar la sede");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Error al guardar la sede");
+      }
 
+      toast.success(isEditing ? "Sede actualizada correctamente" : "Sede creada correctamente");
       mutate();
       setDialogOpen(false);
     } catch (err) {
       console.error("Error saving sede:", err);
+      toast.error(`Error al guardar: ${err instanceof Error ? err.message : "Error desconocido"}`);
     } finally {
       setIsLoading(false);
     }
@@ -108,10 +115,15 @@ export default function SedesPage() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
-      if (!res.ok) throw new Error("Error al eliminar");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Error al eliminar");
+      }
+      toast.success("Sede eliminada correctamente");
       mutate();
     } catch (err) {
       console.error("Error deleting sede:", err);
+      toast.error(`Error al eliminar: ${err instanceof Error ? err.message : "Error desconocido"}`);
     }
   };
 
@@ -136,6 +148,17 @@ export default function SedesPage() {
     );
   }
 
+  // Ordenamiento estable por ID descendente
+  const sortedSedes = sedes ? [...sedes].sort((a, b) => b.id - a.id) : [];
+
+  // Filtro de búsqueda local
+  const sedesFiltradas = sortedSedes.filter((s) =>
+    s.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.ciudad.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.telefonoWhatsapp.includes(searchTerm) ||
+    s.id.toString().includes(searchTerm)
+  );
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -151,6 +174,20 @@ export default function SedesPage() {
         </Button>
       </div>
 
+      {/* Search Bar */}
+      <div className="mb-4">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+          <Input
+            type="text"
+            placeholder="Buscar por nombre, ciudad, WhatsApp o ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg shadow">
         <Table>
           <TableHeader>
@@ -163,14 +200,14 @@ export default function SedesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sedes.length === 0 && (
+            {sedesFiltradas.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-stone-500 py-8">
                   No hay sedes registradas
                 </TableCell>
               </TableRow>
             )}
-            {sedes.map((sede) => (
+            {sedesFiltradas.map((sede) => (
               <TableRow key={sede.id}>
                 <TableCell>{sede.id}</TableCell>
                 <TableCell className="font-medium">{sede.nombre}</TableCell>

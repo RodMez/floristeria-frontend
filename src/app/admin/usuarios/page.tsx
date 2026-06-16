@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { UsuarioAdminResponse, UsuarioAdminRequest, Sede } from "@/types";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -28,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Users, Plus, Pencil, Trash2 } from "lucide-react";
+import { Users, Plus, Pencil, Trash2, Search } from "lucide-react";
 import Cookies from "js-cookie";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -50,6 +51,12 @@ const emptyForm: UsuarioForm = {
 };
 
 export default function UsuariosPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingUsuario, setEditingUsuario] = useState<UsuarioAdminResponse | null>(null);
+  const [form, setForm] = useState<UsuarioForm>(emptyForm);
+  const [isLoading, setIsLoading] = useState(false);
+
   const { data: usuarios, error: usuariosError, mutate: mutateUsuarios } = useSWR<UsuarioAdminResponse[]>(
     `${API_URL}/api/superadmin/usuarios`,
     fetcher,
@@ -61,11 +68,6 @@ export default function UsuariosPage() {
     fetcher,
     { revalidateOnFocus: false }
   );
-
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingUsuario, setEditingUsuario] = useState<UsuarioAdminResponse | null>(null);
-  const [form, setForm] = useState<UsuarioForm>(emptyForm);
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (dialogOpen) {
@@ -132,12 +134,17 @@ export default function UsuariosPage() {
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error("Error al guardar el usuario");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Error al guardar el usuario");
+      }
 
+      toast.success(isEditing ? "Usuario actualizado correctamente" : "Usuario creado correctamente");
       mutateUsuarios();
       setDialogOpen(false);
     } catch (err) {
       console.error("Error saving user:", err);
+      toast.error(`Error al guardar: ${err instanceof Error ? err.message : "Error desconocido"}`);
     } finally {
       setIsLoading(false);
     }
@@ -154,10 +161,15 @@ export default function UsuariosPage() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
-      if (!res.ok) throw new Error("Error al eliminar");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Error al eliminar");
+      }
+      toast.success("Usuario eliminado correctamente");
       mutateUsuarios();
     } catch (err) {
       console.error("Error deleting user:", err);
+      toast.error(`Error al eliminar: ${err instanceof Error ? err.message : "Error desconocido"}`);
     }
   };
 
@@ -182,6 +194,18 @@ export default function UsuariosPage() {
     );
   }
 
+  // Ordenamiento estable por ID descendente
+  const sortedUsuarios = usuarios ? [...usuarios].sort((a, b) => b.id - a.id) : [];
+
+  // Filtro de búsqueda local
+  const usuariosFiltrados = sortedUsuarios.filter((u) =>
+    u.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.rol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.sedeNombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.id.toString().includes(searchTerm)
+  );
+
   const isEditing = editingUsuario !== null;
 
   return (
@@ -199,10 +223,25 @@ export default function UsuariosPage() {
         </Button>
       </div>
 
+      {/* Search Bar */}
+      <div className="mb-4">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+          <Input
+            type="text"
+            placeholder="Buscar por nombre, email, rol, sede o ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg shadow">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[60px]">ID</TableHead>
               <TableHead>Nombre</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Rol</TableHead>
@@ -211,15 +250,16 @@ export default function UsuariosPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {usuarios.length === 0 && (
+            {usuariosFiltrados.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-stone-500 py-8">
+                <TableCell colSpan={6} className="text-center text-stone-500 py-8">
                   No hay usuarios registrados
                 </TableCell>
               </TableRow>
             )}
-            {usuarios.map((usuario) => (
+            {usuariosFiltrados.map((usuario) => (
               <TableRow key={usuario.id}>
+                <TableCell className="font-mono text-sm">{usuario.id}</TableCell>
                 <TableCell className="font-medium">{usuario.nombre}</TableCell>
                 <TableCell>{usuario.email}</TableCell>
                 <TableCell>

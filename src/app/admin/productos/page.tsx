@@ -4,6 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { ProductoResponse, CategoriaResponse } from "@/types";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -14,12 +15,18 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ProductDialog } from "@/components/admin/ProductDialog";
-import { Flower2, Plus, Pencil, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Flower2, Plus, Pencil, Trash2, Search } from "lucide-react";
 import Cookies from "js-cookie";
+import Image from "next/image";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function ProductosPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [productoToEdit, setProductoToEdit] = useState<ProductoResponse | null>(null);
+
   const { data: productos, error, mutate } = useSWR<ProductoResponse[]>(
     `${API_URL}/api/superadmin/productos`,
     fetcher,
@@ -31,9 +38,6 @@ export default function ProductosPage() {
     fetcher,
     { revalidateOnFocus: false }
   );
-
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [productoToEdit, setProductoToEdit] = useState<ProductoResponse | null>(null);
 
   const handleNew = () => {
     setProductoToEdit(null);
@@ -56,10 +60,15 @@ export default function ProductosPage() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
-      if (!res.ok) throw new Error("Error al eliminar");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Error al eliminar");
+      }
+      toast.success("Producto eliminado correctamente");
       mutate();
     } catch (err) {
       console.error("Error deleting product:", err);
+      toast.error(`Error al eliminar: ${err instanceof Error ? err.message : "Error desconocido"}`);
     }
   };
 
@@ -84,6 +93,17 @@ export default function ProductosPage() {
     );
   }
 
+  // Ordenamiento estable por ID descendente
+  const sortedProductos = productos ? [...productos].sort((a, b) => b.id - a.id) : [];
+
+  // Filtro de búsqueda local
+  const productosFiltrados = sortedProductos.filter((p) =>
+    p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.categorias.some((cat) => cat.nombre.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    p.id.toString().includes(searchTerm)
+  );
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -99,10 +119,25 @@ export default function ProductosPage() {
         </Button>
       </div>
 
+      {/* Search Bar */}
+      <div className="mb-4">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+          <Input
+            type="text"
+            placeholder="Buscar por nombre, descripción, categoría o ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg shadow">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[60px]">ID</TableHead>
               <TableHead>Imagen</TableHead>
               <TableHead>Nombre</TableHead>
               <TableHead>Categoría</TableHead>
@@ -111,20 +146,23 @@ export default function ProductosPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {productos.length === 0 && (
+            {productosFiltrados.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-stone-500 py-8">
+                <TableCell colSpan={6} className="text-center text-stone-500 py-8">
                   No hay productos registrados
                 </TableCell>
               </TableRow>
             )}
-            {productos.map((producto) => (
+            {productosFiltrados.map((producto) => (
               <TableRow key={producto.id}>
+                <TableCell className="font-mono text-sm">{producto.id}</TableCell>
                 <TableCell>
-                  <img
+                  <Image
                     src={producto.imagenUrl}
                     alt={producto.nombre}
-                    className="w-12 h-12 object-cover rounded"
+                    width={48}
+                    height={48}
+                    className="object-cover rounded"
                   />
                 </TableCell>
                 <TableCell className="font-medium">{producto.nombre}</TableCell>

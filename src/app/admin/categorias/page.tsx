@@ -4,6 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { CategoriaResponse, CategoriaRequest } from "@/types";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -21,22 +22,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Tags, Plus, Pencil, Trash2 } from "lucide-react";
+import { Tags, Plus, Pencil, Trash2, Search } from "lucide-react";
 import Cookies from "js-cookie";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function CategoriasPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingCategoria, setEditingCategoria] = useState<CategoriaResponse | null>(null);
+  const [nombre, setNombre] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
   const { data: categorias, error, mutate } = useSWR<CategoriaResponse[]>(
     `${API_URL}/api/superadmin/categorias`,
     fetcher,
     { revalidateOnFocus: false }
   );
-
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingCategoria, setEditingCategoria] = useState<CategoriaResponse | null>(null);
-  const [nombre, setNombre] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleNew = () => {
     setEditingCategoria(null);
@@ -71,12 +73,17 @@ export default function CategoriasPage() {
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error("Error al guardar la categoría");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Error al guardar la categoría");
+      }
 
+      toast.success(isEditing ? "Categoría actualizada correctamente" : "Categoría creada correctamente");
       mutate();
       setDialogOpen(false);
     } catch (err) {
       console.error("Error saving category:", err);
+      toast.error(`Error al guardar: ${err instanceof Error ? err.message : "Error desconocido"}`);
     } finally {
       setIsLoading(false);
     }
@@ -93,10 +100,15 @@ export default function CategoriasPage() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
-      if (!res.ok) throw new Error("Error al eliminar");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Error al eliminar");
+      }
+      toast.success("Categoría eliminada correctamente");
       mutate();
     } catch (err) {
       console.error("Error deleting category:", err);
+      toast.error(`Error al eliminar: ${err instanceof Error ? err.message : "Error desconocido"}`);
     }
   };
 
@@ -121,6 +133,15 @@ export default function CategoriasPage() {
     );
   }
 
+  // Ordenamiento estable por ID descendente
+  const sortedCategorias = categorias ? [...categorias].sort((a, b) => b.id - a.id) : [];
+
+  // Filtro de búsqueda local
+  const categoriasFiltradas = sortedCategorias.filter((c) =>
+    c.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.id.toString().includes(searchTerm)
+  );
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -136,6 +157,20 @@ export default function CategoriasPage() {
         </Button>
       </div>
 
+      {/* Search Bar */}
+      <div className="mb-4">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+          <Input
+            type="text"
+            placeholder="Buscar por nombre o ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg shadow">
         <Table>
           <TableHeader>
@@ -146,14 +181,14 @@ export default function CategoriasPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {categorias.length === 0 && (
+            {categoriasFiltradas.length === 0 && (
               <TableRow>
                 <TableCell colSpan={3} className="text-center text-stone-500 py-8">
                   No hay categorías registradas
                 </TableCell>
               </TableRow>
             )}
-            {categorias.map((categoria) => (
+            {categoriasFiltradas.map((categoria) => (
               <TableRow key={categoria.id}>
                 <TableCell>{categoria.id}</TableCell>
                 <TableCell className="font-medium">{categoria.nombre}</TableCell>
