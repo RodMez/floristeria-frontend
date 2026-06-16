@@ -4,15 +4,19 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useEffect } from 'react';
 import Cookies from 'js-cookie';
-import { AuthResponse } from '../types';
+import { AuthResponse, ClienteAuthResponse } from '@/types';
 
 interface AuthState {
   token: string | null;
   rol: string | null;
   sedeId: number | null;
+  clienteId: number | null;
+  nombre: string | null;
+  email: string | null;
   isAuthenticated: boolean;
   isHydrated: boolean;
   setAuth: (data: AuthResponse) => void;
+  setClienteAuth: (data: ClienteAuthResponse) => void;
   logout: () => void;
 }
 
@@ -22,6 +26,9 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       rol: null,
       sedeId: null,
+      clienteId: null,
+      nombre: null,
+      email: null,
       isAuthenticated: false,
       isHydrated: false,
 
@@ -31,6 +38,22 @@ export const useAuthStore = create<AuthState>()(
           token: data.token,
           rol: data.rol,
           sedeId: data.sedeId,
+          clienteId: null,
+          nombre: null,
+          email: null,
+          isAuthenticated: true,
+        });
+      },
+
+      setClienteAuth: (data: ClienteAuthResponse) => {
+        Cookies.set('token', data.token, { expires: 1 });
+        set({
+          token: data.token,
+          rol: data.rol,
+          sedeId: null,
+          clienteId: data.clienteId,
+          nombre: data.nombre,
+          email: data.email,
           isAuthenticated: true,
         });
       },
@@ -41,6 +64,9 @@ export const useAuthStore = create<AuthState>()(
           token: null,
           rol: null,
           sedeId: null,
+          clienteId: null,
+          nombre: null,
+          email: null,
           isAuthenticated: false,
           isHydrated: true, // marcamos como hidratado
         });
