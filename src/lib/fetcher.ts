@@ -1,5 +1,6 @@
 import Cookies from 'js-cookie';
 import { toast } from 'sonner';
+import { ClienteAuthResponse, RegisterClienteRequest } from '@/types';
 
 /**
  * Flag global para evitar múltiples redirecciones/toasts
@@ -47,8 +48,65 @@ export async function fetcher<T = unknown>(url: string): Promise<T> {
 }
 
 /**
+ * Login de cliente - POST /api/v1/clientes/auth/login
+ */
+export async function loginCliente(email: string, password: string): Promise<ClienteAuthResponse> {
+  const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/auth/login`;
+
+  const res = await fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (res.status === 401 || res.status === 403) {
+    throw new Error('Credenciales inválidas');
+  }
+
+  if (!res.ok) {
+    const errorBody = await res.text().catch(() => '');
+    throw new Error(errorBody || `Error ${res.status}`);
+  }
+
+  return res.json() as Promise<ClienteAuthResponse>;
+}
+
+/**
+ * Registro de cliente - POST /api/v1/clientes/auth/registro
+ */
+export async function registerCliente(data: RegisterClienteRequest): Promise<ClienteAuthResponse> {
+  const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/auth/registro`;
+
+  const res = await fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (res.status === 400 || res.status === 409) {
+    const errorBody = await res.text().catch(() => '');
+    throw new Error(errorBody || 'Error en el registro');
+  }
+
+  if (!res.ok) {
+    const errorBody = await res.text().catch(() => '');
+    throw new Error(errorBody || `Error ${res.status}`);
+  }
+
+  return res.json() as Promise<ClienteAuthResponse>;
+}
+
+/**
  * Lógica centralizada de manejo de sesión expirada.
  * Usa flag para evitar ejecución múltiple (race condition con SWR).
+ *
+ * NO usa window.location.href para no destruir el state de Zustand
+ * en memoria. En su lugar, dispara el evento que el store escucha
+ * y confía en que cada página protegida redirija vía router.replace.
  */
 function handleSessionExpired(): void {
   if (isHandlingSessionExpired) return;
@@ -58,8 +116,6 @@ function handleSessionExpired(): void {
   Cookies.remove('token');
 
   // 2. Disparar evento custom para que el store Zustand reaccione
-  //    (No podemos importar useAuthStore directamente porque
-  //     Zustand no permite usar hooks fuera de componentes React)
   window.dispatchEvent(new CustomEvent('auth:session-expired'));
 
   // 3. Mostrar toast
@@ -67,10 +123,15 @@ function handleSessionExpired(): void {
     duration: 5000,
   });
 
-  // 4. Redirigir al login (evitando bucle si ya estamos ahí)
+  // 4. Redirigir via router navigación suave, NO con window.location.href
+  //    que destruye todo el state de Zustand en memoria.
   const currentPath = window.location.pathname;
-  if (!currentPath.startsWith('/tienda/login')) {
-    window.location.href = '/tienda/login';
+  if (!currentPath.startsWith('/tienda/auth')) {
+    // Navegación suave con Next.js: push a /tienda/auth sin recarga completa
+    // Usamos replaceState + popstate para que el router de Next.js reaccione
+    // sin perder el state de Zustand persistido en localStorage
+    window.history.replaceState(null, '', '/tienda/auth');
+    window.dispatchEvent(new PopStateEvent('popstate'));
   }
 
   // Reset del flag después de 2s para permitir re-intento si el usuario
