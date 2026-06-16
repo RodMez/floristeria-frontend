@@ -14,15 +14,20 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useCartStore } from "@/store/useCartStore";
-import CheckoutDialog from "./CheckoutDialog";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function CartDrawer() {
   const { items, sedeActual, removeItem, updateQuantity, updateNota, clearCart } =
     useCartStore();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   const total = items.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
+
+  const handlePagar = () => {
+    router.push("/tienda/checkout");
+  };
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -115,12 +120,9 @@ export default function CartDrawer() {
                   Vaciar carrito
                 </Button>
                 {sedeActual ? (
-                  <CheckoutDialog
-                    cartItems={items}
-                    sedeActual={sedeActual}
-                    total={total}
-                    clearCart={clearCart}
-                  />
+                  <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={handlePagar}>
+                    Pagar
+                  </Button>
                 ) : (
                   <Button className="flex-1" disabled>
                     Selecciona una sede
