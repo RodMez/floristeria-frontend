@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ProductoCatalogo, Sede } from "@/types";
 import { useCartStore } from "@/store/useCartStore";
 import { useState, useMemo } from "react";
+import Image from "next/image";
 
 interface ProductCardProps {
   producto: ProductoCatalogo;
@@ -62,11 +63,13 @@ export default function ProductCard({ producto, sede }: ProductCardProps) {
 
   return (
     <Card className="overflow-hidden">
-      <div className="aspect-square w-full overflow-hidden">
-        <img
+      <div className="aspect-square w-full overflow-hidden relative">
+        <Image
           src={producto.imagenUrl}
           alt={producto.nombre}
-          className="h-full w-full object-cover"
+          fill
+          className="object-cover"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
         />
       </div>
       <CardContent className="p-4">
