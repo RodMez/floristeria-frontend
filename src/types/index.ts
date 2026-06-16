@@ -45,6 +45,22 @@ export interface AuthResponse {
   sedeId: number | null;
 }
 
+// Cliente Auth Types
+export interface ClienteAuthResponse {
+  token: string;
+  clienteId: number;
+  nombre: string;
+  email: string;
+  rol: 'CLIENTE';
+}
+
+export interface RegisterClienteRequest {
+  nombre: string;
+  email: string;
+  password: string;
+  telefono: string;
+}
+
 export interface InventarioResponse {
   id: number;
   productoNombre: string;
@@ -108,4 +124,26 @@ export interface PedidoResponse {
   total: number;
   estado: string;
   creadoEn: string;
+}
+
+// Tipos de Dirección para Checkout
+export interface DireccionResponse {
+  id: number;
+  alias: string;
+  direccion: string;
+  ciudad: string;
+  detalles: string | null;
+}
+
+export interface DireccionRequest {
+  alias: string;
+  direccion: string;
+  ciudad: string;
+  detalles?: string;
+}
+
+// Respuesta al crear un pedido desde Checkout
+export interface CrearPedidoResponse {
+  pedidoId: number;
+  total: number;
 }
