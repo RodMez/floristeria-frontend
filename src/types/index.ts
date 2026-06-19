@@ -126,6 +126,36 @@ export interface PedidoResponse {
   creadoEn: string;
 }
 
+// Constantes de estados de pedido
+export const ORDER_STATUSES = [
+  "PENDIENTE_PAGO",
+  "PAGADO",
+ "EN_PREPARACION",
+  "EN_CAMINO",
+  "ENTREGADO",
+  "CANCELADO",
+] as const;
+
+export type OrderStatus = (typeof ORDER_STATUSES)[number];
+
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  PENDIENTE_PAGO: "Pendiente de pago",
+  PAGADO: "Pagado",
+  EN_PREPARACION: "En preparación",
+  EN_CAMINO: "En camino",
+  ENTREGADO: "Entregado",
+  CANCELADO: "Cancelado",
+};
+
+export const ORDER_STATUS_COLORS: Record<OrderStatus, "default" | "secondary" | "destructive" | "outline"> = {
+  PENDIENTE_PAGO: "secondary",
+  PAGADO: "default",
+  EN_PREPARACION: "secondary",
+  EN_CAMINO: "outline",
+  ENTREGADO: "default",
+  CANCELADO: "destructive",
+};
+
 // Tipos de Dirección para Checkout
 export interface DireccionResponse {
   id: number;

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
-import { PedidoResponse } from "@/types";
+import { PedidoResponse, ORDER_STATUSES, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from "@/types";
+import { Badge } from "@/components/ui/badge";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import {
@@ -22,13 +23,41 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Package, Search } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
+function getOpcionesPermitidas(estadoActual: string): string[] {
+  switch (estadoActual) {
+    case "PENDIENTE_PAGO":
+      return ["CANCELADO"];
+    case "PAGADO":
+      return ["EN_PREPARACION"];
+    case "EN_PREPARACION":
+      return ["EN_CAMINO"];
+    case "EN_CAMINO":
+      return ["ENTREGADO"];
+    case "ENTREGADO":
+    case "CANCELADO":
+      return [];
+    default:
+      return [];
+  }
+}
+
 export default function PedidosPage() {
   const [filtroEstado, setFiltroEstado] = useState<string>("Todos");
   const [searchTerm, setSearchTerm] = useState("");
+  const [pedidoACancelar, setPedidoACancelar] = useState<number | null>(null);
 
   const { data, error, mutate } = useSWR<PedidoResponse[]>(
     `${API_URL}/api/admin/pedidos`,
@@ -39,9 +68,14 @@ export default function PedidosPage() {
   );
 
   const handleStatusChange = async (pedidoId: number, nuevoEstado: string) => {
+    if (nuevoEstado === "CANCELADO") {
+      setPedidoACancelar(pedidoId);
+      return;
+    }
+    const toastId = toast.loading("Actualizando estado...");
     try {
       const token = Cookies.get("token");
-      const response = await fetch(
+      const res = await fetch(
         `${API_URL}/api/admin/pedidos/${pedidoId}/estado`,
         {
           method: "PUT",
@@ -53,16 +87,23 @@ export default function PedidosPage() {
         }
       );
 
-      if (response.ok) {
-        toast.success("Estado del pedido actualizado correctamente");
-        mutate();
-      } else {
-        const errData = await response.json();
-        throw new Error(errData.message || "Error al actualizar el estado");
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        const errData = text ? JSON.parse(text) : {};
+        throw new Error(errData.message || `Error ${res.status}`);
       }
+
+      const text = await res.text().catch(() => "");
+      const data = text ? JSON.parse(text) : {};
+
+      toast.success("Estado actualizado correctamente", { id: toastId });
+      mutate();
     } catch (error) {
       console.error("Error updating order status:", error);
-      toast.error(`Error al actualizar: ${error instanceof Error ? error.message : "Error desconocido"}`);
+      toast.error(
+        `Error: ${error instanceof Error ? error.message : "Error desconocido"}`,
+        { id: toastId }
+      );
     }
   };
 
@@ -134,9 +175,11 @@ export default function PedidosPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="Todos">Todos</SelectItem>
-            <SelectItem value="Pendiente">Pendiente</SelectItem>
-            <SelectItem value="Completado">Completado</SelectItem>
-            <SelectItem value="Cancelado">Cancelado</SelectItem>
+            {ORDER_STATUSES.map((status) => (
+              <SelectItem key={status} value={status}>
+                {ORDER_STATUS_LABELS[status]}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -177,19 +220,30 @@ export default function PedidosPage() {
                   {formatCurrency(item.total)}
                 </TableCell>
                 <TableCell>
-                  <Select
-                    value={item.estado}
-                    onValueChange={(value) => { if (value !== null) handleStatusChange(item.id, value); }}
-                  >
-                    <SelectTrigger className="w-[130px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Pendiente">Pendiente</SelectItem>
-                      <SelectItem value="Completado">Completado</SelectItem>
-                      <SelectItem value="Cancelado">Cancelado</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-2 items-center">
+                    <Badge variant={ORDER_STATUS_COLORS[item.estado as keyof typeof ORDER_STATUS_COLORS] ?? "secondary"}>
+                      {ORDER_STATUS_LABELS[item.estado as keyof typeof ORDER_STATUS_LABELS] ?? item.estado}
+                    </Badge>
+                    <Select
+                      value={item.estado}
+                      onValueChange={(value) => { if (value !== null && value !== item.estado) handleStatusChange(item.id, value); }}
+                      disabled={getOpcionesPermitidas(item.estado).length === 0}
+                    >
+                      <SelectTrigger className="w-[130px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={item.estado}>
+                          {ORDER_STATUS_LABELS[item.estado as keyof typeof ORDER_STATUS_LABELS]}
+                        </SelectItem>
+                        {getOpcionesPermitidas(item.estado).map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {ORDER_STATUS_LABELS[status as keyof typeof ORDER_STATUS_LABELS]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </TableCell>
                 <TableCell className="text-sm text-stone-600">
                   {formatDate(item.creadoEn)}
@@ -199,6 +253,39 @@ export default function PedidosPage() {
           </TableBody>
         </Table>
       </div>
+
+      <Dialog
+        open={pedidoACancelar !== null}
+        onOpenChange={(open) => {
+          if (!open) setPedidoACancelar(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancelar pedido</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de cancelar el pedido #{pedidoACancelar}? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPedidoACancelar(null)}>
+              No, volver
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (pedidoACancelar !== null) {
+                  const id = pedidoACancelar;
+                  setPedidoACancelar(null);
+                  handleStatusChange(id, "CANCELADO");
+                }
+              }}
+            >
+              Sí, cancelar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
