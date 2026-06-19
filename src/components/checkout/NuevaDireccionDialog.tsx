@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import Cookies from "js-cookie";
+import { useCartStore } from "@/store/useCartStore";
 import { DireccionRequest } from "@/types";
 import {
   Dialog,
@@ -32,26 +33,34 @@ export default function NuevaDireccionDialog({
   onCreated,
 }: NuevaDireccionDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState<DireccionRequest>({
+  const [form, setForm] = useState<Omit<DireccionRequest, "ciudad">>({
     alias: "",
     direccion: "",
-    ciudad: "",
     detalles: "",
   });
+  const sedeActual = useCartStore((s) => s.sedeActual);
 
-  const handleChange = (field: keyof DireccionRequest, value: string) => {
+  const handleChange = (
+    field: keyof Omit<DireccionRequest, "ciudad">,
+    value: string
+  ) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const resetForm = () => {
-    setForm({ alias: "", direccion: "", ciudad: "", detalles: "" });
+    setForm({ alias: "", direccion: "", detalles: "" });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.alias.trim() || !form.direccion.trim() || !form.ciudad.trim()) {
-      toast.error("Completa los campos obligatorios: alias, dirección y ciudad.");
+    if (!form.alias.trim() || !form.direccion.trim()) {
+      toast.error("Completa los campos obligatorios: alias y dirección.");
+      return;
+    }
+
+    if (!sedeActual) {
+      toast.error("No se encontró la sede actual.");
       return;
     }
 
@@ -67,7 +76,7 @@ export default function NuevaDireccionDialog({
         body: JSON.stringify({
           alias: form.alias.trim(),
           direccion: form.direccion.trim(),
-          ciudad: form.ciudad.trim(),
+          ciudad: sedeActual.ciudad,
           detalles: form.detalles?.trim() || undefined,
         }),
       });
@@ -96,7 +105,7 @@ export default function NuevaDireccionDialog({
         <DialogHeader>
           <DialogTitle>Nueva dirección</DialogTitle>
           <DialogDescription>
-            Agrega una dirección de entrega para tus pedidos.
+            Dirección de entrega para {sedeActual?.ciudad ?? "tu sede"}.
           </DialogDescription>
         </DialogHeader>
 
@@ -126,14 +135,12 @@ export default function NuevaDireccionDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="ciudad">Ciudad *</Label>
+            <Label htmlFor="ciudad">Ciudad</Label>
             <Input
               id="ciudad"
-              placeholder="Bogotá"
-              value={form.ciudad}
-              onChange={(e) => handleChange("ciudad", e.target.value)}
-              disabled={isSubmitting}
-              required
+              value={sedeActual?.ciudad ?? ""}
+              disabled
+              className="bg-muted text-muted-foreground"
             />
           </div>
 
