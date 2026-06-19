@@ -26,6 +26,7 @@ export default function CartDrawer() {
   const total = items.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
 
   const handlePagar = () => {
+    setOpen(false);
     router.push("/tienda/checkout");
   };
 

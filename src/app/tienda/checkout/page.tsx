@@ -126,8 +126,15 @@ export default function CheckoutPage() {
       });
 
       if (!res.ok) {
-        const errorBody = await res.text().catch(() => "");
-        throw new Error(errorBody || `Error ${res.status}`);
+        const errorText = await res.text();
+        let errorMessage = `Error ${res.status}`;
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.mensaje || errorJson.message || errorText;
+        } catch {
+          errorMessage = errorText;
+        }
+        throw new Error(errorMessage);
       }
 
       const data = (await res.json()) as CrearPedidoResponse;
