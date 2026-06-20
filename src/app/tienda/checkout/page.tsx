@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import Script from "next/script";
 import Cookies from "js-cookie";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
@@ -21,7 +22,6 @@ export default function CheckoutPage() {
 
   const [selectedDireccionId, setSelectedDireccionId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [pedidoExitoso, setPedidoExitoso] = useState(false);
 
   // ── ¿El usuario está autenticado como CLIENTE? ──────────────
   const isAuthClient = isHydrated && isAuthenticated && rol === "CLIENTE";
@@ -53,7 +53,7 @@ export default function CheckoutPage() {
   // isAuthClient = true → seguro para pasar enabled al DireccionSelector
 
   // ── Carrito vacío ────────────────────────────────────────────
-  if (items.length === 0 && !pedidoExitoso) {
+  if (items.length === 0) {
     return (
       <div className="container mx-auto max-w-5xl px-4 py-10">
         <div className="text-center py-16">
@@ -65,24 +65,6 @@ export default function CheckoutPage() {
           <Button onClick={() => router.push("/tienda")}>
             Ir a la tienda
           </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Pedido exitoso ──────────────────────────────────────────
-  if (pedidoExitoso) {
-    return (
-      <div className="container mx-auto max-w-5xl px-4 py-10">
-        <div className="text-center py-16">
-          <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-green-100">
-            <ShoppingCartIcon className="size-8 text-green-600" />
-          </div>
-          <h2 className="text-xl font-semibold mb-2">¡Pedido creado!</h2>
-          <p className="text-muted-foreground mb-6">
-            Pedido creado. Redirigiendo a la pasarela de pago...
-          </p>
-          <LoaderIcon className="mx-auto size-5 animate-spin text-muted-foreground" />
         </div>
       </div>
     );
@@ -138,9 +120,25 @@ export default function CheckoutPage() {
       }
 
       const data = (await res.json()) as CrearPedidoResponse;
-      clearCart();
-      setPedidoExitoso(true);
-      toast.success(`Pedido #${data.pedidoId} creado por ${data.total.toLocaleString("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 })}`);
+
+      const checkout = new (window as any).WidgetCheckout({
+        currency: "COP",
+        amountInCents: data.montoEnCentavos,
+        reference: data.referenciaWompi,
+        publicKey: data.publicKeyWompi,
+        signature: { integrity: data.firmaIntegridad },
+      });
+
+      checkout.open(function (result: any) {
+        const status = result.transaction?.status;
+        if (status === "APPROVED") {
+          clearCart();
+          toast.success("¡Pago aprobado!");
+          router.push("/tienda/mi-cuenta");
+        } else if (status === "DECLINED" || status === "ERROR") {
+          toast.error("El pago fue rechazado o hubo un error.");
+        }
+      });
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Error al crear el pedido."
@@ -152,7 +150,9 @@ export default function CheckoutPage() {
 
   // ── Render principal ─────────────────────────────────────────
   return (
-    <div className="container mx-auto max-w-5xl px-4 py-8">
+    <>
+      <Script src="https://checkout.wompi.co/widget.js" strategy="lazyOnload" />
+      <div className="container mx-auto max-w-5xl px-4 py-8">
       <h1 className="text-2xl font-semibold mb-6">Checkout</h1>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
@@ -197,6 +197,7 @@ export default function CheckoutPage() {
           )}
         </aside>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

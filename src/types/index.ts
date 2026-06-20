@@ -176,4 +176,8 @@ export interface DireccionRequest {
 export interface CrearPedidoResponse {
   pedidoId: number;
   total: number;
+  referenciaWompi: string;
+  montoEnCentavos: number;
+  firmaIntegridad: string;
+  publicKeyWompi: string;
 }
