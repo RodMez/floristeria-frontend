@@ -24,8 +24,15 @@ import {
 } from "@/components/ui/dialog";
 import { Building2, Plus, Pencil, Trash2, Search } from "lucide-react";
 import Cookies from "js-cookie";
+import { z } from "zod";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+
+const sedeSchema = z.object({
+  nombre: z.string().min(1, "El nombre es requerido"),
+  ciudad: z.string().min(1, "La ciudad es requerida"),
+  telefonoWhatsapp: z.string().regex(/^[0-9+ ]+$/, "Solo se permiten números, espacios y el signo +"),
+});
 
 interface SedeForm {
   nombre: string;
@@ -70,6 +77,14 @@ export default function SedesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const validation = sedeSchema.safeParse(form);
+    if (!validation.success) {
+      const firstError = validation.error.issues[0]?.message || "Error de validación";
+      toast.error(firstError);
+      return;
+    }
+
     setIsLoading(true);
 
     const token = Cookies.get("token");
@@ -272,7 +287,7 @@ export default function SedesPage() {
               <Input
                 id="telefonoWhatsapp"
                 value={form.telefonoWhatsapp}
-                onChange={(e) => setForm({ ...form, telefonoWhatsapp: e.target.value })}
+                onChange={(e) => setForm({ ...form, telefonoWhatsapp: e.target.value.replace(/[^0-9+ ]/g, "") })}
                 placeholder="Ej: +57 300 1234567"
                 disabled={isLoading}
                 required

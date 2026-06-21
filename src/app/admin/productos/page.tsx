@@ -162,6 +162,7 @@ export default function ProductosPage() {
                     alt={producto.nombre}
                     width={48}
                     height={48}
+                    style={{ width: "auto", height: "auto" }}
                     className="object-cover rounded"
                   />
                 </TableCell>

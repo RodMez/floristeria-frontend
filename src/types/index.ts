@@ -126,6 +126,17 @@ export interface PedidoResponse {
   creadoEn: string;
 }
 
+export interface PedidoAdminResponse {
+  id: number;
+  cliente: {
+    nombre: string;
+    telefono: string;
+  };
+  total: number;
+  estado: string;
+  creadoEn: string;
+}
+
 // Constantes de estados de pedido
 export const ORDER_STATUSES = [
   "PENDIENTE_PAGO",
