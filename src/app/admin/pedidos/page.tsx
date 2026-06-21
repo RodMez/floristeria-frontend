@@ -3,7 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
-import { PedidoResponse, ORDER_STATUSES, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from "@/types";
+import { PedidoAdminResponse, ORDER_STATUSES, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
@@ -59,7 +59,7 @@ export default function PedidosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [pedidoACancelar, setPedidoACancelar] = useState<number | null>(null);
 
-  const { data, error, mutate } = useSWR<PedidoResponse[]>(
+  const { data, error, mutate } = useSWR<PedidoAdminResponse[]>(
     `${API_URL}/api/admin/pedidos`,
     fetcher,
     {
@@ -68,10 +68,6 @@ export default function PedidosPage() {
   );
 
   const handleStatusChange = async (pedidoId: number, nuevoEstado: string) => {
-    if (nuevoEstado === "CANCELADO") {
-      setPedidoACancelar(pedidoId);
-      return;
-    }
     const toastId = toast.loading("Actualizando estado...");
     try {
       const token = Cookies.get("token");
@@ -88,13 +84,9 @@ export default function PedidosPage() {
       );
 
       if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        const errData = text ? JSON.parse(text) : {};
-        throw new Error(errData.message || `Error ${res.status}`);
+        const text = await res.text();
+        throw new Error(text ? JSON.parse(text).mensaje || text : "Error al actualizar");
       }
-
-      const text = await res.text().catch(() => "");
-      const data = text ? JSON.parse(text) : {};
 
       toast.success("Estado actualizado correctamente", { id: toastId });
       mutate();
@@ -155,8 +147,8 @@ export default function PedidosPage() {
 
   // Filtro de búsqueda local
   const pedidosConBusqueda = pedidosFiltrados.filter((p) =>
-    p.clienteNombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.clienteTelefono.includes(searchTerm) ||
+    p.cliente?.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.cliente?.telefono?.includes(searchTerm) ||
     p.id.toString().includes(searchTerm)
   );
 
@@ -214,8 +206,8 @@ export default function PedidosPage() {
                       {pedidosConBusqueda.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-mono text-sm">#{item.id}</TableCell>
-                <TableCell className="font-medium">{item.clienteNombre}</TableCell>
-                <TableCell>{item.clienteTelefono}</TableCell>
+                <TableCell className="font-medium">{item.cliente?.nombre ?? "—"}</TableCell>
+                <TableCell>{item.cliente?.telefono ?? "—"}</TableCell>
                 <TableCell className="text-right font-medium">
                   {formatCurrency(item.total)}
                 </TableCell>
@@ -226,7 +218,14 @@ export default function PedidosPage() {
                     </Badge>
                     <Select
                       value={item.estado}
-                      onValueChange={(value) => { if (value !== null && value !== item.estado) handleStatusChange(item.id, value); }}
+                      onValueChange={(value) => {
+                        if (value === null || value === item.estado) return;
+                        if (value === "CANCELADO") {
+                          setPedidoACancelar(item.id);
+                        } else {
+                          handleStatusChange(item.id, value);
+                        }
+                      }}
                       disabled={getOpcionesPermitidas(item.estado).length === 0}
                     >
                       <SelectTrigger className="w-[130px]">

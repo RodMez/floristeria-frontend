@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import useSWR from "swr";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { fetcher } from "@/lib/fetcher";
 import { UsuarioAdminResponse, UsuarioAdminRequest, Sede } from "@/types";
 import { toast } from "sonner";
@@ -34,30 +37,38 @@ import Cookies from "js-cookie";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
-interface UsuarioForm {
-  nombre: string;
-  email: string;
-  password: string;
-  rol: string;
-  sedeId: number | null;
-}
+const usuarioSchema = z
+  .object({
+    nombre: z.string().min(1, "El nombre es obligatorio"),
+    email: z
+      .string()
+      .min(1, "El email es obligatorio")
+      .email("El email no tiene un formato válido"),
+    password: z.string().optional(),
+    rol: z.enum(["ADMIN", "SUPERADMIN"], {
+      message: "El rol es obligatorio",
+    }),
+    sedeId: z.number().nullable(),
+  })
+  .refine(
+    (data) => data.rol === "SUPERADMIN" || data.sedeId !== null,
+    { message: "La sede es obligatoria para el rol ADMIN", path: ["sedeId"] }
+  );
 
-const emptyForm: UsuarioForm = {
-  nombre: "",
-  email: "",
-  password: "",
-  rol: "ADMIN",
-  sedeId: null,
-};
+type UsuarioFormData = z.infer<typeof usuarioSchema>;
 
 export default function UsuariosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingUsuario, setEditingUsuario] = useState<UsuarioAdminResponse | null>(null);
-  const [form, setForm] = useState<UsuarioForm>(emptyForm);
+  const [editingUsuario, setEditingUsuario] =
+    useState<UsuarioAdminResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { data: usuarios, error: usuariosError, mutate: mutateUsuarios } = useSWR<UsuarioAdminResponse[]>(
+  const {
+    data: usuarios,
+    error: usuariosError,
+    mutate: mutateUsuarios,
+  } = useSWR<UsuarioAdminResponse[]>(
     `${API_URL}/api/superadmin/usuarios`,
     fetcher,
     { revalidateOnFocus: false }
@@ -69,25 +80,59 @@ export default function UsuariosPage() {
     { revalidateOnFocus: false }
   );
 
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    setError,
+    reset,
+    control,
+    formState: { errors },
+  } = useForm<UsuarioFormData>({
+    resolver: zodResolver(usuarioSchema),
+    defaultValues: {
+      nombre: "",
+      email: "",
+      password: "",
+      rol: "ADMIN",
+      sedeId: null,
+    },
+  });
+
+  const rolValue = watch("rol");
+  const isEditing = editingUsuario !== null;
+
+  useEffect(() => {
+    if (rolValue === "SUPERADMIN") {
+      setValue("sedeId", null);
+    }
+  }, [rolValue, setValue]);
+
   useEffect(() => {
     if (dialogOpen) {
       if (editingUsuario) {
-        setForm({
+        reset({
           nombre: editingUsuario.nombre,
           email: editingUsuario.email,
           password: "",
-          rol: editingUsuario.rol,
-          sedeId: editingUsuario.sedeId,
+          rol: editingUsuario.rol as "ADMIN" | "SUPERADMIN",
+          sedeId: editingUsuario.sedeId ?? null,
         });
       } else {
-        setForm(emptyForm);
+        reset({
+          nombre: "",
+          email: "",
+          password: "",
+          rol: "ADMIN",
+          sedeId: null,
+        });
       }
     }
-  }, [dialogOpen, editingUsuario]);
+  }, [dialogOpen, editingUsuario, reset]);
 
   const handleNew = () => {
     setEditingUsuario(null);
-    setForm(emptyForm);
     setDialogOpen(true);
   };
 
@@ -96,32 +141,30 @@ export default function UsuariosPage() {
     setDialogOpen(true);
   };
 
-  const handleRolChange = (value: string | null) => {
-    if (!value) return;
-    const sedeId = value === "SUPERADMIN" ? null : form.sedeId;
-    setForm({ ...form, rol: value, sedeId });
-  };
+  const onSubmit = async (data: UsuarioFormData) => {
+    if (!isEditing && (!data.password || data.password.length < 8)) {
+      setError("password", {
+        message: "La contraseña debe tener al menos 8 caracteres",
+      });
+      return;
+    }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
     setIsLoading(true);
-
     const token = Cookies.get("token");
-    const isEditing = editingUsuario !== null;
 
     const payload: UsuarioAdminRequest = {
-      nombre: form.nombre,
-      email: form.email,
-      rol: form.rol,
-      sedeId: form.rol === "SUPERADMIN" ? null : form.sedeId,
+      nombre: data.nombre,
+      email: data.email,
+      rol: data.rol,
+      sedeId: data.rol === "SUPERADMIN" ? null : data.sedeId,
     };
 
-    if (!isEditing || form.password.trim() !== "") {
-      payload.password = form.password;
+    if (!isEditing || (data.password && data.password.trim() !== "")) {
+      payload.password = data.password;
     }
 
     const endpoint = isEditing
-      ? `${API_URL}/api/superadmin/usuarios/${editingUsuario.id}`
+      ? `${API_URL}/api/superadmin/usuarios/${editingUsuario!.id}`
       : `${API_URL}/api/superadmin/usuarios`;
 
     try {
@@ -136,15 +179,23 @@ export default function UsuariosPage() {
 
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.message || "Error al guardar el usuario");
+        throw new Error(
+          errData.mensaje || errData.message || "Error al guardar el usuario"
+        );
       }
 
-      toast.success(isEditing ? "Usuario actualizado correctamente" : "Usuario creado correctamente");
+      toast.success(
+        isEditing
+          ? "Usuario actualizado correctamente"
+          : "Usuario creado correctamente"
+      );
       mutateUsuarios();
       setDialogOpen(false);
     } catch (err) {
       console.error("Error saving user:", err);
-      toast.error(`Error al guardar: ${err instanceof Error ? err.message : "Error desconocido"}`);
+      toast.error(
+        `Error al guardar: ${err instanceof Error ? err.message : "Error desconocido"}`
+      );
     } finally {
       setIsLoading(false);
     }
@@ -155,12 +206,15 @@ export default function UsuariosPage() {
 
     const token = Cookies.get("token");
     try {
-      const res = await fetch(`${API_URL}/api/superadmin/usuarios/${usuario.id}`, {
-        method: "DELETE",
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
+      const res = await fetch(
+        `${API_URL}/api/superadmin/usuarios/${usuario.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
       if (!res.ok) {
         const errData = await res.json();
         throw new Error(errData.message || "Error al eliminar");
@@ -169,7 +223,9 @@ export default function UsuariosPage() {
       mutateUsuarios();
     } catch (err) {
       console.error("Error deleting user:", err);
-      toast.error(`Error al eliminar: ${err instanceof Error ? err.message : "Error desconocido"}`);
+      toast.error(
+        `Error al eliminar: ${err instanceof Error ? err.message : "Error desconocido"}`
+      );
     }
   };
 
@@ -194,19 +250,18 @@ export default function UsuariosPage() {
     );
   }
 
-  // Ordenamiento estable por ID descendente
-  const sortedUsuarios = usuarios ? [...usuarios].sort((a, b) => b.id - a.id) : [];
+  const sortedUsuarios = usuarios
+    ? [...usuarios].sort((a, b) => b.id - a.id)
+    : [];
 
-  // Filtro de búsqueda local
-  const usuariosFiltrados = sortedUsuarios.filter((u) =>
-    u.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.rol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.sedeNombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.id.toString().includes(searchTerm)
+  const usuariosFiltrados = sortedUsuarios.filter(
+    (u) =>
+      u.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.rol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.sedeNombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.id.toString().includes(searchTerm)
   );
-
-  const isEditing = editingUsuario !== null;
 
   return (
     <div className="p-6">
@@ -223,7 +278,6 @@ export default function UsuariosPage() {
         </Button>
       </div>
 
-      {/* Search Bar */}
       <div className="mb-4">
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
@@ -252,22 +306,31 @@ export default function UsuariosPage() {
           <TableBody>
             {usuariosFiltrados.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-stone-500 py-8">
+                <TableCell
+                  colSpan={6}
+                  className="text-center text-stone-500 py-8"
+                >
                   No hay usuarios registrados
                 </TableCell>
               </TableRow>
             )}
             {usuariosFiltrados.map((usuario) => (
               <TableRow key={usuario.id}>
-                <TableCell className="font-mono text-sm">{usuario.id}</TableCell>
-                <TableCell className="font-medium">{usuario.nombre}</TableCell>
+                <TableCell className="font-mono text-sm">
+                  {usuario.id}
+                </TableCell>
+                <TableCell className="font-medium">
+                  {usuario.nombre}
+                </TableCell>
                 <TableCell>{usuario.email}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    usuario.rol === "SUPERADMIN"
-                      ? "bg-purple-100 text-purple-700"
-                      : "bg-blue-100 text-blue-700"
-                  }`}>
+                  <span
+                    className={`px-2 py-1 rounded text-xs font-medium ${
+                      usuario.rol === "SUPERADMIN"
+                        ? "bg-purple-100 text-purple-700"
+                        : "bg-blue-100 text-blue-700"
+                    }`}
+                  >
                     {usuario.rol}
                   </span>
                 </TableCell>
@@ -303,81 +366,125 @@ export default function UsuariosPage() {
               {isEditing ? "Editar Usuario" : "Nuevo Usuario"}
             </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="nombre">Nombre</Label>
+              <Label htmlFor="nombre">
+                Nombre <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="nombre"
-                value={form.nombre}
-                onChange={(e) => setForm({ ...form, nombre: e.target.value })}
                 placeholder="Nombre completo"
                 disabled={isLoading}
-                required
+                {...register("nombre")}
               />
+              {errors.nombre && (
+                <p className="text-xs text-red-500">
+                  {errors.nombre.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">
+                Email <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="email"
                 type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder="correo@ejemplo.com"
                 disabled={isLoading}
-                required
+                {...register("email")}
               />
+              {errors.email && (
+                <p className="text-xs text-red-500">{errors.email.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="password">
-                Contraseña {isEditing && <span className="text-stone-400 text-xs">(dejar vacío para no cambiar)</span>}
+                Contraseña{" "}
+                {isEditing && (
+                  <span className="text-stone-400 text-xs">
+                    (dejar vacío para no cambiar)
+                  </span>
+                )}
+                {!isEditing && <span className="text-red-500"> *</span>}
               </Label>
               <Input
                 id="password"
                 type="password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                placeholder={isEditing ? "••••••••" : "Contraseña"}
+                placeholder={isEditing ? "••••••••" : "Mínimo 8 caracteres"}
                 disabled={isLoading}
-                required={!isEditing}
+                {...register("password")}
               />
+              {errors.password && (
+                <p className="text-xs text-red-500">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label>Rol</Label>
-              <Select
-                value={form.rol}
-                onValueChange={handleRolChange}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecciona un rol" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="SUPERADMIN">SUPERADMIN</SelectItem>
-                  <SelectItem value="ADMIN">ADMIN</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>
+                Rol <span className="text-red-500">*</span>
+              </Label>
+              <Controller
+                name="rol"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecciona un rol" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="SUPERADMIN">SUPERADMIN</SelectItem>
+                      <SelectItem value="ADMIN">ADMIN</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.rol && (
+                <p className="text-xs text-red-500">{errors.rol.message}</p>
+              )}
             </div>
 
-            {form.rol === "ADMIN" && (
+            {rolValue === "ADMIN" && (
               <div className="space-y-2">
-                <Label>Sede</Label>
-                <Select
-                  value={form.sedeId?.toString() ?? ""}
-                  onValueChange={(val) => setForm({ ...form, sedeId: Number(val) })}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Selecciona una sede" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sedes.map((sede) => (
-                      <SelectItem key={sede.id} value={sede.id.toString()}>
-                        {sede.nombre} — {sede.ciudad}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>
+                  Sede <span className="text-red-500">*</span>
+                </Label>
+                <Controller
+                  name="sedeId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value?.toString() ?? ""}
+                      onValueChange={(val) => field.onChange(Number(val))}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Selecciona una sede" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sedes.map((sede) => (
+                          <SelectItem
+                            key={sede.id}
+                            value={sede.id.toString()}
+                          >
+                            {sede.nombre} — {sede.ciudad}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.sedeId && (
+                  <p className="text-xs text-red-500">
+                    {errors.sedeId.message}
+                  </p>
+                )}
               </div>
             )}
 
