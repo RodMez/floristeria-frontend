@@ -1,0 +1,643 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import useSWR from "swr";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import { useAuthStore } from "@/store/useAuthStore";
+import { fetcher } from "@/lib/fetcher";
+import {
+  crearDireccion,
+  actualizarDireccion,
+  eliminarDireccion,
+  actualizarPerfil,
+} from "@/lib/fetcher";
+import {
+  PedidoHistorial,
+  ORDER_STATUS_LABELS,
+  DireccionResponse,
+  DireccionRequest,
+  Sede,
+} from "@/types";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  LoaderIcon,
+  Package,
+  UserIcon,
+  MapPinIcon,
+  PlusIcon,
+  PencilIcon,
+  Trash2Icon,
+} from "lucide-react";
+
+const API_PEDIDOS_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/pedidos`;
+const API_DIRECCIONES_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/direcciones`;
+const API_SEDES_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/sedes`;
+
+const STATUS_BADGE_STYLES: Record<string, string> = {
+  PENDIENTE_PAGO:
+    "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200",
+  PAGADO: "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200",
+  EN_PREPARACION:
+    "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200",
+  EN_CAMINO:
+    "bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200",
+  ENTREGADO:
+    "bg-green-100 text-green-800 border-green-200 hover:bg-green-200",
+  CANCELADO: "bg-red-100 text-red-800 border-red-200 hover:bg-red-200",
+};
+
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    minimumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString("es-CO", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+const perfilSchema = z.object({
+  nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
+  telefono: z.string().min(7, "Ingresa un teléfono válido"),
+});
+
+type PerfilFormData = z.infer<typeof perfilSchema>;
+
+export default function MiCuentaPage() {
+  const router = useRouter();
+  const { isAuthenticated, rol, isHydrated } = useAuthStore();
+  const isAuthClient = isHydrated && isAuthenticated && rol === "CLIENTE";
+
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    if (!isAuthClient) {
+      router.replace("/tienda/auth?redirect=/tienda/mi-cuenta");
+    }
+  }, [isHydrated, isAuthClient, router]);
+
+  if (!isHydrated) {
+    return (
+      <div className="container mx-auto max-w-5xl px-4 py-10 flex items-center justify-center">
+        <LoaderIcon className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!isAuthClient) {
+    return null;
+  }
+
+  return (
+    <div className="container mx-auto max-w-5xl px-4 py-8">
+      <h1 className="text-2xl font-semibold mb-6">Mi Cuenta</h1>
+
+      <Tabs defaultValue="pedidos">
+        <TabsList>
+          <TabsTrigger value="pedidos">
+            <Package className="size-4" />
+            Pedidos
+          </TabsTrigger>
+          <TabsTrigger value="direcciones">
+            <MapPinIcon className="size-4" />
+            Direcciones
+          </TabsTrigger>
+          <TabsTrigger value="perfil">
+            <UserIcon className="size-4" />
+            Perfil
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="pedidos">
+          <PedidosTab />
+        </TabsContent>
+
+        <TabsContent value="direcciones">
+          <DireccionesTab />
+        </TabsContent>
+
+        <TabsContent value="perfil">
+          <PerfilTab />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// ─── Pedidos ───────────────────────────────────────────────────
+
+function PedidosTab() {
+  const { data, error, isLoading } = useSWR<PedidoHistorial[]>(
+    API_PEDIDOS_URL,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[300px]">
+        <div className="text-center">
+          <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-pulse" />
+          <p className="text-muted-foreground">Cargando pedidos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-destructive">
+          Error al cargar los pedidos. Intenta de nuevo más tarde.
+        </p>
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="py-16 text-center">
+        <Package className="mx-auto mb-4 size-12 text-muted-foreground/60" />
+        <h2 className="text-xl font-semibold mb-2">
+          Aún no has realizado ninguna compra.
+        </h2>
+        <p className="text-muted-foreground">
+          Explora nuestros productos y haz tu primer pedido.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-6 space-y-4">
+      {[...data]
+        .sort((a, b) => b.id - a.id)
+        .map((pedido) => (
+          <Card key={pedido.id}>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Pedido #{pedido.id}</CardTitle>
+                <Badge
+                  className={
+                    STATUS_BADGE_STYLES[pedido.estado] ??
+                    "bg-gray-100 text-gray-800 border-gray-200"
+                  }
+                >
+                  {ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  {formatDate(pedido.creadoEn)}
+                </span>
+                <span className="font-semibold text-base">
+                  {formatCurrency(pedido.total)}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+    </div>
+  );
+}
+
+// ─── Perfil ────────────────────────────────────────────────────
+
+function PerfilTab() {
+  const { nombre, updateProfile } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const form = useForm<PerfilFormData>({
+    resolver: zodResolver(perfilSchema),
+    defaultValues: {
+      nombre: nombre ?? "",
+      telefono: "",
+    },
+  });
+
+  const handleSubmit = async (data: PerfilFormData) => {
+    setIsLoading(true);
+    try {
+      const res = await actualizarPerfil(data);
+      updateProfile(res.nombre, res.telefono);
+      toast.success("Perfil actualizado correctamente.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Error al actualizar el perfil."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="mt-6 max-w-md">
+      <Card>
+        <CardHeader>
+          <CardTitle>Editar Perfil</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="perfil-nombre">Nombre</Label>
+              <Input
+                id="perfil-nombre"
+                type="text"
+                placeholder="Tu nombre"
+                {...form.register("nombre")}
+                disabled={isLoading}
+              />
+              {form.formState.errors.nombre && (
+                <p className="text-sm text-red-500">
+                  {form.formState.errors.nombre.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="perfil-telefono">Teléfono</Label>
+              <Input
+                id="perfil-telefono"
+                type="tel"
+                placeholder="+57 300 000 0000"
+                {...form.register("telefono")}
+                disabled={isLoading}
+              />
+              {form.formState.errors.telefono && (
+                <p className="text-sm text-red-500">
+                  {form.formState.errors.telefono.message}
+                </p>
+              )}
+            </div>
+
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <LoaderIcon className="size-4 animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                "Guardar cambios"
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─── Direcciones ───────────────────────────────────────────────
+
+function DireccionesTab() {
+  const { data, error, isLoading, mutate } = useSWR<DireccionResponse[]>(
+    API_DIRECCIONES_URL,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingDireccion, setEditingDireccion] = useState<DireccionResponse | null>(null);
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("¿Estás seguro de eliminar esta dirección?")) return;
+
+    try {
+      await eliminarDireccion(id);
+      toast.success("Dirección eliminada.");
+      mutate();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Error al eliminar la dirección."
+      );
+    }
+  };
+
+  const handleEdit = (dir: DireccionResponse) => {
+    setEditingDireccion(dir);
+    setDialogOpen(true);
+  };
+
+  const handleAdd = () => {
+    setEditingDireccion(null);
+    setDialogOpen(true);
+  };
+
+  const handleSaved = () => {
+    setDialogOpen(false);
+    setEditingDireccion(null);
+    mutate();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[300px]">
+        <div className="text-center">
+          <MapPinIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-pulse" />
+          <p className="text-muted-foreground">Cargando direcciones...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-destructive">
+          Error al cargar las direcciones. Intenta de nuevo más tarde.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-6">
+      <div className="mb-4">
+        <Button variant="outline" size="sm" onClick={handleAdd}>
+          <PlusIcon className="size-4" />
+          Agregar nueva dirección
+        </Button>
+      </div>
+
+      {!data || data.length === 0 ? (
+        <div className="py-12 text-center">
+          <MapPinIcon className="mx-auto mb-4 size-12 text-muted-foreground/60" />
+          <p className="text-muted-foreground">
+            No tienes direcciones guardadas.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {data.map((dir) => (
+            <Card key={dir.id}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>{dir.alias}</CardTitle>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => handleEdit(dir)}
+                    >
+                      <PencilIcon className="size-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => handleDelete(dir.id)}
+                    >
+                      <Trash2Icon className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground space-y-1">
+                <p>
+                  {dir.direccion}, {dir.ciudad}
+                </p>
+                {dir.detalles && (
+                  <p className="text-xs text-muted-foreground/70">
+                    {dir.detalles}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <DireccionDialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDialogOpen(false);
+            setEditingDireccion(null);
+          }
+        }}
+        direccion={editingDireccion}
+        onSaved={handleSaved}
+      />
+    </div>
+  );
+}
+
+// ─── Dialog de Dirección (Crear / Editar) ──────────────────────
+
+interface DireccionDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  direccion: DireccionResponse | null;
+  onSaved: () => void;
+}
+
+function DireccionDialog({
+  open,
+  onOpenChange,
+  direccion,
+  onSaved,
+}: DireccionDialogProps) {
+  const isEditing = direccion !== null;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { data: sedes } = useSWR<Sede[]>(API_SEDES_URL, fetcher, {
+    revalidateOnFocus: false,
+  });
+  const ciudades = [...new Set(sedes?.map((s) => s.ciudad) ?? [])].sort();
+
+  const [form, setForm] = useState<DireccionRequest>({
+    alias: "",
+    direccion: "",
+    ciudad: "",
+    detalles: "",
+  });
+
+  useEffect(() => {
+    if (open) {
+      if (direccion) {
+        setForm({
+          alias: direccion.alias,
+          direccion: direccion.direccion,
+          ciudad: direccion.ciudad,
+          detalles: direccion.detalles ?? "",
+        });
+      } else {
+        setForm({ alias: "", direccion: "", ciudad: "", detalles: "" });
+      }
+    }
+  }, [open, direccion]);
+
+  const handleChange = (field: keyof DireccionRequest, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!form.alias.trim() || !form.direccion.trim() || !form.ciudad.trim()) {
+      toast.error("Completa los campos obligatorios: alias, dirección y ciudad.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      if (isEditing) {
+        await actualizarDireccion(direccion.id, form);
+        toast.success("Dirección actualizada.");
+      } else {
+        await crearDireccion(form);
+        toast.success("Dirección guardada.");
+      }
+      onSaved();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Error al guardar la dirección."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>
+            {isEditing ? "Editar dirección" : "Nueva dirección"}
+          </DialogTitle>
+          <DialogDescription>
+            {isEditing
+              ? "Actualiza los datos de tu dirección."
+              : "Agrega una nueva dirección de entrega."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="dialog-alias">Alias *</Label>
+            <Input
+              id="dialog-alias"
+              placeholder="Ej: Casa, Oficina"
+              value={form.alias}
+              onChange={(e) => handleChange("alias", e.target.value)}
+              disabled={isSubmitting}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dialog-direccion">Dirección *</Label>
+            <Input
+              id="dialog-direccion"
+              placeholder="Calle 10 # 20-30, Apto 501"
+              value={form.direccion}
+              onChange={(e) => handleChange("direccion", e.target.value)}
+              disabled={isSubmitting}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dialog-ciudad">Ciudad</Label>
+            <Select
+              value={form.ciudad}
+              onValueChange={(value) => {
+                if (value) handleChange("ciudad", value);
+              }}
+              disabled={isSubmitting || !sedes}
+            >
+              <SelectTrigger id="dialog-ciudad">
+                <SelectValue
+                  placeholder={
+                    !sedes ? "Cargando ciudades..." : "Selecciona una ciudad"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {ciudades.map((ciudad) => (
+                  <SelectItem key={ciudad} value={ciudad}>
+                    {ciudad}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dialog-detalles">Detalles adicionales</Label>
+            <Input
+              id="dialog-detalles"
+              placeholder="Casa azul, portería, etc."
+              value={form.detalles}
+              onChange={(e) => handleChange("detalles", e.target.value)}
+              disabled={isSubmitting}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <LoaderIcon className="size-4 animate-spin" />
+                  Guardando...
+                </>
+              ) : isEditing ? (
+                "Guardar cambios"
+              ) : (
+                "Guardar dirección"
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -192,3 +192,17 @@ export interface CrearPedidoResponse {
   firmaIntegridad: string;
   publicKeyWompi: string;
 }
+
+// Historial de pedidos del cliente
+export interface PedidoHistorial {
+  id: number;
+  total: number;
+  estado: string;
+  creadoEn: string;
+  referenciaPago: string;
+}
+
+export interface ActualizarPerfilRequest {
+  nombre: string;
+  telefono: string;
+}

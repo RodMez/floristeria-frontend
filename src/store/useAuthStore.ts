@@ -13,10 +13,12 @@ interface AuthState {
   clienteId: number | null;
   nombre: string | null;
   email: string | null;
+  telefono: string | null;
   isAuthenticated: boolean;
   isHydrated: boolean;
   setAuth: (data: AuthResponse) => void;
   setClienteAuth: (data: ClienteAuthResponse) => void;
+  updateProfile: (nombre: string, telefono?: string) => void;
   logout: () => void;
 }
 
@@ -29,6 +31,7 @@ export const useAuthStore = create<AuthState>()(
       clienteId: null,
       nombre: null,
       email: null,
+      telefono: null,
       isAuthenticated: false,
       isHydrated: false,
 
@@ -58,6 +61,13 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
+      updateProfile: (nombre: string, telefono?: string) => {
+        set((state) => ({
+          nombre,
+          ...(telefono !== undefined ? { telefono } : {}),
+        }));
+      },
+
       logout: () => {
         Cookies.remove('token');
         set({
@@ -67,8 +77,9 @@ export const useAuthStore = create<AuthState>()(
           clienteId: null,
           nombre: null,
           email: null,
+          telefono: null,
           isAuthenticated: false,
-          isHydrated: true, // marcamos como hidratado
+          isHydrated: true,
         });
       },
     }),

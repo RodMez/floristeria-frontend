@@ -1,6 +1,6 @@
 import Cookies from 'js-cookie';
 import { toast } from 'sonner';
-import { ClienteAuthResponse, RegisterClienteRequest } from '@/types';
+import { ClienteAuthResponse, RegisterClienteRequest, PedidoHistorial, DireccionRequest, DireccionResponse, ActualizarPerfilRequest } from '@/types';
 
 /**
  * Flag global para evitar múltiples redirecciones/toasts
@@ -101,6 +101,64 @@ export async function registerCliente(data: RegisterClienteRequest): Promise<Cli
 }
 
 /**
+ * Obtiene el historial de pedidos del cliente autenticado.
+ * GET /api/v1/clientes/pedidos
+ */
+export function getMisPedidos(): Promise<PedidoHistorial[]> {
+  return fetcher<PedidoHistorial[]>(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/pedidos`
+  );
+}
+
+const API_DIRECCIONES = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/direcciones`;
+
+/**
+ * Crea una nueva dirección de entrega.
+ * POST /api/v1/clientes/direcciones
+ */
+export function crearDireccion(data: DireccionRequest): Promise<DireccionResponse> {
+  return authFetch<DireccionResponse>(API_DIRECCIONES, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Actualiza una dirección existente.
+ * PUT /api/v1/clientes/direcciones/{id}
+ */
+export function actualizarDireccion(id: number, data: DireccionRequest): Promise<DireccionResponse> {
+  return authFetch<DireccionResponse>(`${API_DIRECCIONES}/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Elimina una dirección del cliente.
+ * DELETE /api/v1/clientes/direcciones/{id}
+ */
+export function eliminarDireccion(id: number): Promise<void> {
+  return authFetch<void>(`${API_DIRECCIONES}/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
+ * Actualiza el perfil del cliente (nombre y teléfono).
+ * PUT /api/v1/clientes/perfil
+ */
+export function actualizarPerfil(data: ActualizarPerfilRequest): Promise<{ nombre: string; telefono?: string }> {
+  return authFetch<{ nombre: string; telefono?: string }>(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/perfil`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }
+  );
+}
+
+/**
  * Lógica centralizada de manejo de sesión expirada.
  * Usa flag para evitar ejecución múltiple (race condition con SWR).
  *
@@ -173,6 +231,10 @@ export async function authFetch<T = unknown>(
   if (!res.ok) {
     const errorBody = await res.text().catch(() => '');
     throw new Error(errorBody || `Error ${res.status}`);
+  }
+
+  if (res.status === 204) {
+    return undefined as unknown as T;
   }
 
   return res.json() as Promise<T>;
