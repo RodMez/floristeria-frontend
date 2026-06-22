@@ -32,7 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Package, Search } from "lucide-react";
+import { Eye, Package, Search } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -58,6 +58,7 @@ export default function PedidosPage() {
   const [filtroEstado, setFiltroEstado] = useState<string>("Todos");
   const [searchTerm, setSearchTerm] = useState("");
   const [pedidoACancelar, setPedidoACancelar] = useState<number | null>(null);
+  const [pedidoSeleccionado, setPedidoSeleccionado] = useState<PedidoAdminResponse | null>(null);
 
   const { data, error, mutate } = useSWR<PedidoAdminResponse[]>(
     `${API_URL}/api/admin/pedidos`,
@@ -147,8 +148,8 @@ export default function PedidosPage() {
 
   // Filtro de búsqueda local
   const pedidosConBusqueda = pedidosFiltrados.filter((p) =>
-    p.cliente?.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.cliente?.telefono?.includes(searchTerm) ||
+    p.clienteNombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.clienteTelefono?.includes(searchTerm) ||
     p.id.toString().includes(searchTerm)
   );
 
@@ -197,17 +198,22 @@ export default function PedidosPage() {
               <TableHead className="w-[80px]">ID</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Teléfono</TableHead>
+              <TableHead>Sede</TableHead>
+              <TableHead>Método Pago</TableHead>
               <TableHead className="text-right">Total</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Fecha</TableHead>
+              <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
                       {pedidosConBusqueda.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-mono text-sm">#{item.id}</TableCell>
-                <TableCell className="font-medium">{item.cliente?.nombre ?? "—"}</TableCell>
-                <TableCell>{item.cliente?.telefono ?? "—"}</TableCell>
+                <TableCell className="font-medium">{item.clienteNombre ?? "—"}</TableCell>
+                <TableCell>{item.clienteTelefono ?? "—"}</TableCell>
+                <TableCell>{item.sedeNombre ?? "—"}</TableCell>
+                <TableCell>{item.metodoPago || "—"}</TableCell>
                 <TableCell className="text-right font-medium">
                   {formatCurrency(item.total)}
                 </TableCell>
@@ -247,11 +253,150 @@ export default function PedidosPage() {
                 <TableCell className="text-sm text-stone-600">
                   {formatDate(item.creadoEn)}
                 </TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setPedidoSeleccionado(item)}
+                    title="Ver detalles"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+
+      <Dialog
+        open={pedidoSeleccionado !== null}
+        onOpenChange={(open) => {
+          if (!open) setPedidoSeleccionado(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Pedido #{pedidoSeleccionado?.id}</DialogTitle>
+            <DialogDescription>
+              {pedidoSeleccionado?.clienteNombre} —{" "}
+              {formatDate(pedidoSeleccionado?.creadoEn ?? "")}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">
+                Información del Pago
+              </h4>
+              <div className="bg-stone-50 rounded-lg p-3 space-y-1.5 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-stone-500">Referencia</span>
+                  <span className="font-mono text-xs">
+                    {pedidoSeleccionado?.referenciaPago || "—"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-500">Método</span>
+                  <span className="font-medium capitalize">
+                    {pedidoSeleccionado?.metodoPago || "—"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-500">Transacción</span>
+                  <span className="font-mono text-xs">
+                    {pedidoSeleccionado?.transaccionId || "—"}
+                  </span>
+                </div>
+                <div className="flex justify-between border-t pt-1.5 mt-1.5">
+                  <span className="text-stone-500">Total</span>
+                  <span className="font-bold">
+                    {formatCurrency(pedidoSeleccionado?.total ?? 0)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">
+                Información de Entrega
+              </h4>
+              <div className="bg-stone-50 rounded-lg p-3 space-y-1.5 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-stone-500">Alias</span>
+                  <span className="font-medium">
+                    {pedidoSeleccionado?.direccionEntrega?.alias || "—"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-500">Dirección</span>
+                  <span className="text-right max-w-[60%]">
+                    {pedidoSeleccionado?.direccionEntrega?.direccion || "—"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-500">Ciudad</span>
+                  <span>{pedidoSeleccionado?.direccionEntrega?.ciudad || "—"}</span>
+                </div>
+                {pedidoSeleccionado?.direccionEntrega?.detalles && (
+                  <div className="flex justify-between">
+                    <span className="text-stone-500">Detalles</span>
+                    <span className="text-right max-w-[60%]">
+                      {pedidoSeleccionado.direccionEntrega.detalles}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">
+                Productos
+              </h4>
+              <div className="bg-stone-50 rounded-lg max-h-[300px] overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">Producto</TableHead>
+                      <TableHead className="text-xs text-right">Cant</TableHead>
+                      <TableHead className="text-xs text-right">Precio</TableHead>
+                      <TableHead className="text-xs">Nota</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pedidoSeleccionado?.detalles?.map((d, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="text-sm font-medium">
+                          {d.productoNombre}
+                        </TableCell>
+                        <TableCell className="text-sm text-right">
+                          {d.cantidad}
+                        </TableCell>
+                        <TableCell className="text-sm text-right">
+                          {formatCurrency(d.precioUnitario)}
+                        </TableCell>
+                        <TableCell className="text-sm text-stone-600 italic">
+                          {d.notaPersonalizacion || "—"}
+                        </TableCell>
+                      </TableRow>
+                    )) ?? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-sm text-stone-400 text-center py-4">
+                          Sin productos
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter showCloseButton>
+            Cerrar
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={pedidoACancelar !== null}

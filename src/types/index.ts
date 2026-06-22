@@ -126,14 +126,33 @@ export interface PedidoResponse {
   creadoEn: string;
 }
 
+export interface DireccionEntregaDTO {
+  alias: string;
+  direccion: string;
+  ciudad: string;
+  detalles: string;
+}
+
+export interface DetallePedidoAdminDTO {
+  productoNombre: string;
+  cantidad: number;
+  precioUnitario: number;
+  notaPersonalizacion: string;
+}
+
 export interface PedidoAdminResponse {
   id: number;
-  cliente: {
-    nombre: string;
-    telefono: string;
-  };
+  clienteNombre: string;
+  clienteEmail: string;
+  clienteTelefono: string;
+  sedeNombre: string;
+  metodoPago: string;
+  referenciaPago: string;
+  direccionEntrega: DireccionEntregaDTO;
+  detalles: DetallePedidoAdminDTO[];
   total: number;
   estado: string;
+  transaccionId: string;
   creadoEn: string;
 }
 
