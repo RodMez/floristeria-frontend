@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 
 // Schema de validación para Login
@@ -30,6 +31,7 @@ const registerSchema = z.object({
   email: z.string().email("Email inválido"),
   telefono: z.string().min(10, "Teléfono inválido"),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+  aceptaDatos: z.literal(true, { message: "Debes aceptar la política de datos" }),
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -60,6 +62,7 @@ function AuthContent() {
       email: "",
       telefono: "",
       password: "",
+      aceptaDatos: undefined as unknown as true,
     },
   });
 
@@ -198,6 +201,27 @@ function AuthContent() {
                     <p className="text-sm text-red-500">{registerForm.formState.errors.password.message}</p>
                   )}
                 </div>
+                <div className="flex items-start space-x-2 pt-2">
+                  <Checkbox
+                    id="register-acepta-datos"
+                    checked={!!registerForm.watch("aceptaDatos")}
+                    onCheckedChange={(checked) =>
+                      registerForm.setValue("aceptaDatos", (checked ? true : undefined) as unknown as true, {
+                        shouldValidate: true,
+                      })
+                    }
+                    disabled={isLoading}
+                  />
+                  <Label htmlFor="register-acepta-datos" className="text-sm font-normal leading-snug cursor-pointer">
+                    Acepto la{" "}
+                    <a href="/legal/datos" target="_blank" className="underline text-primary hover:text-primary/80">
+                      Política de Tratamiento de Datos Personales
+                    </a>
+                  </Label>
+                </div>
+                {registerForm.formState.errors.aceptaDatos && (
+                  <p className="text-sm text-red-500">{registerForm.formState.errors.aceptaDatos.message}</p>
+                )}
               </CardContent>
               <CardFooter className="flex flex-col gap-2">
                 <Button type="submit" className="w-full" disabled={isLoading}>

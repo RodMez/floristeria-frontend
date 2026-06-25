@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useAuthStore } from "@/store/useAuthStore";
 import { LoginRequest } from "@/types";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,14 +13,12 @@ import { Button } from "@/components/ui/button";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { setAuth } = useAuthStore();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setIsLoading(true);
 
     try {
@@ -38,7 +37,7 @@ export default function LoginPage() {
       console.log("Respuesta recibida:", response.status);
 
       if (response.status === 401 || response.status === 403) {
-        setError("Credenciales inválidas");
+        toast.error("Credenciales inválidas");
         setIsLoading(false);
         return;
       }
@@ -46,7 +45,19 @@ export default function LoginPage() {
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Error del servidor:", errorText);
-        setError(`Error ${response.status}: ${errorText}`);
+        let serverMessage: string | null = null;
+        try {
+          const parsed = JSON.parse(errorText);
+          serverMessage = parsed.mensaje || parsed.message;
+        } catch {}
+
+        if (response.status >= 500) {
+          toast.error("El correo o la contraseña no son correctos. Por favor, verifica tus datos e intenta de nuevo.");
+        } else if (serverMessage) {
+          toast.error(serverMessage);
+        } else {
+          toast.error(`Ocurrió un error inesperado (código ${response.status}).`);
+        }
         setIsLoading(false);
         return;
       }
@@ -57,7 +68,7 @@ export default function LoginPage() {
       router.push("/admin");
     } catch (err) {
       console.error("Error de conexión:", err);
-      setError(`Error de conexión: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error("No pudimos conectar con el servidor. Revisa tu conexión a internet.");
       setIsLoading(false);
     }
   };
@@ -93,7 +104,6 @@ export default function LoginPage() {
                 required
               />
             </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
           </CardContent>
           <CardFooter>
             <Button type="submit" className="w-full" disabled={isLoading}>

@@ -11,6 +11,8 @@ import { CrearPedidoResponse } from "@/types";
 import DireccionSelector from "@/components/checkout/DireccionSelector";
 import ResumenPedido from "@/components/checkout/ResumenPedido";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { LoaderIcon, ShoppingCartIcon, MapPinIcon } from "lucide-react";
 
 const API_PEDIDOS_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/pedidos`;
@@ -21,6 +23,7 @@ export default function CheckoutPage() {
   const { items, clearCart, sedeActual } = useCartStore();
 
   const [selectedDireccionId, setSelectedDireccionId] = useState<number | null>(null);
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ── ¿El usuario está autenticado como CLIENTE? ──────────────
@@ -38,7 +41,7 @@ export default function CheckoutPage() {
   // ── Guardia de hidratación ───────────────────────────────────
   if (!isHydrated) {
     return (
-      <div className="container mx-auto max-w-5xl px-4 py-10 flex items-center justify-center">
+      <div className="fixed inset-0 flex items-center justify-center bg-white z-50">
         <LoaderIcon className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -71,7 +74,7 @@ export default function CheckoutPage() {
   }
 
   // ── Crear pedido ─────────────────────────────────────────────
-  const isButtonDisabled = !selectedDireccionId || isSubmitting;
+  const isButtonDisabled = !selectedDireccionId || !aceptaTerminos || isSubmitting;
 
   const handleCrearPedido = async () => {
     if (!selectedDireccionId) {
@@ -173,6 +176,21 @@ export default function CheckoutPage() {
         {/* ── Columna derecha: Resumen + Acción ──────────────── */}
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
           <ResumenPedido />
+
+          <div className="flex items-start space-x-2">
+            <Checkbox
+              id="acepta-terminos"
+              checked={aceptaTerminos}
+              onCheckedChange={(checked) => setAceptaTerminos(checked === true)}
+              disabled={isSubmitting}
+            />
+            <Label htmlFor="acepta-terminos" className="text-sm font-normal leading-snug cursor-pointer">
+              Acepto los{" "}
+              <a href="/legal/terminos" target="_blank" className="underline text-primary hover:text-primary/80">
+                Términos y Condiciones
+              </a>{" "}
+            </Label>
+          </div>
 
           <Button
             size="lg"

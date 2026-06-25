@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sede } from "@/types";
 
@@ -16,6 +17,10 @@ async function getSedes(): Promise<Sede[]> {
 
 export default async function Home() {
   const sedes = await getSedes();
+
+  if (sedes.length === 1) {
+    redirect(`/tienda/sede/${sedes[0].id}`);
+  }
 
   return (
     <div className="min-h-screen">
