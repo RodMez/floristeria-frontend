@@ -64,6 +64,7 @@ export interface RegisterClienteRequest {
 export interface InventarioResponse {
   id: number;
   productoNombre: string;
+  productoImagenUrl?: string;
   sedeNombre: string;
   precio: number;
   stock: number;

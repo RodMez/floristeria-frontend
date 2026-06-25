@@ -23,7 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Package, Search } from "lucide-react";
+import { Package, Search, ImageIcon } from "lucide-react";
+import Image from "next/image";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -116,6 +117,7 @@ export default function InventarioPage() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[60px]">ID</TableHead>
+              <TableHead className="w-[70px]">Imagen</TableHead>
               <TableHead className="w-[250px]">Producto</TableHead>
               <TableHead>Sede</TableHead>
               <TableHead className="text-right">Precio</TableHead>
@@ -128,6 +130,22 @@ export default function InventarioPage() {
             {inventarioFiltrado.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-mono text-sm">{item.id}</TableCell>
+                <TableCell>
+                  {item.productoImagenUrl ? (
+                    <Image
+                      src={item.productoImagenUrl}
+                      alt={item.productoNombre}
+                      width={40}
+                      height={40}
+                      style={{ width: "auto", height: "auto" }}
+                      className="rounded-md object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-md bg-stone-100 flex items-center justify-center">
+                      <ImageIcon className="h-5 w-5 text-stone-400" />
+                    </div>
+                  )}
+                </TableCell>
                 <TableCell className="font-medium">{item.productoNombre}</TableCell>
                 <TableCell>{item.sedeNombre}</TableCell>
                 <TableCell className="text-right">

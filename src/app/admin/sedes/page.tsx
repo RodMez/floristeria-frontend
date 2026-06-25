@@ -131,14 +131,26 @@ export default function SedesPage() {
         },
       });
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Error al eliminar");
+        let errorMessage = "No se pudo eliminar la sede. Asegúrate de que no tenga productos o pedidos asociados.";
+        try {
+          const errData = await res.json();
+          const raw = errData.mensaje || errData.message;
+          if (raw && (raw.includes("restricción") || raw.includes("asociados") || raw.includes("constraint"))) {
+            errorMessage = "No se pudo eliminar la sede porque tiene productos o pedidos asociados. Primero elimina estos elementos.";
+          } else if (raw) {
+            errorMessage = raw;
+          }
+        } catch {
+          const errorText = await res.text();
+          if (errorText) errorMessage = errorText;
+        }
+        throw new Error(errorMessage);
       }
       toast.success("Sede eliminada correctamente");
       mutate();
     } catch (err) {
       console.error("Error deleting sede:", err);
-      toast.error(`Error al eliminar: ${err instanceof Error ? err.message : "Error desconocido"}`);
+      toast.error(err instanceof Error ? err.message : "No se pudo eliminar la sede.");
     }
   };
 
