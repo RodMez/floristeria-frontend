@@ -11,9 +11,10 @@ import Image from "next/image";
 interface ProductCardProps {
   producto: ProductoCatalogo;
   sede: Sede;
+  priority?: boolean;
 }
 
-export default function ProductCard({ producto, sede }: ProductCardProps) {
+export default function ProductCard({ producto, sede, priority = false }: ProductCardProps) {
   const { addItem } = useCartStore();
   const [isAdding, setIsAdding] = useState(false);
 
@@ -62,19 +63,20 @@ export default function ProductCard({ producto, sede }: ProductCardProps) {
   };
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden h-full">
       <div className="aspect-square w-full overflow-hidden relative">
         <Image
           src={producto.imagenUrl}
           alt={producto.nombre}
           fill
+          priority={priority}
           className="object-cover"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
         />
       </div>
-      <CardContent className="p-4">
+      <CardContent className="p-4 flex flex-col flex-1">
         {/* Categorías - Badges */}
-        <div className="flex flex-wrap gap-1 mb-2">
+        <div className="flex flex-wrap gap-1 mb-2 min-h-[2rem] items-start">
           {categorias.map((cat) => (
             <Badge key={cat.id} variant="secondary" className="text-xs">
               {cat.nombre}
@@ -85,7 +87,7 @@ export default function ProductCard({ producto, sede }: ProductCardProps) {
         <h3 className="font-semibold text-stone-800 line-clamp-1">
           {producto.nombre}
         </h3>
-        <p className="text-sm text-stone-500 line-clamp-2 mt-1">
+        <p className="text-sm text-stone-500 line-clamp-2 mt-1 min-h-[2.5rem] flex-1">
           {producto.descripcion}
         </p>
         <p className="text-lg font-semibold text-stone-900 mt-2">

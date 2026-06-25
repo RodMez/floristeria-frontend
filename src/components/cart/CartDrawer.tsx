@@ -121,9 +121,9 @@ export default function CartDrawer() {
                   Vaciar carrito
                 </Button>
                 {sedeActual ? (
-                  <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={handlePagar}>
-                    Pagar
-                  </Button>
+                <Button  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-base font-semibold py-1" onClick={handlePagar}>
+                  Pagar
+                </Button>
                 ) : (
                   <Button className="flex-1" disabled>
                     Selecciona una sede

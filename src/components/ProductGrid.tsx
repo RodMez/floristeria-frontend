@@ -90,8 +90,8 @@ export function ProductGrid({ productos, categorias, sede }: ProductGridProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProductos.map((producto) => (
-            <ProductCard key={producto.productoId} producto={producto} sede={sede} />
+          {filteredProductos.map((producto, index) => (
+            <ProductCard key={producto.productoId} producto={producto} sede={sede} priority={index < 4} />
           ))}
         </div>
       )}
