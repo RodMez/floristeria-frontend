@@ -26,17 +26,12 @@ export default function CheckoutPage() {
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ── ¿El usuario está autenticado como CLIENTE? ──────────────
-  const isAuthClient = isHydrated && isAuthenticated && rol === "CLIENTE";
-
   // ── Protección de ruta ──────────────────────────────────────
   useEffect(() => {
-    if (!isHydrated) return;
-
-    if (!isAuthClient) {
+    if (isHydrated && (!isAuthenticated || rol !== "CLIENTE")) {
       router.replace("/tienda/auth?redirect=/tienda/checkout");
     }
-  }, [isHydrated, isAuthClient, router]);
+  }, [isHydrated, isAuthenticated, rol, router]);
 
   // ── Guardia de hidratación ───────────────────────────────────
   if (!isHydrated) {
@@ -48,12 +43,9 @@ export default function CheckoutPage() {
   }
 
   // ── No autenticado → no renderizar nada (ya se redirigió) ───
-  if (!isAuthClient) {
+  if (!isAuthenticated || rol !== "CLIENTE") {
     return null;
   }
-
-  // ── A partir de aquí el usuario ESTÁ autenticado como CLIENTE ─
-  // isAuthClient = true → seguro para pasar enabled al DireccionSelector
 
   // ── Carrito vacío ────────────────────────────────────────────
   if (items.length === 0) {
@@ -73,6 +65,29 @@ export default function CheckoutPage() {
     );
   }
 
+  // ── Idempotencia del Widget Wompi ────────────────────────────
+  const abrirWidgetWompi = (data: CrearPedidoResponse) => {
+    const checkout = new (window as any).WidgetCheckout({
+      currency: "COP",
+      amountInCents: data.montoEnCentavos,
+      reference: data.referenciaWompi,
+      publicKey: data.publicKeyWompi,
+      signature: { integrity: data.firmaIntegridad },
+    });
+
+    checkout.open(function (result: any) {
+      const status = result.transaction?.status;
+      if (status === "APPROVED") {
+        sessionStorage.removeItem('pedidoPendiente');
+        clearCart();
+        toast.success("¡Pago aprobado!");
+        router.push("/tienda/mi-cuenta");
+      } else if (status === "DECLINED" || status === "ERROR") {
+        toast.error("El pago fue rechazado o hubo un error.");
+      }
+    });
+  };
+
   // ── Crear pedido ─────────────────────────────────────────────
   const isButtonDisabled = !selectedDireccionId || !aceptaTerminos || isSubmitting;
 
@@ -85,6 +100,18 @@ export default function CheckoutPage() {
     if (!sedeActual) {
       toast.error("No se encontró la sede del pedido.");
       return;
+    }
+
+    const pedidoGuardadoRaw = sessionStorage.getItem('pedidoPendiente');
+    if (pedidoGuardadoRaw) {
+      const { data, itemsSnapshot, direccionId, sedeId } = JSON.parse(pedidoGuardadoRaw);
+      const itemsActuales = items.map(i => ({ id: i.id, cantidad: i.cantidad, notaPersonalizacion: i.notaPersonalizacion }));
+      const carritoIgual = JSON.stringify(itemsActuales) === JSON.stringify(itemsSnapshot);
+      if (carritoIgual && direccionId === selectedDireccionId && sedeId === sedeActual?.id) {
+        abrirWidgetWompi(data);
+        return;
+      }
+      sessionStorage.removeItem('pedidoPendiente');
     }
 
     setIsSubmitting(true);
@@ -123,25 +150,13 @@ export default function CheckoutPage() {
       }
 
       const data = (await res.json()) as CrearPedidoResponse;
-
-      const checkout = new (window as any).WidgetCheckout({
-        currency: "COP",
-        amountInCents: data.montoEnCentavos,
-        reference: data.referenciaWompi,
-        publicKey: data.publicKeyWompi,
-        signature: { integrity: data.firmaIntegridad },
-      });
-
-      checkout.open(function (result: any) {
-        const status = result.transaction?.status;
-        if (status === "APPROVED") {
-          clearCart();
-          toast.success("¡Pago aprobado!");
-          router.push("/tienda/mi-cuenta");
-        } else if (status === "DECLINED" || status === "ERROR") {
-          toast.error("El pago fue rechazado o hubo un error.");
-        }
-      });
+      sessionStorage.setItem('pedidoPendiente', JSON.stringify({
+        data,
+        itemsSnapshot: items.map(i => ({ id: i.id, cantidad: i.cantidad, notaPersonalizacion: i.notaPersonalizacion })),
+        direccionId: selectedDireccionId,
+        sedeId: sedeActual.id,
+      }));
+      abrirWidgetWompi(data);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Error al crear el pedido."
@@ -167,7 +182,7 @@ export default function CheckoutPage() {
           </div>
 
           <DireccionSelector
-            enabled={isAuthClient}
+            enabled={isAuthenticated && rol === "CLIENTE"}
             selectedDireccionId={selectedDireccionId}
             onSelect={setSelectedDireccionId}
           />

@@ -56,7 +56,20 @@ import {
   PlusIcon,
   PencilIcon,
   Trash2Icon,
+  Eye,
+  Download,
+  CreditCard,
+  Truck,
 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import jsPDF from "jspdf";
 
 const API_PEDIDOS_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/pedidos`;
 const API_DIRECCIONES_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/direcciones`;
@@ -167,6 +180,7 @@ function PedidosTab() {
     fetcher,
     { revalidateOnFocus: false }
   );
+  const [pedidoSeleccionado, setPedidoSeleccionado] = useState<PedidoHistorial | null>(null);
 
   if (isLoading) {
     return (
@@ -203,38 +217,334 @@ function PedidosTab() {
     );
   }
 
+  const pedidosOrdenados = [...data].sort((a, b) => b.id - a.id);
+
   return (
-    <div className="mt-6 space-y-4">
-      {[...data]
-        .sort((a, b) => b.id - a.id)
-        .map((pedido) => (
-          <Card key={pedido.id}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Pedido #{pedido.id}</CardTitle>
-                <Badge
-                  className={
-                    STATUS_BADGE_STYLES[pedido.estado] ??
-                    "bg-gray-100 text-gray-800 border-gray-200"
-                  }
-                >
-                  {ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">
-                  {formatDate(pedido.creadoEn)}
-                </span>
-                <span className="font-semibold text-base">
+    <div className="mt-6">
+      <div className="bg-white rounded-lg border shadow-sm">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[80px]">ID</TableHead>
+              <TableHead>Fecha</TableHead>
+              <TableHead>Sede</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead className="text-right">Total</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {pedidosOrdenados.map((pedido) => (
+              <TableRow key={pedido.id}>
+                <TableCell className="font-mono text-sm">#{pedido.id}</TableCell>
+                <TableCell className="text-sm">{formatDate(pedido.creadoEn)}</TableCell>
+                <TableCell className="text-sm">{pedido.sedeNombre ?? "—"}</TableCell>
+                <TableCell>
+                  <Badge
+                    className={
+                      STATUS_BADGE_STYLES[pedido.estado] ??
+                      "bg-gray-100 text-gray-800 border-gray-200"
+                    }
+                  >
+                    {ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right font-medium">
                   {formatCurrency(pedido.total)}
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPedidoSeleccionado(pedido)}
+                    className="gap-1.5"
+                  >
+                    <Eye className="size-4" />
+                    Ver Detalles
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <PedidoDetalleDialog
+        pedido={pedidoSeleccionado}
+        onOpenChange={(open) => {
+          if (!open) setPedidoSeleccionado(null);
+        }}
+      />
+    </div>
+  );
+}
+
+// ─── Dialog de Detalles del Pedido ──────────────────────────────
+
+interface PedidoDetalleDialogProps {
+  pedido: PedidoHistorial | null;
+  onOpenChange: (open: boolean) => void;
+}
+
+function PedidoDetalleDialog({ pedido, onOpenChange }: PedidoDetalleDialogProps) {
+  const generarPDF = () => {
+    if (!pedido) return;
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("Floristeria", pageWidth / 2, y, { align: "center" });
+    y += 8;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text("Comprobante de Pedido", pageWidth / 2, y, { align: "center" });
+    y += 12;
+
+    doc.setDrawColor(200);
+    doc.line(20, y, pageWidth - 20, y);
+    y += 8;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(`Pedido #${pedido.id}`, 20, y);
+    y += 7;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Fecha: ${formatDate(pedido.creadoEn)}`, 20, y);
+    y += 6;
+    doc.text(`Estado: ${ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado}`, 20, y);
+    y += 10;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Informacion del Pago", 20, y);
+    y += 6;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Referencia Wompi: ${pedido.referenciaPago || "—"}`, 20, y);
+    y += 6;
+    doc.text(`Metodo de Pago: ${pedido.metodoPago || "—"}`, 20, y);
+    y += 6;
+    doc.text(`Total: ${formatCurrency(pedido.total)}`, 20, y);
+    y += 10;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Informacion de Entrega", 20, y);
+    y += 6;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Sede: ${pedido.sedeNombre || "—"}`, 20, y);
+    y += 6;
+    if (pedido.direccionEntrega) {
+      const dir = pedido.direccionEntrega;
+      doc.text(`Direccion: ${dir.direccion}, ${dir.ciudad}`, 20, y);
+      y += 6;
+      if (dir.detalles) {
+        doc.text(`Detalles: ${dir.detalles}`, 20, y);
+        y += 6;
+      }
+    }
+    y += 4;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Productos", 20, y);
+    y += 7;
+
+    const colProducto = 20;
+    const colCant = 110;
+    const colPrecio = 135;
+    const colSubtotal = 165;
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("Producto", colProducto, y);
+    doc.text("Cant", colCant, y);
+    doc.text("Precio", colPrecio, y);
+    doc.text("Subtotal", colSubtotal, y);
+    y += 5;
+    doc.line(20, y, pageWidth - 20, y);
+    y += 5;
+
+    doc.setFont("helvetica", "normal");
+    pedido.detalles?.forEach((d) => {
+      const subtotal = d.cantidad * d.precioUnitario;
+      const nombreLinea = doc.splitTextToSize(d.productoNombre, 85);
+      doc.text(nombreLinea, colProducto, y);
+      doc.text(String(d.cantidad), colCant, y);
+      doc.text(formatCurrency(d.precioUnitario), colPrecio, y);
+      doc.text(formatCurrency(subtotal), colSubtotal, y);
+      y += nombreLinea.length * 5;
+      if (d.notaPersonalizacion) {
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "italic");
+        const notaLinea = doc.splitTextToSize(`Nota: ${d.notaPersonalizacion}`, 85);
+        doc.text(notaLinea, colProducto, y);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        y += notaLinea.length * 4;
+      }
+      y += 2;
+    });
+
+    y += 2;
+    doc.line(20, y, pageWidth - 20, y);
+    y += 7;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(`Total: ${formatCurrency(pedido.total)}`, pageWidth - 20, y, { align: "right" });
+
+    y += 15;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text("Gracias por su compra", pageWidth / 2, y, { align: "center" });
+
+    doc.save(`pedido-${pedido.id}.pdf`);
+  };
+
+  return (
+    <Dialog open={pedido !== null} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Pedido #{pedido?.id}</DialogTitle>
+          <DialogDescription>
+            {pedido?.sedeNombre} — {formatDate(pedido?.creadoEn ?? "")}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Sección 1: Información del Pago */}
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+              <CreditCard className="size-3.5" />
+              Información del Pago
+            </h4>
+            <div className="bg-muted/50 rounded-lg p-3 space-y-1.5 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Referencia Wompi</span>
+                <span className="font-mono text-xs">
+                  {pedido?.referenciaPago || "—"}
                 </span>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-    </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Método de Pago</span>
+                <span className="font-medium capitalize">
+                  {pedido?.metodoPago || "—"}
+                </span>
+              </div>
+              <div className="flex justify-between border-t pt-1.5 mt-1.5">
+                <span className="text-muted-foreground">Total</span>
+                <span className="font-bold">
+                  {formatCurrency(pedido?.total ?? 0)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Sección 2: Información de Entrega */}
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+              <Truck className="size-3.5" />
+              Información de Entrega
+            </h4>
+            <div className="bg-muted/50 rounded-lg p-3 space-y-1.5 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Sede</span>
+                <span className="font-medium">
+                  {pedido?.sedeNombre || "—"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Alias</span>
+                <span>{pedido?.direccionEntrega?.alias || "—"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Dirección</span>
+                <span className="text-right max-w-[60%]">
+                  {pedido?.direccionEntrega?.direccion || "—"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Ciudad</span>
+                <span>{pedido?.direccionEntrega?.ciudad || "—"}</span>
+              </div>
+              {pedido?.direccionEntrega?.detalles && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Detalles</span>
+                  <span className="text-right max-w-[60%]">
+                    {pedido.direccionEntrega.detalles}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sección 3: Productos */}
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+              <Package className="size-3.5" />
+              Productos
+            </h4>
+            <div className="bg-muted/50 rounded-lg max-h-[250px] overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Producto</TableHead>
+                    <TableHead className="text-xs text-right">Cant</TableHead>
+                    <TableHead className="text-xs text-right">Precio</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pedido?.detalles?.map((d, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="text-sm font-medium">
+                        {d.productoNombre}
+                        <span className="block text-xs text-muted-foreground font-normal">
+                          {d.productoSku}
+                        </span>
+                        {d.notaPersonalizacion && (
+                          <span className="block text-xs text-muted-foreground italic font-normal">
+                            Nota: {d.notaPersonalizacion}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-right">
+                        {d.cantidad}
+                      </TableCell>
+                      <TableCell className="text-sm text-right">
+                        {formatCurrency(d.precioUnitario)}
+                      </TableCell>
+                    </TableRow>
+                  )) ?? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-sm text-muted-foreground text-center py-4">
+                        Sin productos
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cerrar
+          </Button>
+          <Button onClick={generarPDF} className="gap-1.5">
+            <Download className="size-4" />
+            Descargar Comprobante
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
