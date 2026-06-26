@@ -32,7 +32,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Eye, Package, Search } from "lucide-react";
+import { Eye, Package, Search, Download } from "lucide-react";
+import jsPDF from "jspdf";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -56,6 +57,7 @@ function getOpcionesPermitidas(estadoActual: string): string[] {
 
 export default function PedidosPage() {
   const [filtroEstado, setFiltroEstado] = useState<string>("Todos");
+  const [filtroSede, setFiltroSede] = useState<string>("Todas");
   const [searchTerm, setSearchTerm] = useState("");
   const [pedidoACancelar, setPedidoACancelar] = useState<number | null>(null);
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState<PedidoAdminResponse | null>(null);
@@ -67,6 +69,8 @@ export default function PedidosPage() {
       revalidateOnFocus: false,
     }
   );
+
+  const sedesUnicas = [...new Set((data ?? []).map((p) => p.sedeNombre))].sort();
 
   const handleStatusChange = async (pedidoId: number, nuevoEstado: string) => {
     const toastId = toast.loading("Actualizando estado...");
@@ -139,42 +143,182 @@ export default function PedidosPage() {
     });
   };
 
-  const pedidosFiltrados =
-    filtroEstado === "Todos"
-      ? [...(data ?? [])].sort((a, b) => b.id - a.id)
-      : [...(data ?? [])]
-          .filter((p) => p.estado === filtroEstado)
-          .sort((a, b) => b.id - a.id);
+  const generarPDF = (pedido: PedidoAdminResponse) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("Floristeria", pageWidth / 2, y, { align: "center" });
+    y += 8;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text("Comprobante de Pedido", pageWidth / 2, y, { align: "center" });
+    y += 12;
+
+    doc.setDrawColor(200);
+    doc.line(20, y, pageWidth - 20, y);
+    y += 8;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(`Pedido #${pedido.id}`, 20, y);
+    y += 7;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Fecha: ${formatDate(pedido.creadoEn)}`, 20, y);
+    y += 6;
+    doc.text(`Estado: ${ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado}`, 20, y);
+    y += 6;
+    doc.text(`Cliente: ${pedido.clienteNombre}`, 20, y);
+    y += 6;
+    doc.text(`Telefono: ${pedido.clienteTelefono}`, 20, y);
+    y += 6;
+    doc.text(`Email: ${pedido.clienteEmail}`, 20, y);
+    y += 10;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Informacion del Pago", 20, y);
+    y += 6;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Referencia Wompi: ${pedido.referenciaPago || "—"}`, 20, y);
+    y += 6;
+    doc.text(`Metodo de Pago: ${pedido.metodoPago || "—"}`, 20, y);
+    y += 6;
+    doc.text(`Transaccion: ${pedido.transaccionId || "—"}`, 20, y);
+    y += 6;
+    doc.text(`Total: ${formatCurrency(pedido.total)}`, 20, y);
+    y += 10;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Informacion de Entrega", 20, y);
+    y += 6;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Sede: ${pedido.sedeNombre || "—"}`, 20, y);
+    y += 6;
+    if (pedido.direccionEntrega) {
+      const dir = pedido.direccionEntrega;
+      doc.text(`Direccion: ${dir.direccion}, ${dir.ciudad}`, 20, y);
+      y += 6;
+      if (dir.detalles) {
+        doc.text(`Detalles: ${dir.detalles}`, 20, y);
+        y += 6;
+      }
+    }
+    y += 4;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Productos", 20, y);
+    y += 7;
+
+    const colProducto = 20;
+    const colCant = 110;
+    const colPrecio = 135;
+    const colSubtotal = 165;
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("Producto", colProducto, y);
+    doc.text("Cant", colCant, y);
+    doc.text("Precio", colPrecio, y);
+    doc.text("Subtotal", colSubtotal, y);
+    y += 5;
+    doc.line(20, y, pageWidth - 20, y);
+    y += 5;
+
+    doc.setFont("helvetica", "normal");
+    pedido.detalles?.forEach((d) => {
+      const subtotal = d.cantidad * d.precioUnitario;
+      const nombreLinea = doc.splitTextToSize(d.productoNombre, 85);
+      doc.text(nombreLinea, colProducto, y);
+      doc.text(String(d.cantidad), colCant, y);
+      doc.text(formatCurrency(d.precioUnitario), colPrecio, y);
+      doc.text(formatCurrency(subtotal), colSubtotal, y);
+      y += nombreLinea.length * 5;
+      if (d.notaPersonalizacion) {
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "italic");
+        const notaLinea = doc.splitTextToSize(`Nota: ${d.notaPersonalizacion}`, 85);
+        doc.text(notaLinea, colProducto, y);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        y += notaLinea.length * 4;
+      }
+      y += 2;
+    });
+
+    y += 2;
+    doc.line(20, y, pageWidth - 20, y);
+    y += 7;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(`Total: ${formatCurrency(pedido.total)}`, pageWidth - 20, y, { align: "right" });
+
+    y += 15;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text("Gracias por su compra", pageWidth / 2, y, { align: "center" });
+
+    doc.save(`pedido-${pedido.id}.pdf`);
+  };
+
+  const pedidosFiltrados = [...(data ?? [])]
+    .filter((p) => filtroEstado === "Todos" || p.estado === filtroEstado)
+    .filter((p) => filtroSede === "Todas" || p.sedeNombre === filtroSede)
+    .sort((a, b) => b.id - a.id);
 
   // Filtro de búsqueda local
   const pedidosConBusqueda = pedidosFiltrados.filter((p) =>
     p.clienteNombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.clienteTelefono?.includes(searchTerm) ||
-    p.id.toString().includes(searchTerm)
+    p.metodoPago?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-stone-900">Pedidos</h1>
           <p className="text-stone-500 text-sm mt-1">
             Administra y da seguimiento a los pedidos de tus clientes
           </p>
         </div>
-        <Select value={filtroEstado} onValueChange={(v) => { if (v !== null) setFiltroEstado(v); }}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Filtrar estado" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Todos">Todos</SelectItem>
-            {ORDER_STATUSES.map((status) => (
-              <SelectItem key={status} value={status}>
-                {ORDER_STATUS_LABELS[status]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-3">
+          <Select value={filtroEstado} onValueChange={(v) => { if (v !== null) setFiltroEstado(v); }}>
+            <SelectTrigger className="w-[160px] border-stone-300">
+              <SelectValue placeholder="Filtrar estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Todos">Todos los estados</SelectItem>
+              {ORDER_STATUSES.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {ORDER_STATUS_LABELS[status]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filtroSede} onValueChange={(v) => { if (v !== null) setFiltroSede(v); }}>
+            <SelectTrigger className="w-[180px] border-emerald-300">
+              <SelectValue placeholder="Filtrar sede" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Todas">Todas las sedes</SelectItem>
+              {sedesUnicas.map((sede) => (
+                <SelectItem key={sede} value={sede}>
+                  {sede}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -183,7 +327,7 @@ export default function PedidosPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
           <Input
             type="text"
-            placeholder="Buscar por cliente, teléfono o ID..."
+            placeholder="Buscar por cliente, teléfono o método de pago..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -195,7 +339,6 @@ export default function PedidosPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[80px]">ID</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Teléfono</TableHead>
               <TableHead>Sede</TableHead>
@@ -209,7 +352,6 @@ export default function PedidosPage() {
           <TableBody>
                       {pedidosConBusqueda.map((item) => (
               <TableRow key={item.id}>
-                <TableCell className="font-mono text-sm">#{item.id}</TableCell>
                 <TableCell className="font-medium">{item.clienteNombre ?? "—"}</TableCell>
                 <TableCell>{item.clienteTelefono ?? "—"}</TableCell>
                 <TableCell>{item.sedeNombre ?? "—"}</TableCell>
@@ -360,7 +502,6 @@ export default function PedidosPage() {
                       <TableHead className="text-xs">Producto</TableHead>
                       <TableHead className="text-xs text-right">Cant</TableHead>
                       <TableHead className="text-xs text-right">Precio</TableHead>
-                      <TableHead className="text-xs">Nota</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -368,6 +509,14 @@ export default function PedidosPage() {
                       <TableRow key={i}>
                         <TableCell className="text-sm font-medium">
                           {d.productoNombre}
+                          <span className="block text-xs text-stone-400 font-normal">
+                            {d.productoSku}
+                          </span>
+                          {d.notaPersonalizacion && (
+                            <span className="block text-xs text-stone-400 italic font-normal">
+                              Nota: {d.notaPersonalizacion}
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell className="text-sm text-right">
                           {d.cantidad}
@@ -375,13 +524,10 @@ export default function PedidosPage() {
                         <TableCell className="text-sm text-right">
                           {formatCurrency(d.precioUnitario)}
                         </TableCell>
-                        <TableCell className="text-sm text-stone-600 italic">
-                          {d.notaPersonalizacion || "—"}
-                        </TableCell>
                       </TableRow>
                     )) ?? (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-sm text-stone-400 text-center py-4">
+                        <TableCell colSpan={3} className="text-sm text-stone-400 text-center py-4">
                           Sin productos
                         </TableCell>
                       </TableRow>
@@ -392,8 +538,17 @@ export default function PedidosPage() {
             </div>
           </div>
 
-          <DialogFooter showCloseButton>
-            Cerrar
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPedidoSeleccionado(null)}>
+              Cerrar
+            </Button>
+            <Button
+              onClick={() => pedidoSeleccionado && generarPDF(pedidoSeleccionado)}
+              className="gap-1.5"
+            >
+              <Download className="size-4" />
+              Descargar Comprobante
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
