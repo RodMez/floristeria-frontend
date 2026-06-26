@@ -3,6 +3,8 @@ export interface Sede {
   nombre: string;
   ciudad: string;
   telefonoWhatsapp: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
 }
 
 export interface ProductoCatalogo {
@@ -64,21 +66,26 @@ export interface RegisterClienteRequest {
 export interface InventarioResponse {
   id: number;
   productoNombre: string;
+  productoSku: string;
   productoImagenUrl?: string;
   sedeNombre: string;
   precio: number;
+  precioFinal: number;
+  descuentoPorcentaje: number;
   stock: number;
   disponible: boolean;
 }
 
 export interface InventarioUpdateRequest {
   precio: number;
+  descuentoPorcentaje: number;
   stock: number;
   disponible: boolean;
 }
 
 export interface ProductoResponse {
   id: number;
+  sku: string;
   nombre: string;
   descripcion: string;
   imagenUrl: string;
@@ -86,6 +93,7 @@ export interface ProductoResponse {
 }
 
 export interface ProductoRequest {
+  sku: string;
   nombre: string;
   descripcion: string;
   imagenUrl: string;
@@ -136,6 +144,7 @@ export interface DireccionEntregaDTO {
 
 export interface DetallePedidoAdminDTO {
   productoNombre: string;
+  productoSku: string;
   cantidad: number;
   precioUnitario: number;
   notaPersonalizacion: string;
@@ -213,13 +222,26 @@ export interface CrearPedidoResponse {
   publicKeyWompi: string;
 }
 
-// Historial de pedidos del cliente
+// Detalle de producto en el historial del cliente
+export interface DetallePedidoHistorialDTO {
+  productoNombre: string;
+  productoSku: string;
+  cantidad: number;
+  precioUnitario: number;
+  notaPersonalizacion: string;
+}
+
+// Historial de pedidos del cliente (enriquecido)
 export interface PedidoHistorial {
   id: number;
   total: number;
   estado: string;
   creadoEn: string;
   referenciaPago: string;
+  sedeNombre: string;
+  metodoPago: string;
+  direccionEntrega: DireccionEntregaDTO;
+  detalles: DetallePedidoHistorialDTO[];
 }
 
 export interface ActualizarPerfilRequest {
