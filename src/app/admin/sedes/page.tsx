@@ -32,18 +32,24 @@ const sedeSchema = z.object({
   nombre: z.string().min(1, "El nombre es requerido"),
   ciudad: z.string().min(1, "La ciudad es requerida"),
   telefonoWhatsapp: z.string().regex(/^[0-9+ ]+$/, "Solo se permiten números, espacios y el signo +"),
+  instagramUrl: z.string().url("URL inválida").optional().or(z.literal("")),
+  facebookUrl: z.string().url("URL inválida").optional().or(z.literal("")),
 });
 
 interface SedeForm {
   nombre: string;
   ciudad: string;
   telefonoWhatsapp: string;
+  instagramUrl: string;
+  facebookUrl: string;
 }
 
 const emptyForm: SedeForm = {
   nombre: "",
   ciudad: "",
   telefonoWhatsapp: "",
+  instagramUrl: "",
+  facebookUrl: "",
 };
 
 export default function SedesPage() {
@@ -71,6 +77,8 @@ export default function SedesPage() {
       nombre: sede.nombre,
       ciudad: sede.ciudad,
       telefonoWhatsapp: sede.telefonoWhatsapp,
+      instagramUrl: sede.instagramUrl || "",
+      facebookUrl: sede.facebookUrl || "",
     });
     setDialogOpen(true);
   };
@@ -303,6 +311,26 @@ export default function SedesPage() {
                 placeholder="Ej: +57 300 1234567"
                 disabled={isLoading}
                 required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="instagramUrl">Instagram URL (opcional)</Label>
+              <Input
+                id="instagramUrl"
+                value={form.instagramUrl}
+                onChange={(e) => setForm({ ...form, instagramUrl: e.target.value })}
+                placeholder="https://instagram.com/tu-sede"
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="facebookUrl">Facebook URL (opcional)</Label>
+              <Input
+                id="facebookUrl"
+                value={form.facebookUrl}
+                onChange={(e) => setForm({ ...form, facebookUrl: e.target.value })}
+                placeholder="https://facebook.com/tu-sede"
+                disabled={isLoading}
               />
             </div>
             <div className="flex justify-end gap-2 pt-4">
