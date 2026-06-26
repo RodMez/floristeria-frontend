@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -23,16 +24,37 @@ interface EditInventarioDialogProps {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
+const inventarioSchema = z.object({
+  precio: z.coerce.number().min(0, "El precio no puede ser negativo"),
+  descuentoPorcentaje: z.coerce.number().min(0).max(100, "El descuento debe estar entre 0 y 100"),
+  stock: z.coerce.number().min(0, "El stock no puede ser negativo"),
+});
+
 export function EditInventarioDialog({ item, mutate }: EditInventarioDialogProps) {
   const [open, setOpen] = useState(false);
   const [precio, setPrecio] = useState(item.precio.toString());
+  const [descuentoPorcentaje, setDescuentoPorcentaje] = useState((item.descuentoPorcentaje ?? 0).toString());
   const [stock, setStock] = useState(item.stock.toString());
   const [disponible, setDisponible] = useState(item.disponible);
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const parsed = inventarioSchema.safeParse({ precio, descuentoPorcentaje, stock });
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      parsed.error.issues.forEach((issue) => {
+        const field = issue.path[0] as string;
+        fieldErrors[field] = issue.message;
+      });
+      setErrors(fieldErrors);
+      return;
+    }
+
     setIsLoading(true);
+    setErrors({});
 
     try {
       const token = Cookies.get("token");
@@ -45,8 +67,9 @@ export function EditInventarioDialog({ item, mutate }: EditInventarioDialogProps
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify({
-            precio: parseFloat(precio),
-            stock: parseInt(stock, 10),
+            precio: parsed.data.precio,
+            descuentoPorcentaje: parsed.data.descuentoPorcentaje,
+            stock: parsed.data.stock,
             disponible,
           }),
         }
@@ -90,6 +113,24 @@ export function EditInventarioDialog({ item, mutate }: EditInventarioDialogProps
                 onChange={(e) => setPrecio(e.target.value)}
                 disabled={isLoading}
               />
+              {errors.precio && (
+                <p className="text-xs text-red-500">{errors.precio}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="descuento">Descuento (%)</Label>
+              <Input
+                id="descuento"
+                type="number"
+                min={0}
+                max={100}
+                value={descuentoPorcentaje}
+                onChange={(e) => setDescuentoPorcentaje(e.target.value)}
+                disabled={isLoading}
+              />
+              {errors.descuentoPorcentaje && (
+                <p className="text-xs text-red-500">{errors.descuentoPorcentaje}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="stock">Stock</Label>
@@ -100,6 +141,9 @@ export function EditInventarioDialog({ item, mutate }: EditInventarioDialogProps
                 onChange={(e) => setStock(e.target.value)}
                 disabled={isLoading}
               />
+              {errors.stock && (
+                <p className="text-xs text-red-500">{errors.stock}</p>
+              )}
             </div>
           </div>
           <div className="flex items-center space-x-2">

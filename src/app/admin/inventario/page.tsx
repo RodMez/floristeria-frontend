@@ -4,7 +4,6 @@ import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { InventarioResponse } from "@/types";
-import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -13,7 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { EditInventarioDialog } from "@/components/admin/EditInventarioDialog";
 import { Input } from "@/components/ui/input";
 import {
@@ -68,8 +66,8 @@ export default function InventarioPage() {
   const inventarioFiltrado = sortedData.filter((item) => {
     const matchesSearch =
       item.productoNombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.sedeNombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id.toString().includes(searchTerm);
+      item.productoSku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.sedeNombre.toLowerCase().includes(searchTerm.toLowerCase());
 
     const itemEstado = item.disponible && item.stock > 0 ? "Disponible" : "Agotado";
     const matchesEstado = filtroEstado === "Todos" || itemEstado === filtroEstado;
@@ -92,7 +90,7 @@ export default function InventarioPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
           <Input
             type="text"
-            placeholder="Buscar por producto, sede o ID..."
+            placeholder="Buscar por producto, SKU o sede..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -116,11 +114,13 @@ export default function InventarioPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[60px]">ID</TableHead>
+              <TableHead className="w-[100px]">SKU</TableHead>
               <TableHead className="w-[70px]">Imagen</TableHead>
               <TableHead className="w-[250px]">Producto</TableHead>
               <TableHead>Sede</TableHead>
               <TableHead className="text-right">Precio</TableHead>
+              <TableHead className="text-right">Descuento</TableHead>
+              <TableHead className="text-right">Precio Final</TableHead>
               <TableHead className="text-right">Stock</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
@@ -129,7 +129,7 @@ export default function InventarioPage() {
           <TableBody>
             {inventarioFiltrado.map((item) => (
               <TableRow key={item.id}>
-                <TableCell className="font-mono text-sm">{item.id}</TableCell>
+                <TableCell className="font-mono text-sm">{item.productoSku}</TableCell>
                 <TableCell>
                   {item.productoImagenUrl ? (
                     <Image
@@ -149,7 +149,17 @@ export default function InventarioPage() {
                 <TableCell className="font-medium">{item.productoNombre}</TableCell>
                 <TableCell>{item.sedeNombre}</TableCell>
                 <TableCell className="text-right">
-                  ${item.precio.toLocaleString("es-CO")}
+                  {item.descuentoPorcentaje > 0 ? (
+                    <span className="line-through text-stone-400 mr-2">
+                      ${item.precio.toLocaleString("es-CO")}
+                    </span>
+                  ) : null}
+                </TableCell>
+                <TableCell className="text-right">
+                  {item.descuentoPorcentaje}%
+                </TableCell>
+                <TableCell className="text-right font-medium">
+                  ${item.precioFinal.toLocaleString("es-CO")}
                 </TableCell>
                 <TableCell className="text-right">{item.stock}</TableCell>
                 <TableCell>

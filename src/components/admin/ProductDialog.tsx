@@ -21,6 +21,7 @@ import Image from "next/image";
 
 /** ─────────── Zod Schema ─────────── */
 const productoSchema = z.object({
+  sku: z.string().min(3, "El SKU debe tener al menos 3 caracteres"),
   nombre: z.string().min(1, "El nombre es obligatorio"),
   descripcion: z.string().min(1, "La descripción es obligatoria"),
   categoriaIds: z
@@ -64,6 +65,7 @@ export function ProductDialog({
   } = useForm<ProductoFormData>({
     resolver: zodResolver(productoSchema),
     defaultValues: {
+      sku: "",
       nombre: "",
       descripcion: "",
       categoriaIds: [],
@@ -76,12 +78,14 @@ export function ProductDialog({
     if (isOpen) {
       if (producto) {
         reset({
+          sku: producto.sku || "",
           nombre: producto.nombre,
           descripcion: producto.descripcion,
           categoriaIds: producto.categorias.map((c) => c.id),
         });
       } else {
         reset({
+          sku: "",
           nombre: "",
           descripcion: "",
           categoriaIds: [],
@@ -135,6 +139,7 @@ export function ProductDialog({
 
       // Paso 2: Guardar producto
       const payload: ProductoRequest = {
+        sku: data.sku,
         nombre: data.nombre,
         descripcion: data.descripcion,
         imagenUrl,
@@ -179,6 +184,22 @@ export function ProductDialog({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          {/* SKU */}
+          <div className="space-y-2">
+            <Label htmlFor="sku">
+              SKU <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="sku"
+              placeholder="Ej: FLR-001"
+              disabled={isLoading}
+              {...register("sku")}
+            />
+            {errors.sku && (
+              <p className="text-xs text-red-500">{errors.sku.message}</p>
+            )}
+          </div>
+
           {/* Nombre */}
           <div className="space-y-2">
             <Label htmlFor="nombre">

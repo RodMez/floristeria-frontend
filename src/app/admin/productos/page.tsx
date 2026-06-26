@@ -101,7 +101,7 @@ export default function ProductosPage() {
     p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.categorias.some((cat) => cat.nombre.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    p.id.toString().includes(searchTerm)
+    (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -125,7 +125,7 @@ export default function ProductosPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
           <Input
             type="text"
-            placeholder="Buscar por nombre, descripción, categoría o ID..."
+            placeholder="Buscar por nombre, descripción, categoría o SKU..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -137,7 +137,7 @@ export default function ProductosPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[60px]">ID</TableHead>
+              <TableHead className="w-[100px]">SKU</TableHead>
               <TableHead>Imagen</TableHead>
               <TableHead>Nombre</TableHead>
               <TableHead>Categoría</TableHead>
@@ -155,7 +155,7 @@ export default function ProductosPage() {
             )}
             {productosFiltrados.map((producto) => (
               <TableRow key={producto.id}>
-                <TableCell className="font-mono text-sm">{producto.id}</TableCell>
+                <TableCell className="font-mono text-sm">{producto.sku || "Sin SKU"}</TableCell>
                 <TableCell>
                   <Image
                     src={producto.imagenUrl}
