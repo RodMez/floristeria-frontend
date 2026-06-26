@@ -65,9 +65,9 @@ export default function InventarioPage() {
   // Filtro de búsqueda local + filtro por estado
   const inventarioFiltrado = sortedData.filter((item) => {
     const matchesSearch =
-      item.productoNombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.productoSku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.sedeNombre.toLowerCase().includes(searchTerm.toLowerCase());
+      (item.productoNombre?.toLowerCase() ?? "").includes(searchTerm.toLowerCase()) ||
+      (item.productoSku?.toLowerCase() ?? "").includes(searchTerm.toLowerCase()) ||
+      (item.sedeNombre?.toLowerCase() ?? "").includes(searchTerm.toLowerCase());
 
     const itemEstado = item.disponible && item.stock > 0 ? "Disponible" : "Agotado";
     const matchesEstado = filtroEstado === "Todos" || itemEstado === filtroEstado;
