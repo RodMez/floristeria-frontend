@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import useSWR from "swr";
 import { toast } from "sonner";
 import Cookies from "js-cookie";
 import { useCartStore } from "@/store/useCartStore";
-import { DireccionRequest } from "@/types";
+import { DireccionRequest, ZonaDomicilioResponse } from "@/types";
+import { fetcher } from "@/lib/fetcher";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +19,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { LoaderIcon } from "lucide-react";
 
 interface NuevaDireccionDialogProps {
@@ -33,15 +42,57 @@ export default function NuevaDireccionDialog({
   onCreated,
 }: NuevaDireccionDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState<Omit<DireccionRequest, "ciudad">>({
+  const [form, setForm] = useState({
     alias: "",
     direccion: "",
     detalles: "",
   });
+  const [selectedLocalidad, setSelectedLocalidad] = useState<string>("");
+  const [selectedBarrio, setSelectedBarrio] = useState<string>("");
+  const [selectedZonaId, setSelectedZonaId] = useState<number | null>(null);
+
   const sedeActual = useCartStore((s) => s.sedeActual);
 
+  const { data: zonas } = useSWR<ZonaDomicilioResponse[]>(
+    sedeActual
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1/zonas-domicilio/sede/${sedeActual.id}`
+      : null,
+    fetcher
+  );
+
+  // Localidades únicas
+  const localidades = useMemo(() => {
+    if (!zonas) return [];
+    return [...new Set(zonas.map((z) => z.localidad))].sort();
+  }, [zonas]);
+
+  // Barrios filtrados por localidad seleccionada
+  const barrios = useMemo(() => {
+    if (!zonas || !selectedLocalidad) return [];
+    const filtradas = zonas.filter((z) => z.localidad === selectedLocalidad);
+    return filtradas.map((z) => ({
+      id: z.id,
+      label: z.barrio || "Otro",
+      hasBarrio: !!z.barrio,
+    }));
+  }, [zonas, selectedLocalidad]);
+
+  const handleLocalidadChange = (value: string | null) => {
+    if (!value || value === "__none") return;
+    setSelectedLocalidad(value);
+    setSelectedBarrio("");
+    setSelectedZonaId(null);
+  };
+
+  const handleBarrioChange = (value: string | null) => {
+    if (!value || value === "__none") return;
+    setSelectedBarrio(value);
+    const zona = barrios.find((b) => b.label === value);
+    setSelectedZonaId(zona?.id ?? null);
+  };
+
   const handleChange = (
-    field: keyof Omit<DireccionRequest, "ciudad">,
+    field: keyof typeof form,
     value: string
   ) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -49,6 +100,9 @@ export default function NuevaDireccionDialog({
 
   const resetForm = () => {
     setForm({ alias: "", direccion: "", detalles: "" });
+    setSelectedLocalidad("");
+    setSelectedBarrio("");
+    setSelectedZonaId(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,6 +115,11 @@ export default function NuevaDireccionDialog({
 
     if (!sedeActual) {
       toast.error("No se encontró la sede actual.");
+      return;
+    }
+
+    if (!selectedZonaId) {
+      toast.error("Selecciona una zona de domicilio (localidad y barrio).");
       return;
     }
 
@@ -78,6 +137,7 @@ export default function NuevaDireccionDialog({
           direccion: form.direccion.trim(),
           ciudad: sedeActual.ciudad,
           detalles: form.detalles?.trim() || undefined,
+          zonaDomicilioId: selectedZonaId,
         }),
       });
 
@@ -143,6 +203,55 @@ export default function NuevaDireccionDialog({
               className="bg-muted text-muted-foreground"
             />
           </div>
+
+          {/* ── Zona de Domicilio (Selects Dependientes) ─────── */}
+          {zonas && zonas.length > 0 && (
+            <>
+              <div className="space-y-2">
+                <Label>Localidad *</Label>
+                <Select
+                  value={selectedLocalidad}
+                  onValueChange={handleLocalidadChange}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona una localidad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">Selecciona una localidad...</SelectItem>
+                    {localidades.map((loc) => (
+                      <SelectItem key={loc} value={loc}>
+                        {loc}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {selectedLocalidad && (
+                <div className="space-y-2">
+                  <Label>Barrio *</Label>
+                  <Select
+                    value={selectedBarrio}
+                    onValueChange={handleBarrioChange}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona un barrio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none">Selecciona un barrio...</SelectItem>
+                      {barrios.map((b) => (
+                        <SelectItem key={b.id} value={b.label}>
+                          {b.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="detalles">Detalles adicionales</Label>

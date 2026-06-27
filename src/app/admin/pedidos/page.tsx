@@ -191,8 +191,6 @@ export default function PedidosPage() {
     doc.text(`Metodo de Pago: ${pedido.metodoPago || "—"}`, 20, y);
     y += 6;
     doc.text(`Transaccion: ${pedido.transaccionId || "—"}`, 20, y);
-    y += 6;
-    doc.text(`Total: ${formatCurrency(pedido.total)}`, 20, y);
     y += 10;
 
     doc.setFont("helvetica", "bold");
@@ -211,6 +209,10 @@ export default function PedidosPage() {
         doc.text(`Detalles: ${dir.detalles}`, 20, y);
         y += 6;
       }
+    }
+    if (pedido.zonaDomicilioNombre) {
+      doc.text(`Zona de Envio: ${pedido.zonaDomicilioNombre}`, 20, y);
+      y += 6;
     }
     y += 4;
 
@@ -258,6 +260,15 @@ export default function PedidosPage() {
     y += 2;
     doc.line(20, y, pageWidth - 20, y);
     y += 7;
+
+    if (pedido.costoEnvio && pedido.costoEnvio > 0) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(`Costo de Envio (Zona: ${pedido.zonaDomicilioNombre || ""})`, 20, y);
+      doc.text(formatCurrency(pedido.costoEnvio), pageWidth - 20, y, { align: "right" });
+      y += 7;
+    }
+
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text(`Total: ${formatCurrency(pedido.total)}`, pageWidth - 20, y, { align: "right" });
@@ -488,6 +499,18 @@ export default function PedidosPage() {
                     </span>
                   </div>
                 )}
+                <div className="flex justify-between border-t pt-1.5 mt-1.5">
+                  <span className="text-stone-500">Zona de Envío</span>
+                  <span className="font-medium">
+                    {pedidoSeleccionado?.zonaDomicilioNombre || "—"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-500">Costo de Envío</span>
+                  <span className="font-medium">
+                    {formatCurrency(pedidoSeleccionado?.costoEnvio ?? 0)}
+                  </span>
+                </div>
               </div>
             </div>
 

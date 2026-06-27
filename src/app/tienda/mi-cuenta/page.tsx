@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { useForm } from "react-hook-form";
@@ -21,6 +21,7 @@ import {
   DireccionResponse,
   DireccionRequest,
   Sede,
+  ZonaDomicilioResponse,
 } from "@/types";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
@@ -329,8 +330,6 @@ function PedidoDetalleDialog({ pedido, onOpenChange }: PedidoDetalleDialogProps)
     doc.text(`Referencia Wompi: ${pedido.referenciaPago || "—"}`, 20, y);
     y += 6;
     doc.text(`Metodo de Pago: ${pedido.metodoPago || "—"}`, 20, y);
-    y += 6;
-    doc.text(`Total: ${formatCurrency(pedido.total)}`, 20, y);
     y += 10;
 
     doc.setFont("helvetica", "bold");
@@ -349,6 +348,10 @@ function PedidoDetalleDialog({ pedido, onOpenChange }: PedidoDetalleDialogProps)
         doc.text(`Detalles: ${dir.detalles}`, 20, y);
         y += 6;
       }
+    }
+    if (pedido.zonaDomicilioNombre) {
+      doc.text(`Zona de Envio: ${pedido.zonaDomicilioNombre}`, 20, y);
+      y += 6;
     }
     y += 4;
 
@@ -396,6 +399,15 @@ function PedidoDetalleDialog({ pedido, onOpenChange }: PedidoDetalleDialogProps)
     y += 2;
     doc.line(20, y, pageWidth - 20, y);
     y += 7;
+
+    if (pedido.costoEnvio && pedido.costoEnvio > 0) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(`Costo de Envio (Zona: ${pedido.zonaDomicilioNombre || ""})`, 20, y);
+      doc.text(formatCurrency(pedido.costoEnvio), pageWidth - 20, y, { align: "right" });
+      y += 7;
+    }
+
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text(`Total: ${formatCurrency(pedido.total)}`, pageWidth - 20, y, { align: "right" });
@@ -482,6 +494,18 @@ function PedidoDetalleDialog({ pedido, onOpenChange }: PedidoDetalleDialogProps)
                   </span>
                 </div>
               )}
+              <div className="flex justify-between border-t pt-1.5 mt-1.5">
+                <span className="text-muted-foreground">Zona de Envío</span>
+                <span className="font-medium">
+                  {pedido?.zonaDomicilioNombre || "—"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Costo de Envío</span>
+                <span className="font-medium">
+                  {formatCurrency(pedido?.costoEnvio ?? 0)}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -798,7 +822,54 @@ function DireccionDialog({
     direccion: "",
     ciudad: "",
     detalles: "",
+    zonaDomicilioId: 0,
   });
+
+  // ── Zona de Domicilio (Selects Dependientes) ───────────────
+  const sedeParaCiudad = sedes?.find((s) => s.ciudad === form.ciudad);
+
+  const { data: zonas } = useSWR<ZonaDomicilioResponse[]>(
+    sedeParaCiudad
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1/zonas-domicilio/sede/${sedeParaCiudad.id}`
+      : null,
+    fetcher
+  );
+
+  const [selectedLocalidad, setSelectedLocalidad] = useState<string>("");
+  const [selectedBarrio, setSelectedBarrio] = useState<string>("");
+  const [selectedZonaId, setSelectedZonaId] = useState<number | null>(null);
+
+  const localidades = useMemo(() => {
+    if (!zonas) return [];
+    return [...new Set(zonas.map((z) => z.localidad))].sort();
+  }, [zonas]);
+
+  const barrios = useMemo(() => {
+    if (!zonas || !selectedLocalidad) return [];
+    const filtradas = zonas.filter((z) => z.localidad === selectedLocalidad);
+    return filtradas.map((z) => ({
+      id: z.id,
+      label: z.barrio || "Otro",
+      hasBarrio: !!z.barrio,
+    }));
+  }, [zonas, selectedLocalidad]);
+
+  const handleLocalidadChange = (value: string | null) => {
+    if (!value || value === "__none") return;
+    setSelectedLocalidad(value);
+    setSelectedBarrio("");
+    setSelectedZonaId(null);
+    setForm((prev) => ({ ...prev, zonaDomicilioId: 0 }));
+  };
+
+  const handleBarrioChange = (value: string | null) => {
+    if (!value || value === "__none") return;
+    setSelectedBarrio(value);
+    const zona = barrios.find((b) => b.label === value);
+    const zonaId = zona?.id ?? 0;
+    setSelectedZonaId(zonaId);
+    setForm((prev) => ({ ...prev, zonaDomicilioId: zonaId }));
+  };
 
   useEffect(() => {
     if (open) {
@@ -808,15 +879,39 @@ function DireccionDialog({
           direccion: direccion.direccion,
           ciudad: direccion.ciudad,
           detalles: direccion.detalles ?? "",
+          zonaDomicilioId: direccion.zonaDomicilioId ?? 0,
         });
+        setSelectedZonaId(direccion.zonaDomicilioId ?? null);
       } else {
-        setForm({ alias: "", direccion: "", ciudad: "", detalles: "" });
+        setForm({ alias: "", direccion: "", ciudad: "", detalles: "", zonaDomicilioId: 0 });
+        setSelectedLocalidad("");
+        setSelectedBarrio("");
+        setSelectedZonaId(null);
       }
     }
   }, [open, direccion]);
 
+  // Pre-seleccionar localidad y barrio al editar
+  useEffect(() => {
+    if (open && isEditing && zonas && direccion?.zonaDomicilioId) {
+      const zona = zonas.find((z) => z.id === direccion.zonaDomicilioId);
+      if (zona) {
+        setSelectedLocalidad(zona.localidad);
+        setSelectedBarrio(zona.barrio || "Otro");
+      }
+    }
+  }, [open, isEditing, zonas, direccion]);
+
   const handleChange = (field: keyof DireccionRequest, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+    // Si cambia la ciudad, resetear zona
+    if (field === "ciudad") {
+      setSelectedLocalidad("");
+      setSelectedBarrio("");
+      setSelectedZonaId(null);
+      setForm((prev) => ({ ...prev, [field]: value, zonaDomicilioId: 0 }));
+      return;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -824,6 +919,11 @@ function DireccionDialog({
 
     if (!form.alias.trim() || !form.direccion.trim() || !form.ciudad.trim()) {
       toast.error("Completa los campos obligatorios: alias, dirección y ciudad.");
+      return;
+    }
+
+    if (!form.zonaDomicilioId) {
+      toast.error("Selecciona una zona de domicilio (localidad y barrio).");
       return;
     }
 
@@ -892,7 +992,7 @@ function DireccionDialog({
             <Select
               value={form.ciudad}
               onValueChange={(value) => {
-                if (value) handleChange("ciudad", value);
+                if (value && value !== "__none") handleChange("ciudad", value);
               }}
               disabled={isSubmitting || !sedes}
             >
@@ -904,6 +1004,7 @@ function DireccionDialog({
                 />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="__none">Selecciona una ciudad...</SelectItem>
                 {ciudades.map((ciudad) => (
                   <SelectItem key={ciudad} value={ciudad}>
                     {ciudad}
@@ -912,6 +1013,55 @@ function DireccionDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {/* ── Zona de Domicilio (Selects Dependientes) ─────── */}
+          {zonas && zonas.length > 0 && form.ciudad && (
+            <>
+              <div className="space-y-2">
+                <Label>Localidad *</Label>
+                <Select
+                  value={selectedLocalidad}
+                  onValueChange={handleLocalidadChange}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona una localidad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">Selecciona una localidad...</SelectItem>
+                    {localidades.map((loc) => (
+                      <SelectItem key={loc} value={loc}>
+                        {loc}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {selectedLocalidad && (
+                <div className="space-y-2">
+                  <Label>Barrio *</Label>
+                  <Select
+                    value={selectedBarrio}
+                    onValueChange={handleBarrioChange}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona un barrio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none">Selecciona un barrio...</SelectItem>
+                      {barrios.map((b) => (
+                        <SelectItem key={b.id} value={b.label}>
+                          {b.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="dialog-detalles">Detalles adicionales</Label>

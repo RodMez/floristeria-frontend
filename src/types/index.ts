@@ -162,6 +162,8 @@ export interface PedidoAdminResponse {
   direccionEntrega: DireccionEntregaDTO;
   detalles: DetallePedidoAdminDTO[];
   total: number;
+  costoEnvio: number;
+  zonaDomicilioNombre: string;
   estado: string;
   transaccionId: string;
   creadoEn: string;
@@ -204,6 +206,8 @@ export interface DireccionResponse {
   direccion: string;
   ciudad: string;
   detalles: string | null;
+  zonaDomicilioId: number;
+  zonaDomicilioNombre: string;
 }
 
 export interface DireccionRequest {
@@ -211,6 +215,7 @@ export interface DireccionRequest {
   direccion: string;
   ciudad: string;
   detalles?: string;
+  zonaDomicilioId: number;
 }
 
 // Respuesta al crear un pedido desde Checkout
@@ -236,6 +241,8 @@ export interface DetallePedidoHistorialDTO {
 export interface PedidoHistorial {
   id: number;
   total: number;
+  costoEnvio: number;
+  zonaDomicilioNombre: string;
   estado: string;
   creadoEn: string;
   referenciaPago: string;

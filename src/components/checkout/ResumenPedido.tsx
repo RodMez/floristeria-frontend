@@ -51,14 +51,21 @@ function ItemRow({ item }: { item: CartItem }) {
   );
 }
 
-export default function ResumenPedido() {
+export default function ResumenPedido({
+  costoEnvio = 0,
+  zonaNombre,
+}: {
+  costoEnvio?: number;
+  zonaNombre?: string;
+}) {
   const items = useCartStore((state) => state.items);
   const sedeActual = useCartStore((state) => state.sedeActual);
 
-  const total = items.reduce(
+  const subtotal = items.reduce(
     (sum, item) => sum + item.precio * item.cantidad,
     0
   );
+  const total = subtotal + costoEnvio;
 
   if (items.length === 0) {
     return (
@@ -88,8 +95,24 @@ export default function ResumenPedido() {
 
         <Separator className="my-3" />
 
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>Subtotal</span>
+          <span>{formatPrice(subtotal)}</span>
+        </div>
+
+        {costoEnvio > 0 && (
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>
+              Envío{zonaNombre ? ` (Zona: ${zonaNombre})` : ""}
+            </span>
+            <span>{formatPrice(costoEnvio)}</span>
+          </div>
+        )}
+
+        <Separator className="my-3" />
+
         <div className="flex items-center justify-between font-medium">
-          <span>Total</span>
+          <span>Total a Pagar</span>
           <span className="text-lg">{formatPrice(total)}</span>
         </div>
       </CardContent>

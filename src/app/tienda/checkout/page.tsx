@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Script from "next/script";
 import Cookies from "js-cookie";
+import useSWR from "swr";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
-import { CrearPedidoResponse } from "@/types";
+import { CrearPedidoResponse, DireccionResponse, ZonaDomicilioResponse } from "@/types";
+import { fetcher } from "@/lib/fetcher";
 import DireccionSelector from "@/components/checkout/DireccionSelector";
 import ResumenPedido from "@/components/checkout/ResumenPedido";
 import { Button } from "@/components/ui/button";
@@ -16,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { LoaderIcon, ShoppingCartIcon, MapPinIcon } from "lucide-react";
 
 const API_PEDIDOS_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/pedidos`;
+const API_DIRECCIONES_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/direcciones`;
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -25,6 +28,33 @@ export default function CheckoutPage() {
   const [selectedDireccionId, setSelectedDireccionId] = useState<number | null>(null);
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ── Fetch de zonas (para calcular costoEnvio) ─────────────
+  const { data: zonas } = useSWR<ZonaDomicilioResponse[]>(
+    sedeActual
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1/zonas-domicilio/sede/${sedeActual.id}`
+      : null,
+    fetcher
+  );
+
+  // ── Fetch de direcciones (SWR deduplica con DireccionSelector) ─
+  const { data: direcciones } = useSWR<DireccionResponse[]>(
+    isAuthenticated && rol === "CLIENTE" ? API_DIRECCIONES_URL : null,
+    fetcher
+  );
+
+  // ── Derivar costoEnvio desde la dirección seleccionada ────
+  const direccionSeleccionada = useMemo(
+    () => direcciones?.find((d) => d.id === selectedDireccionId),
+    [direcciones, selectedDireccionId]
+  );
+
+  const zonaIdDesdeDireccion = direccionSeleccionada?.zonaDomicilioId;
+  const zonaDesdeDireccion = zonas?.find((z) => z.id === zonaIdDesdeDireccion);
+  const costoEnvio = zonaDesdeDireccion?.precio ?? 0;
+  const zonaNombre = zonaDesdeDireccion
+    ? `${zonaDesdeDireccion.localidad}${zonaDesdeDireccion.barrio ? ` - ${zonaDesdeDireccion.barrio}` : ""}`
+    : undefined;
 
   // ── Protección de ruta ──────────────────────────────────────
   useEffect(() => {
@@ -190,7 +220,7 @@ export default function CheckoutPage() {
 
         {/* ── Columna derecha: Resumen + Acción ──────────────── */}
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-          <ResumenPedido />
+          <ResumenPedido costoEnvio={costoEnvio} zonaNombre={zonaNombre} />
 
           <div className="flex items-start space-x-2">
             <Checkbox
