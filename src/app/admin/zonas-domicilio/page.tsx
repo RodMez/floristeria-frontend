@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { ZonaDomicilioResponse, ZonaDomicilioRequest, Sede } from "@/types";
@@ -38,6 +38,9 @@ import { useAuthStore } from "@/store/useAuthStore";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
+const normalizeText = (text: string) =>
+  text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
 const zonaSchema = z.object({
   sedeId: z.number().min(1, "Seleccione una sede"),
   localidad: z.string().min(1, "La localidad es requerida"),
@@ -53,12 +56,18 @@ export default function ZonasDomicilioPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingZona, setEditingZona] = useState<ZonaDomicilioResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [localidadSearch, setLocalidadSearch] = useState("");
+  const [localidadFocused, setLocalidadFocused] = useState(false);
+  const [barrioSearch, setBarrioSearch] = useState("");
+  const [barrioFocused, setBarrioFocused] = useState(false);
 
   const {
     register,
     handleSubmit,
     reset,
     control,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<ZonaFormData>({
     resolver: zodResolver(zonaSchema),
@@ -69,6 +78,32 @@ export default function ZonasDomicilioPage() {
       precio: 0,
     },
   });
+
+  useEffect(() => {
+    const errorList = Object.values(errors);
+    if (errorList.length > 0) {
+      errorList.forEach((err) => {
+        if (err?.message) {
+          toast.error(err.message as string);
+        }
+      });
+    }
+  }, [errors]);
+
+  const watchedSedeId = watch("sedeId");
+  const watchedLocalidad = watch("localidad");
+
+  useEffect(() => {
+    setValue("localidad", "");
+    setValue("barrio", "");
+    setLocalidadSearch("");
+    setBarrioSearch("");
+  }, [watchedSedeId, setValue]);
+
+  useEffect(() => {
+    setValue("barrio", "");
+    setBarrioSearch("");
+  }, [watchedLocalidad, setValue]);
 
   const { data: sedes } = useSWR<Sede[]>(
     `${API_URL}/api/v1/sedes`,
@@ -85,6 +120,45 @@ export default function ZonasDomicilioPage() {
     fetcher,
     { revalidateOnFocus: false }
   );
+
+  const localidades = useMemo(() => {
+    if (!zonas || !watchedSedeId) return [];
+    const sedeZonas = zonas.filter((z) => z.sedeId === watchedSedeId);
+    const unique = new Map<string, string>();
+    for (const z of sedeZonas) {
+      const key = normalizeText(z.localidad);
+      if (!unique.has(key)) unique.set(key, z.localidad);
+    }
+    return [...unique.values()].sort();
+  }, [zonas, watchedSedeId]);
+
+  const barrios = useMemo(() => {
+    if (!zonas || !watchedSedeId || !watchedLocalidad) return [];
+    const filtered = zonas.filter(
+      (z) => z.sedeId === watchedSedeId && z.localidad === watchedLocalidad
+    );
+    const unique = new Map<string, string>();
+    for (const z of filtered) {
+      if (!z.barrio) continue;
+      const key = normalizeText(z.barrio);
+      if (!unique.has(key)) unique.set(key, z.barrio);
+    }
+    return [...unique.values()].sort();
+  }, [zonas, watchedSedeId, watchedLocalidad]);
+
+  const filteredLocalidades = useMemo(() => {
+    if (!localidadSearch) return localidades;
+    return localidades.filter((loc) =>
+      normalizeText(loc).includes(normalizeText(localidadSearch))
+    );
+  }, [localidades, localidadSearch]);
+
+  const filteredBarrios = useMemo(() => {
+    if (!barrioSearch) return barrios;
+    return barrios.filter((bar) =>
+      normalizeText(bar).includes(normalizeText(barrioSearch))
+    );
+  }, [barrios, barrioSearch]);
 
   useEffect(() => {
     if (dialogOpen) {
@@ -128,8 +202,8 @@ export default function ZonasDomicilioPage() {
 
     const payload: ZonaDomicilioRequest = {
       sedeId: data.sedeId,
-      localidad: data.localidad,
-      barrio: data.barrio || undefined,
+      localidad: normalizeText(data.localidad),
+      barrio: data.barrio ? normalizeText(data.barrio) : undefined,
       precio: data.precio,
     };
 
@@ -330,13 +404,21 @@ export default function ZonasDomicilioPage() {
                   control={control}
                   render={({ field }) => (
                     <Select
-                      value={field.value?.toString() ?? ""}
-                      onValueChange={(val) => field.onChange(Number(val))}
+                      value={field.value && field.value !== 0 ? field.value.toString() : ""}
+                      onValueChange={(val) => { if (val && val !== "__none") field.onChange(Number(val)); }}
                     >
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Selecciona una sede" />
+                        {field.value && field.value !== 0 && sedes
+                          ? (() => {
+                              const sede = sedes.find((s) => s.id === field.value);
+                              return sede ? `${sede.nombre} — ${sede.ciudad}` : null;
+                            })()
+                          : (
+                            <SelectValue placeholder="Selecciona una sede" />
+                          )}
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="__none">Selecciona una sede...</SelectItem>
                         {sedes?.map((sede) => (
                           <SelectItem key={sede.id} value={sede.id.toString()}>
                             {sede.nombre} — {sede.ciudad}
@@ -346,34 +428,77 @@ export default function ZonasDomicilioPage() {
                     </Select>
                   )}
                 />
-                {errors.sedeId && (
-                  <p className="text-xs text-red-500">{errors.sedeId.message}</p>
-                )}
               </div>
             )}
             <div className="space-y-2">
               <Label htmlFor="localidad">Localidad / Municipio *</Label>
-              <Input
-                id="localidad"
-                {...register("localidad")}
-                placeholder="Ej: Chía, Cundinamarca"
-                disabled={isLoading}
-              />
-              {errors.localidad && (
-                <p className="text-xs text-red-500">{errors.localidad.message}</p>
-              )}
+              <div className="relative">
+                <Input
+                  id="localidad"
+                  value={watchedLocalidad ?? ""}
+                  placeholder="Ej: Chía, Cundinamarca"
+                  disabled={isLoading}
+                  onFocus={() => setLocalidadFocused(true)}
+                  onBlur={() => setTimeout(() => setLocalidadFocused(false), 200)}
+                  onChange={(e) => {
+                    setValue("localidad", e.target.value, { shouldValidate: true });
+                    setLocalidadSearch(e.target.value);
+                  }}
+                />
+                {localidadFocused && filteredLocalidades.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-md max-h-60 overflow-auto">
+                    {filteredLocalidades.map((loc) => (
+                      <div
+                        key={loc}
+                        className="px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setValue("localidad", loc);
+                          setLocalidadSearch("");
+                          setLocalidadFocused(false);
+                        }}
+                      >
+                        {loc}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="barrio">Barrio (opcional)</Label>
-              <Input
-                id="barrio"
-                {...register("barrio")}
-                placeholder="Dejar vacío para tarifa general"
-                disabled={isLoading}
-              />
-              {errors.barrio && (
-                <p className="text-xs text-red-500">{errors.barrio.message}</p>
-              )}
+              <div className="relative">
+                <Input
+                  id="barrio"
+                  value={watch("barrio") ?? ""}
+                  placeholder="Dejar vacío para tarifa general"
+                  disabled={isLoading}
+                  onFocus={() => setBarrioFocused(true)}
+                  onBlur={() => setTimeout(() => setBarrioFocused(false), 200)}
+                  onChange={(e) => {
+                    setValue("barrio", e.target.value, { shouldValidate: true });
+                    setBarrioSearch(e.target.value);
+                  }}
+                />
+                {barrioFocused && filteredBarrios.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-md max-h-60 overflow-auto">
+                    {filteredBarrios.map((bar) => (
+                      <div
+                        key={bar}
+                        className="px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setValue("barrio", bar);
+                          setBarrioSearch("");
+                          setBarrioFocused(false);
+                        }}
+                      >
+                        {bar}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="precio">Precio (COP) *</Label>
@@ -381,13 +506,10 @@ export default function ZonasDomicilioPage() {
                 id="precio"
                 type="number"
                 step="100"
-                {...register("precio")}
+                {...register("precio", { valueAsNumber: true })}
                 placeholder="0"
                 disabled={isLoading}
               />
-              {errors.precio && (
-                <p className="text-xs text-red-500">{errors.precio.message}</p>
-              )}
             </div>
             <div className="flex justify-end gap-2 pt-4">
               <Button

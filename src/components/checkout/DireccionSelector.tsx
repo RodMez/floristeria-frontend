@@ -134,6 +134,11 @@ export default function DireccionSelector({
                   <p className="text-sm text-muted-foreground truncate">
                     {dir.direccion}, {dir.ciudad}
                   </p>
+                  {dir.zonaDomicilioNombre && (
+                    <p className="text-xs text-muted-foreground/70 mt-0.5">
+                      Zona: {dir.zonaDomicilioNombre}
+                    </p>
+                  )}
                   {dir.detalles && (
                     <p className="text-xs text-muted-foreground/70 mt-0.5 truncate">
                       {dir.detalles}
