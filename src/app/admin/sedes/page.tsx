@@ -23,6 +23,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Building2, Plus, Pencil, Trash2, Search } from "lucide-react";
+import { FaWhatsapp, FaInstagram, FaFacebook } from "react-icons/fa";
+import { MdEmail } from "react-icons/md";
 import Cookies from "js-cookie";
 import { z } from "zod";
 
@@ -34,6 +36,7 @@ const sedeSchema = z.object({
   telefonoWhatsapp: z.string().regex(/^[0-9+ ]+$/, "Solo se permiten números, espacios y el signo +"),
   instagramUrl: z.string().url("URL inválida").optional().or(z.literal("")),
   facebookUrl: z.string().url("URL inválida").optional().or(z.literal("")),
+  email: z.string().email("Correo inválido").optional().or(z.literal("")),
 });
 
 interface SedeForm {
@@ -42,6 +45,7 @@ interface SedeForm {
   telefonoWhatsapp: string;
   instagramUrl: string;
   facebookUrl: string;
+  email: string;
 }
 
 const emptyForm: SedeForm = {
@@ -50,6 +54,7 @@ const emptyForm: SedeForm = {
   telefonoWhatsapp: "",
   instagramUrl: "",
   facebookUrl: "",
+  email: "",
 };
 
 export default function SedesPage() {
@@ -79,6 +84,7 @@ export default function SedesPage() {
       telefonoWhatsapp: sede.telefonoWhatsapp,
       instagramUrl: sede.instagramUrl || "",
       facebookUrl: sede.facebookUrl || "",
+      email: sede.email || "",
     });
     setDialogOpen(true);
   };
@@ -191,6 +197,7 @@ export default function SedesPage() {
     s.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.ciudad.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.telefonoWhatsapp.includes(searchTerm) ||
+    s.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.id.toString().includes(searchTerm)
   );
 
@@ -215,7 +222,7 @@ export default function SedesPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
           <Input
             type="text"
-            placeholder="Buscar por nombre, ciudad, WhatsApp o ID..."
+            placeholder="Buscar por nombre, ciudad, WhatsApp, correo o ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -230,7 +237,7 @@ export default function SedesPage() {
               <TableHead>ID</TableHead>
               <TableHead>Nombre</TableHead>
               <TableHead>Ciudad</TableHead>
-              <TableHead>WhatsApp</TableHead>
+              <TableHead>Contacto</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -247,7 +254,55 @@ export default function SedesPage() {
                 <TableCell>{sede.id}</TableCell>
                 <TableCell className="font-medium">{sede.nombre}</TableCell>
                 <TableCell>{sede.ciudad}</TableCell>
-                <TableCell>{sede.telefonoWhatsapp}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {sede.telefonoWhatsapp && (
+                      <a
+                        href={`https://wa.me/${sede.telefonoWhatsapp.replace(/[^0-9]/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                        title={`WhatsApp: ${sede.telefonoWhatsapp}`}
+                      >
+                        <FaWhatsapp className="h-4 w-4" />
+                      </a>
+                    )}
+                    {sede.instagramUrl && (
+                      <a
+                        href={sede.instagramUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-pink-100 text-pink-700 hover:bg-pink-200 transition-colors"
+                        title="Instagram"
+                      >
+                        <FaInstagram className="h-4 w-4" />
+                      </a>
+                    )}
+                    {sede.facebookUrl && (
+                      <a
+                        href={sede.facebookUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                        title="Facebook"
+                      >
+                        <FaFacebook className="h-4 w-4" />
+                      </a>
+                    )}
+                    {sede.email && (
+                      <a
+                        href={`mailto:${sede.email}`}
+                        className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-stone-100 text-stone-700 hover:bg-stone-200 transition-colors"
+                        title={`Correo: ${sede.email}`}
+                      >
+                        <MdEmail className="h-4 w-4" />
+                      </a>
+                    )}
+                    {!sede.telefonoWhatsapp && !sede.instagramUrl && !sede.facebookUrl && !sede.email && (
+                      <span className="text-stone-400 text-sm">Sin contacto</span>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
                     <Button
@@ -330,6 +385,17 @@ export default function SedesPage() {
                 value={form.facebookUrl}
                 onChange={(e) => setForm({ ...form, facebookUrl: e.target.value })}
                 placeholder="https://facebook.com/tu-sede"
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Correo electrónico (opcional)</Label>
+              <Input
+                id="email"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="sede@floristeria.com"
                 disabled={isLoading}
               />
             </div>
