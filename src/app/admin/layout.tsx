@@ -15,6 +15,7 @@ import {
   Building2,
   Users,
   Menu,
+  MapPin,
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -49,6 +50,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navItems = [
     { href: "/admin/inventario", label: "Inventario", icon: Package },
     { href: "/admin/pedidos", label: "Pedidos", icon: ClipboardList },
+    { href: "/admin/zonas-domicilio", label: "Domicilios", icon: MapPin },
   ];
 
   const superAdminItems = [

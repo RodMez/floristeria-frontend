@@ -5,6 +5,7 @@ export interface Sede {
   telefonoWhatsapp: string;
   instagramUrl?: string;
   facebookUrl?: string;
+  email?: string;
 }
 
 export interface ProductoCatalogo {
@@ -247,4 +248,19 @@ export interface PedidoHistorial {
 export interface ActualizarPerfilRequest {
   nombre: string;
   telefono: string;
+}
+
+export interface ZonaDomicilioResponse {
+  id: number;
+  sedeId: number;
+  localidad: string;
+  barrio: string;
+  precio: number;
+}
+
+export interface ZonaDomicilioRequest {
+  sedeId: number;
+  localidad: string;
+  barrio?: string;
+  precio: number;
 }
