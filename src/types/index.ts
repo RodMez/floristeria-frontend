@@ -18,6 +18,7 @@ export interface ProductoCatalogo {
   categoriasNombres?: string[];
   categoriaNombre?: string;
   precio: number;
+  descuentoPorcentaje: number;
   stock: number;
   disponible: boolean;
 }

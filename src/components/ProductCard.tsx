@@ -39,12 +39,20 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
   }, [producto.categorias, producto.categoriasNombres, producto.categoriaNombre]);
 
   const isAgotado = !producto.disponible || producto.stock === 0;
+  const tieneDescuento = producto.descuentoPorcentaje > 0;
+  const precioFinal = useMemo(
+    () => producto.precio - (producto.precio * producto.descuentoPorcentaje) / 100,
+    [producto.precio, producto.descuentoPorcentaje]
+  );
 
   const formatoPrecio = new Intl.NumberFormat("es-CO", {
     style: "currency",
     currency: "COP",
     minimumFractionDigits: 0,
-  }).format(producto.precio);
+  });
+
+  const precioOriginal = formatoPrecio.format(producto.precio);
+  const precioConDescuento = formatoPrecio.format(precioFinal);
 
   const handleAddToCart = () => {
     setIsAdding(true);
@@ -53,6 +61,7 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
         id: String(producto.productoId),
         nombre: producto.nombre,
         precio: producto.precio,
+        descuentoPorcentaje: producto.descuentoPorcentaje,
         cantidad: 1,
         imagen_url: producto.imagenUrl,
         sede_id: String(sede.id),
@@ -73,6 +82,11 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
           className="object-cover"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
         />
+        {tieneDescuento && (
+          <div className="discount-ribbon">
+            <span>-{producto.descuentoPorcentaje}% OFF</span>
+          </div>
+        )}
       </div>
       <CardContent className="p-4 flex flex-col flex-1">
         {/* Categorías - Badges */}
@@ -91,7 +105,16 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
           {producto.descripcion}
         </p>
         <p className="text-lg font-semibold text-stone-900 mt-2">
-          {formatoPrecio}
+          {tieneDescuento ? (
+            <>
+              <span className="text-sm font-normal text-stone-400 line-through mr-2">
+                {precioOriginal}
+              </span>
+              <span className="text-green-600">{precioConDescuento}</span>
+            </>
+          ) : (
+            precioOriginal
+          )}
         </p>
       </CardContent>
       <CardFooter className="p-4 pt-0 flex items-center justify-between">

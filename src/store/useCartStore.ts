@@ -6,10 +6,16 @@ export interface CartItem {
   id: string;
   nombre: string;
   precio: number;
+  descuentoPorcentaje: number;
   cantidad: number;
   imagen_url: string;
   sede_id: string;
   notaPersonalizacion?: string;
+}
+
+export function getPrecioFinal(item: CartItem): number {
+  const descuento = item.descuentoPorcentaje ?? 0;
+  return item.precio - (item.precio * descuento) / 100;
 }
 
 interface CartState {

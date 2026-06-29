@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { useCartStore } from "@/store/useCartStore";
+import { useCartStore, getPrecioFinal } from "@/store/useCartStore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -23,7 +23,7 @@ export default function CartDrawer() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
-  const total = items.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
+  const total = items.reduce((sum, item) => sum + getPrecioFinal(item) * item.cantidad, 0);
 
   const handlePagar = () => {
     setOpen(false);
@@ -61,11 +61,23 @@ export default function CartDrawer() {
                       <div className="flex justify-between text-sm font-medium">
                         <h4 className="line-clamp-1">{item.nombre}</h4>
                         <p className="ml-4">
-                          ${(item.precio * item.cantidad).toLocaleString("es-CO")}
+                          ${(getPrecioFinal(item) * item.cantidad).toLocaleString("es-CO")}
                         </p>
                       </div>
                       <p className="text-xs text-stone-500">
-                        ${item.precio.toLocaleString("es-CO")} c/u
+                        {item.descuentoPorcentaje > 0 ? (
+                          <>
+                            <span className="line-through mr-1">
+                              ${item.precio.toLocaleString("es-CO")}
+                            </span>
+                            <span className="text-green-600 font-medium">
+                              ${getPrecioFinal(item).toLocaleString("es-CO")}
+                            </span>
+                            c/u
+                          </>
+                        ) : (
+                          `$${item.precio.toLocaleString("es-CO")} c/u`
+                        )}
                       </p>
                       <div className="mt-2 flex items-center gap-2">
                         <Button
