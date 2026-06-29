@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCartStore, CartItem } from "@/store/useCartStore";
+import { useCartStore, CartItem, getPrecioFinal } from "@/store/useCartStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
@@ -35,7 +35,15 @@ function ItemRow({ item }: { item: CartItem }) {
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">{item.nombre}</p>
         <p className="text-xs text-muted-foreground">
-          Cant. {item.cantidad} × {formatPrice(item.precio)}
+          Cant. {item.cantidad} ×{" "}
+          {item.descuentoPorcentaje > 0 ? (
+            <>
+              <span className="line-through mr-1">{formatPrice(item.precio)}</span>
+              <span className="text-green-600 font-medium">{formatPrice(getPrecioFinal(item))}</span>
+            </>
+          ) : (
+            formatPrice(item.precio)
+          )}
         </p>
         {item.notaPersonalizacion && (
           <p className="text-xs text-muted-foreground/70 italic truncate">
@@ -45,7 +53,7 @@ function ItemRow({ item }: { item: CartItem }) {
       </div>
 
       <p className="text-sm font-medium shrink-0">
-        {formatPrice(item.precio * item.cantidad)}
+        {formatPrice(getPrecioFinal(item) * item.cantidad)}
       </p>
     </div>
   );
@@ -62,7 +70,7 @@ export default function ResumenPedido({
   const sedeActual = useCartStore((state) => state.sedeActual);
 
   const subtotal = items.reduce(
-    (sum, item) => sum + item.precio * item.cantidad,
+    (sum, item) => sum + getPrecioFinal(item) * item.cantidad,
     0
   );
   const total = subtotal + costoEnvio;
@@ -102,9 +110,7 @@ export default function ResumenPedido({
 
         {costoEnvio > 0 && (
           <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>
-              Envío{zonaNombre ? ` (Zona: ${zonaNombre})` : ""}
-            </span>
+            <span>Envío</span>
             <span>{formatPrice(costoEnvio)}</span>
           </div>
         )}
