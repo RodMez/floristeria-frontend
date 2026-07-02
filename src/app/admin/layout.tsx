@@ -17,6 +17,7 @@ import {
   Menu,
   MapPin,
   Settings,
+  LayoutDashboard,
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -49,6 +50,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   const navItems = [
+    { href: "/admin", label: "Pedidos Activos", icon: LayoutDashboard },
     { href: "/admin/inventario", label: "Inventario", icon: Package },
     { href: "/admin/pedidos", label: "Pedidos", icon: ClipboardList },
     { href: "/admin/zonas-domicilio", label: "Domicilios", icon: MapPin },
