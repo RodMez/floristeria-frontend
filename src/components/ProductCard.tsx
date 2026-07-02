@@ -7,6 +7,7 @@ import { ProductoCatalogo, Sede } from "@/types";
 import { useCartStore } from "@/store/useCartStore";
 import { useState, useMemo } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 interface ProductCardProps {
   producto: ProductoCatalogo;
@@ -98,9 +99,12 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
           ))}
         </div>
 
-        <h3 className="font-semibold text-stone-800 line-clamp-1">
+        <Link
+          href={`/tienda/sede/${sede.id}/producto/${producto.productoId}`}
+          className="font-semibold text-stone-800 line-clamp-1 hover:underline"
+        >
           {producto.nombre}
-        </h3>
+        </Link>
         <p className="text-sm text-stone-500 line-clamp-2 mt-1 min-h-[2.5rem] flex-1">
           {producto.descripcion}
         </p>

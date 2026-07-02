@@ -15,23 +15,21 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useCartStore, getPrecioFinal } from "@/store/useCartStore";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 export default function CartDrawer() {
-  const { items, sedeActual, removeItem, updateQuantity, updateNota, clearCart } =
+  const { items, sedeActual, removeItem, updateQuantity, updateNota, clearCart, drawerOpen, setDrawerOpen } =
     useCartStore();
   const router = useRouter();
-  const [open, setOpen] = useState(false);
 
   const total = items.reduce((sum, item) => sum + getPrecioFinal(item) * item.cantidad, 0);
 
   const handlePagar = () => {
-    setOpen(false);
+    setDrawerOpen(false);
     router.push("/tienda/checkout");
   };
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
       <SheetTrigger className="relative inline-flex items-center justify-center rounded-md text-sm font-medium hover:bg-stone-100 hover:text-stone-900 h-10 w-10">
         <ShoppingCart className="h-5 w-5" />
       </SheetTrigger>

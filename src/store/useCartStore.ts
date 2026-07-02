@@ -21,6 +21,8 @@ export function getPrecioFinal(item: CartItem): number {
 interface CartState {
   items: CartItem[];
   sedeActual: Sede | null;
+  drawerOpen: boolean;
+  setDrawerOpen: (open: boolean) => void;
   addItem: (item: CartItem, sede: Sede) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, cantidad: number) => void;
@@ -33,6 +35,8 @@ export const useCartStore = create<CartState>()(
     (set) => ({
       items: [],
       sedeActual: null,
+      drawerOpen: false,
+      setDrawerOpen: (open) => set({ drawerOpen: open }),
       addItem: (item, sede) =>
         set((state) => {
           // Si hay items en el carrito y la sede es diferente, vaciar el carrito
@@ -73,6 +77,10 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: "floristeria-cart",
+      partialize: (state) => ({
+        items: state.items,
+        sedeActual: state.sedeActual,
+      }),
     }
   )
 );
