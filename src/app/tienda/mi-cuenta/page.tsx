@@ -988,7 +988,7 @@ function DireccionDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dialog-ciudad">Ciudad</Label>
+            <Label htmlFor="dialog-ciudad">Sede de Despacho *</Label>
             <Select
               value={form.ciudad}
               onValueChange={(value) => {
@@ -1018,7 +1018,7 @@ function DireccionDialog({
           {zonas && zonas.length > 0 && form.ciudad && (
             <>
               <div className="space-y-2">
-                <Label>Localidad *</Label>
+                <Label>Localidad / Municipio *</Label>
                 <Select
                   value={selectedLocalidad}
                   onValueChange={handleLocalidadChange}
@@ -1040,7 +1040,7 @@ function DireccionDialog({
 
               {selectedLocalidad && (
                 <div className="space-y-2">
-                  <Label>Barrio *</Label>
+                  <Label>Barrio</Label>
                   <Select
                     value={selectedBarrio}
                     onValueChange={handleBarrioChange}

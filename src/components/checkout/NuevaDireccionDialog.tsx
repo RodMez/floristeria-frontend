@@ -195,7 +195,7 @@ export default function NuevaDireccionDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="ciudad">Ciudad</Label>
+            <Label htmlFor="ciudad">Sede de Despacho *</Label>
             <Input
               id="ciudad"
               value={sedeActual?.ciudad ?? ""}
@@ -208,7 +208,7 @@ export default function NuevaDireccionDialog({
           {zonas && zonas.length > 0 && (
             <>
               <div className="space-y-2">
-                <Label>Localidad *</Label>
+                <Label>Localidad / Municipio *</Label>
                 <Select
                   value={selectedLocalidad}
                   onValueChange={handleLocalidadChange}
@@ -230,7 +230,7 @@ export default function NuevaDireccionDialog({
 
               {selectedLocalidad && (
                 <div className="space-y-2">
-                  <Label>Barrio *</Label>
+                  <Label>Barrio</Label>
                   <Select
                     value={selectedBarrio}
                     onValueChange={handleBarrioChange}
