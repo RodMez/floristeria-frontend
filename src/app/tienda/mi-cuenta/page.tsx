@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/useAuthStore";
-import { fetcher } from "@/lib/fetcher";
+import { fetcher, authFetch, obtenerPerfil } from "@/lib/fetcher";
 import {
   crearDireccion,
   actualizarDireccion,
@@ -22,6 +22,7 @@ import {
   DireccionRequest,
   Sede,
   ZonaDomicilioResponse,
+  ClientePerfilResponse,
 } from "@/types";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
@@ -111,6 +112,13 @@ const perfilSchema = z.object({
 });
 
 type PerfilFormData = z.infer<typeof perfilSchema>;
+
+const passwordSchema = z.object({
+  passwordActual: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+  nuevaPassword: z.string().min(6, "La nueva contraseña debe tener al menos 6 caracteres"),
+});
+
+type PasswordFormData = z.infer<typeof passwordSchema>;
 
 export default function MiCuentaPage() {
   const router = useRouter();
@@ -577,12 +585,27 @@ function PedidoDetalleDialog({ pedido, onOpenChange }: PedidoDetalleDialogProps)
 function PerfilTab() {
   const { nombre, updateProfile } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingPassword, setIsLoadingPassword] = useState(false);
+
+  const { data: perfil, mutate } = useSWR<ClientePerfilResponse>(
+    "perfil-cliente",
+    obtenerPerfil,
+    { revalidateOnFocus: false }
+  );
 
   const form = useForm<PerfilFormData>({
     resolver: zodResolver(perfilSchema),
+    values: {
+      nombre: perfil?.nombre ?? nombre ?? "",
+      telefono: perfil?.telefono ?? "",
+    },
+  });
+
+  const passwordForm = useForm<PasswordFormData>({
+    resolver: zodResolver(passwordSchema),
     defaultValues: {
-      nombre: nombre ?? "",
-      telefono: "",
+      passwordActual: "",
+      nuevaPassword: "",
     },
   });
 
@@ -591,6 +614,7 @@ function PerfilTab() {
     try {
       const res = await actualizarPerfil(data);
       updateProfile(res.nombre, res.telefono);
+      mutate();
       toast.success("Perfil actualizado correctamente.");
     } catch (error) {
       toast.error(
@@ -601,8 +625,36 @@ function PerfilTab() {
     }
   };
 
+  const handlePasswordSubmit = async (data: PasswordFormData) => {
+    setIsLoadingPassword(true);
+    try {
+      await authFetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/perfil/password`,
+        {
+          method: "PUT",
+          body: JSON.stringify(data),
+        }
+      );
+      toast.success("Contraseña cambiada correctamente.");
+      passwordForm.reset();
+    } catch (error) {
+      let mensaje = "Error al cambiar la contraseña.";
+      if (error instanceof Error) {
+        try {
+          const parsed = JSON.parse(error.message);
+          mensaje = parsed.message || mensaje;
+        } catch {
+          mensaje = error.message || mensaje;
+        }
+      }
+      toast.error(mensaje);
+    } finally {
+      setIsLoadingPassword(false);
+    }
+  };
+
   return (
-    <div className="mt-6 max-w-md">
+    <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
       <Card>
         <CardHeader>
           <CardTitle>Editar Perfil</CardTitle>
@@ -652,6 +704,61 @@ function PerfilTab() {
                 </>
               ) : (
                 "Guardar cambios"
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Cambiar Contraseña</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form
+            onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="password-actual">Contraseña actual</Label>
+              <Input
+                id="password-actual"
+                type="password"
+                placeholder="Tu contraseña actual"
+                {...passwordForm.register("passwordActual")}
+                disabled={isLoadingPassword}
+              />
+              {passwordForm.formState.errors.passwordActual && (
+                <p className="text-sm text-red-500">
+                  {passwordForm.formState.errors.passwordActual.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="nueva-password">Nueva contraseña</Label>
+              <Input
+                id="nueva-password"
+                type="password"
+                placeholder="Tu nueva contraseña"
+                {...passwordForm.register("nuevaPassword")}
+                disabled={isLoadingPassword}
+              />
+              {passwordForm.formState.errors.nuevaPassword && (
+                <p className="text-sm text-red-500">
+                  {passwordForm.formState.errors.nuevaPassword.message}
+                </p>
+              )}
+            </div>
+
+            <Button type="submit" disabled={isLoadingPassword}>
+              {isLoadingPassword ? (
+                <>
+                  <LoaderIcon className="size-4 animate-spin" />
+                  Cambiando...
+                </>
+              ) : (
+                "Cambiar contraseña"
               )}
             </Button>
           </form>

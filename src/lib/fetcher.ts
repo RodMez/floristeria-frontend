@@ -1,6 +1,6 @@
 import Cookies from 'js-cookie';
 import { toast } from 'sonner';
-import { ClienteAuthResponse, RegisterClienteRequest, PedidoHistorial, DireccionRequest, DireccionResponse, ActualizarPerfilRequest } from '@/types';
+import { ClienteAuthResponse, RegisterClienteRequest, PedidoHistorial, DireccionRequest, DireccionResponse, ActualizarPerfilRequest, ClientePerfilResponse } from '@/types';
 
 /**
  * Flag global para evitar múltiples redirecciones/toasts
@@ -155,6 +155,16 @@ export function actualizarPerfil(data: ActualizarPerfilRequest): Promise<{ nombr
       method: 'PUT',
       body: JSON.stringify(data),
     }
+  );
+}
+
+/**
+ * Obtiene el perfil del cliente autenticado.
+ * GET /api/v1/clientes/perfil
+ */
+export function obtenerPerfil(): Promise<ClientePerfilResponse> {
+  return authFetch<ClientePerfilResponse>(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/perfil`
   );
 }
 
