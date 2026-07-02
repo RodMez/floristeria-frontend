@@ -9,7 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Settings, Save } from "lucide-react";
+import { Settings, Save, Copy } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -56,6 +64,13 @@ export default function ConfiguracionPage() {
   });
 
   const watchedEnviarCopia = watch("enviarCopiaMaestro");
+
+  const metaFeedUrl = `${API_URL}/api/v1/catalogo/meta-feed`;
+
+  const handleCopyMetaFeed = () => {
+    navigator.clipboard.writeText(metaFeedUrl);
+    toast.success("Enlace copiado al portapapeles");
+  };
 
   useEffect(() => {
     if (configuracion) {
@@ -174,6 +189,26 @@ export default function ConfiguracionPage() {
           </div>
         </form>
       </div>
+
+      <Separator className="my-6" />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Integración con Meta Business (Facebook/Instagram)</CardTitle>
+          <CardDescription>
+            Copia este enlace y pégalo en tu Administrador de Ventas de Meta
+            para sincronizar tu catálogo de productos automáticamente.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2">
+            <Input readOnly value={metaFeedUrl} className="flex-1 font-mono text-sm" />
+            <Button type="button" variant="outline" onClick={handleCopyMetaFeed}>
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
