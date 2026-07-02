@@ -274,6 +274,13 @@ export interface ActualizarPerfilRequest {
   telefono: string;
 }
 
+export interface ClientePerfilResponse {
+  id: number;
+  nombre: string;
+  email: string;
+  telefono: string;
+}
+
 export interface ZonaDomicilioResponse {
   id: number;
   sedeId: number;
