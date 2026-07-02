@@ -23,6 +23,19 @@ export interface ProductoCatalogo {
   disponible: boolean;
 }
 
+export interface ProductoDetalleDTO {
+  productoId: number;
+  sku: string;
+  nombre: string;
+  descripcion: string;
+  imagenUrl: string;
+  categorias: { id: number; nombre: string }[];
+  precio: number;
+  descuentoPorcentaje: number;
+  stock: number;
+  disponible: boolean;
+}
+
 export interface DetallePedidoRequest {
   productoId: number;
   cantidad: number;
