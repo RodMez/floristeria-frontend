@@ -815,7 +815,11 @@ function DireccionDialog({
   const { data: sedes } = useSWR<Sede[]>(API_SEDES_URL, fetcher, {
     revalidateOnFocus: false,
   });
-  const ciudades = [...new Set(sedes?.map((s) => s.ciudad) ?? [])].sort();
+  const sedesOptions = sedes?.map((s) => ({
+    id: s.id,
+    label: `${s.nombre} - ${s.ciudad}`,
+    ciudad: s.ciudad,
+  })) ?? [];
 
   const [form, setForm] = useState<DireccionRequest>({
     alias: "",
@@ -826,11 +830,11 @@ function DireccionDialog({
   });
 
   // ── Zona de Domicilio (Selects Dependientes) ───────────────
-  const sedeParaCiudad = sedes?.find((s) => s.ciudad === form.ciudad);
+  const [selectedSedeId, setSelectedSedeId] = useState<number | null>(null);
 
   const { data: zonas } = useSWR<ZonaDomicilioResponse[]>(
-    sedeParaCiudad
-      ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1/zonas-domicilio/sede/${sedeParaCiudad.id}`
+    selectedSedeId
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1/zonas-domicilio/sede/${selectedSedeId}`
       : null,
     fetcher
   );
@@ -871,6 +875,22 @@ function DireccionDialog({
     setForm((prev) => ({ ...prev, zonaDomicilioId: zonaId }));
   };
 
+  const handleSedeChange = (sedeId: string | null) => {
+    if (!sedeId || sedeId === "__none") return;
+    const sede = sedesOptions.find((s) => s.id === Number(sedeId));
+    if (!sede) return;
+
+    setSelectedSedeId(sede.id);
+    setForm((prev) => ({
+      ...prev,
+      ciudad: sede.ciudad,
+      zonaDomicilioId: 0,
+    }));
+    setSelectedLocalidad("");
+    setSelectedBarrio("");
+    setSelectedZonaId(null);
+  };
+
   useEffect(() => {
     if (open) {
       if (direccion) {
@@ -882,14 +902,17 @@ function DireccionDialog({
           zonaDomicilioId: direccion.zonaDomicilioId ?? 0,
         });
         setSelectedZonaId(direccion.zonaDomicilioId ?? null);
+        const sedeEncontrada = sedes?.find((s) => s.ciudad === direccion.ciudad);
+        setSelectedSedeId(sedeEncontrada?.id ?? null);
       } else {
         setForm({ alias: "", direccion: "", ciudad: "", detalles: "", zonaDomicilioId: 0 });
         setSelectedLocalidad("");
         setSelectedBarrio("");
         setSelectedZonaId(null);
+        setSelectedSedeId(null);
       }
     }
-  }, [open, direccion]);
+  }, [open, direccion, sedes]);
 
   // Pre-seleccionar localidad y barrio al editar
   useEffect(() => {
@@ -990,24 +1013,22 @@ function DireccionDialog({
           <div className="space-y-2">
             <Label htmlFor="dialog-ciudad">Sede de Despacho *</Label>
             <Select
-              value={form.ciudad}
-              onValueChange={(value) => {
-                if (value && value !== "__none") handleChange("ciudad", value);
-              }}
+              value={selectedSedeId?.toString() ?? ""}
+              onValueChange={handleSedeChange}
               disabled={isSubmitting || !sedes}
             >
               <SelectTrigger id="dialog-ciudad">
                 <SelectValue
                   placeholder={
-                    !sedes ? "Cargando ciudades..." : "Selecciona una ciudad"
+                    !sedes ? "Cargando sedes..." : "Selecciona una sede"
                   }
                 />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__none">Selecciona una ciudad...</SelectItem>
-                {ciudades.map((ciudad) => (
-                  <SelectItem key={ciudad} value={ciudad}>
-                    {ciudad}
+                <SelectItem value="__none">Selecciona una sede...</SelectItem>
+                {sedesOptions.map((sede) => (
+                  <SelectItem key={sede.id} value={sede.id.toString()}>
+                    {sede.label}
                   </SelectItem>
                 ))}
               </SelectContent>
