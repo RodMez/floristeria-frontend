@@ -16,6 +16,7 @@ import {
   Users,
   Menu,
   MapPin,
+  Settings,
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -58,6 +59,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/categorias", label: "Categorías", icon: Tags },
     { href: "/admin/sedes", label: "Sedes", icon: Building2 },
     { href: "/admin/usuarios", label: "Usuarios", icon: Users },
+    { href: "/admin/configuracion", label: "Configuración", icon: Settings },
   ];
 
   return (
