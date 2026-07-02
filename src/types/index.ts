@@ -272,3 +272,8 @@ export interface ZonaDomicilioRequest {
   barrio?: string;
   precio: number;
 }
+
+export interface ConfiguracionTiendaDTO {
+  correoMaestro: string | null;
+  enviarCopiaMaestro: boolean;
+}
