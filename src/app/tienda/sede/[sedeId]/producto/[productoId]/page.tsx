@@ -77,11 +77,7 @@ export default function ProductoPage() {
     [sedes, sedeId]
   );
 
-  const tieneDescuento = producto?.descuentoPorcentaje ? producto.descuentoPorcentaje > 0 : false;
-  const precioFinal = useMemo(() => {
-    if (!producto) return 0;
-    return producto.precio - (producto.precio * producto.descuentoPorcentaje) / 100;
-  }, [producto]);
+  const tieneDescuento = (producto?.descuentoPorcentaje ?? 0) > 0;
 
   const isAgotado = producto ? !producto.disponible || producto.stock === 0 : false;
 
@@ -92,8 +88,8 @@ export default function ProductoPage() {
       {
         id: String(producto.productoId),
         nombre: producto.nombre,
-        precio: producto.precio,
-        descuentoPorcentaje: producto.descuentoPorcentaje,
+        precio: producto.precioBase,
+        descuentoPorcentaje: producto.descuentoPorcentaje ?? 0,
         cantidad,
         imagen_url: producto.imagenUrl,
         sede_id: String(sede.id),
@@ -164,17 +160,6 @@ export default function ProductoPage() {
 
         {/* Columna derecha - Información */}
         <div className="flex flex-col">
-          {/* Categorías */}
-          {producto.categorias && producto.categorias.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {producto.categorias.map((cat) => (
-                <Badge key={cat.id} variant="secondary" className="text-xs">
-                  {cat.nombre}
-                </Badge>
-              ))}
-            </div>
-          )}
-
           {/* Título */}
           <h1 className="text-3xl font-bold text-stone-800 mb-2">
             {producto.nombre}
@@ -193,15 +178,15 @@ export default function ProductoPage() {
                   -{producto.descuentoPorcentaje}% OFF
                 </Badge>
                 <span className="text-lg text-stone-400 line-through">
-                  {formatPrecio(producto.precio)}
+                  {formatPrecio(producto.precioBase)}
                 </span>
                 <span className="text-4xl font-extrabold text-primary">
-                  {formatPrecio(precioFinal)}
+                  {formatPrecio(producto.precioFinal)}
                 </span>
               </>
             ) : (
               <span className="text-4xl font-extrabold text-primary">
-                {formatPrecio(producto.precio)}
+                {formatPrecio(producto.precioBase)}
               </span>
             )}
           </div>

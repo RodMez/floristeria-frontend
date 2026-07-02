@@ -24,14 +24,17 @@ export interface ProductoCatalogo {
 }
 
 export interface ProductoDetalleDTO {
+  inventarioId: number;
   productoId: number;
-  sku: string;
   nombre: string;
   descripcion: string;
   imagenUrl: string;
-  categorias: { id: number; nombre: string }[];
-  precio: number;
-  descuentoPorcentaje: number;
+  sku: string;
+  sedeId: number;
+  sedeNombre: string;
+  precioBase: number;
+  descuentoPorcentaje: number | null;
+  precioFinal: number;
   stock: number;
   disponible: boolean;
 }
