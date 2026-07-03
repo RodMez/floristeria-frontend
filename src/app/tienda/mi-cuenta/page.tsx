@@ -766,9 +766,16 @@ function DireccionesTab() {
   );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingDireccion, setEditingDireccion] = useState<DireccionResponse | null>(null);
+  const [direccionToDelete, setDireccionToDelete] = useState<DireccionResponse | null>(null);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("¿Estás seguro de eliminar esta dirección?")) return;
+  const handleDelete = (dir: DireccionResponse) => {
+    setDireccionToDelete(dir);
+  };
+
+  const confirmDelete = async () => {
+    if (!direccionToDelete) return;
+    const id = direccionToDelete.id;
+    setDireccionToDelete(null);
 
     try {
       await eliminarDireccion(id);
@@ -852,7 +859,7 @@ function DireccionesTab() {
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      onClick={() => handleDelete(dir.id)}
+                      onClick={() => handleDelete(dir)}
                     >
                       <Trash2Icon className="size-4" />
                     </Button>
@@ -885,6 +892,25 @@ function DireccionesTab() {
         direccion={editingDireccion}
         onSaved={handleSaved}
       />
+
+      <Dialog open={direccionToDelete !== null} onOpenChange={(open) => { if (!open) setDireccionToDelete(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar dirección</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de eliminar la dirección &ldquo;{direccionToDelete?.alias}&rdquo;? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDireccionToDelete(null)}>
+              No, volver
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Sí, eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

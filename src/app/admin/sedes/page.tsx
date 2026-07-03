@@ -19,6 +19,8 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -63,6 +65,7 @@ export default function SedesPage() {
   const [editingSede, setEditingSede] = useState<Sede | null>(null);
   const [form, setForm] = useState<SedeForm>(emptyForm);
   const [isLoading, setIsLoading] = useState(false);
+  const [sedeToDelete, setSedeToDelete] = useState<Sede | null>(null);
 
   const { data: sedes, error, mutate } = useSWR<Sede[]>(
     `${API_URL}/api/superadmin/sedes`,
@@ -119,7 +122,7 @@ export default function SedesPage() {
 
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.message || "Error al guardar la sede");
+        throw new Error(errData.mensaje || errData.message || "Error al guardar la sede");
       }
 
       toast.success(isEditing ? "Sede actualizada correctamente" : "Sede creada correctamente");
@@ -133,8 +136,14 @@ export default function SedesPage() {
     }
   };
 
-  const handleDelete = async (sede: Sede) => {
-    if (!window.confirm(`¿Eliminar la sede "${sede.nombre}"?`)) return;
+  const handleDelete = (sede: Sede) => {
+    setSedeToDelete(sede);
+  };
+
+  const confirmDelete = async () => {
+    if (!sedeToDelete) return;
+    const sede = sedeToDelete;
+    setSedeToDelete(null);
 
     const token = Cookies.get("token");
     try {
@@ -413,6 +422,25 @@ export default function SedesPage() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={sedeToDelete !== null} onOpenChange={(open) => { if (!open) setSedeToDelete(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar sede</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de eliminar la sede &ldquo;{sedeToDelete?.nombre}&rdquo;? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSedeToDelete(null)}>
+              No, volver
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Sí, eliminar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -19,6 +19,8 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -33,6 +35,7 @@ export default function CategoriasPage() {
   const [editingCategoria, setEditingCategoria] = useState<CategoriaResponse | null>(null);
   const [nombre, setNombre] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [categoriaToDelete, setCategoriaToDelete] = useState<CategoriaResponse | null>(null);
 
   const { data: categorias, error, mutate } = useSWR<CategoriaResponse[]>(
     `${API_URL}/api/superadmin/categorias`,
@@ -89,8 +92,14 @@ export default function CategoriasPage() {
     }
   };
 
-  const handleDelete = async (categoria: CategoriaResponse) => {
-    if (!window.confirm(`¿Eliminar la categoría "${categoria.nombre}"?`)) return;
+  const handleDelete = (categoria: CategoriaResponse) => {
+    setCategoriaToDelete(categoria);
+  };
+
+  const confirmDelete = async () => {
+    if (!categoriaToDelete) return;
+    const categoria = categoriaToDelete;
+    setCategoriaToDelete(null);
 
     const token = Cookies.get("token");
     try {
@@ -102,7 +111,7 @@ export default function CategoriasPage() {
       });
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.message || "Error al eliminar");
+        throw new Error(errData.mensaje || errData.message || "Error al eliminar");
       }
       toast.success("Categoría eliminada correctamente");
       mutate();
@@ -249,6 +258,25 @@ export default function CategoriasPage() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={categoriaToDelete !== null} onOpenChange={(open) => { if (!open) setCategoriaToDelete(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar categoría</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de eliminar la categoría &ldquo;{categoriaToDelete?.nombre}&rdquo;? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCategoriaToDelete(null)}>
+              No, volver
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Sí, eliminar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

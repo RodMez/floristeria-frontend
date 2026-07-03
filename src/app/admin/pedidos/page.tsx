@@ -143,6 +143,14 @@ export default function PedidosPage() {
     });
   };
 
+  const formatDateSolo = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("es-CO", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  };
+
   const generarPDF = (pedido: PedidoAdminResponse) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -358,7 +366,7 @@ export default function PedidosPage() {
               <TableHead className="text-right">Total</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Fecha</TableHead>
-              <TableHead>Acciones</TableHead>
+              <TableHead>Detalles</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -409,7 +417,7 @@ export default function PedidosPage() {
                   </Select>
                 </TableCell>
                 <TableCell className="text-sm text-stone-600">
-                  {formatDate(item.creadoEn)}
+                  {formatDateSolo(item.creadoEn)}
                 </TableCell>
                 <TableCell>
                   <Button

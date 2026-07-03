@@ -19,6 +19,8 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -60,6 +62,7 @@ export default function ZonasDomicilioPage() {
   const [localidadFocused, setLocalidadFocused] = useState(false);
   const [barrioSearch, setBarrioSearch] = useState("");
   const [barrioFocused, setBarrioFocused] = useState(false);
+  const [zonaToDelete, setZonaToDelete] = useState<ZonaDomicilioResponse | null>(null);
 
   const {
     register,
@@ -219,7 +222,7 @@ export default function ZonasDomicilioPage() {
 
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.message || "Error al guardar la zona de domicilio");
+        throw new Error(errData.mensaje || errData.message || "Error al guardar la zona de domicilio");
       }
 
       toast.success(isEditing ? "Zona actualizada correctamente" : "Zona creada correctamente");
@@ -233,9 +236,14 @@ export default function ZonasDomicilioPage() {
     }
   };
 
-  const handleDelete = async (zona: ZonaDomicilioResponse) => {
-    const nombreZona = `${zona.localidad}${zona.barrio ? ` - ${zona.barrio}` : ""}`;
-    if (!window.confirm(`¿Eliminar la zona "${nombreZona}"?`)) return;
+  const handleDelete = (zona: ZonaDomicilioResponse) => {
+    setZonaToDelete(zona);
+  };
+
+  const confirmDelete = async () => {
+    if (!zonaToDelete) return;
+    const zona = zonaToDelete;
+    setZonaToDelete(null);
 
     const token = Cookies.get("token");
     const deleteUrl = rol === "SUPERADMIN"
@@ -525,6 +533,25 @@ export default function ZonasDomicilioPage() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={zonaToDelete !== null} onOpenChange={(open) => { if (!open) setZonaToDelete(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar zona de domicilio</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de eliminar la zona &ldquo;{zonaToDelete?.localidad}{zonaToDelete?.barrio ? ` - ${zonaToDelete.barrio}` : ""}&rdquo;? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setZonaToDelete(null)}>
+              No, volver
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Sí, eliminar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
