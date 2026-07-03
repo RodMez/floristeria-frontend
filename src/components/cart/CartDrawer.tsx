@@ -107,7 +107,7 @@ export default function CartDrawer() {
                         </Button>
                       </div>
                       <Textarea
-                        placeholder="Nota de personalización..."
+                        placeholder="Ej: Rosa sin espinas, incluir tarjeta con mensaje..."
                         className="mt-2 h-16 text-xs"
                         value={item.notaPersonalizacion || ""}
                         onChange={(e) => updateNota(item.id, e.target.value)}

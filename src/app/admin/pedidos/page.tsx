@@ -433,7 +433,7 @@ export default function PedidosPage() {
           if (!open) setPedidoSeleccionado(null);
         }}
       >
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg ring-0 border border-border">
           <DialogHeader>
             <DialogTitle>Pedido #{pedidoSeleccionado?.id}</DialogTitle>
             <DialogDescription>
@@ -450,7 +450,7 @@ export default function PedidosPage() {
               <div className="bg-stone-50 rounded-lg p-3 space-y-1.5 text-sm">
                 <div className="flex justify-between">
                   <span className="text-stone-500">Referencia</span>
-                  <span className="font-mono text-xs">
+                  <span className="font-mono text-xs break-all">
                     {pedidoSeleccionado?.referenciaPago || "—"}
                   </span>
                 </div>
@@ -462,7 +462,7 @@ export default function PedidosPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-stone-500">Transacción</span>
-                  <span className="font-mono text-xs">
+                  <span className="font-mono text-xs break-all">
                     {pedidoSeleccionado?.transaccionId || "—"}
                   </span>
                 </div>
@@ -488,7 +488,7 @@ export default function PedidosPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-stone-500">Dirección</span>
-                  <span className="text-right max-w-[60%]">
+                  <span className="text-right max-w-[60%] break-words">
                     {pedidoSeleccionado?.direccionEntrega?.direccion || "—"}
                   </span>
                 </div>
@@ -499,7 +499,7 @@ export default function PedidosPage() {
                 {pedidoSeleccionado?.direccionEntrega?.detalles && (
                   <div className="flex justify-between">
                     <span className="text-stone-500">Detalles</span>
-                    <span className="text-right max-w-[60%]">
+                    <span className="text-right max-w-[60%] break-words">
                       {pedidoSeleccionado.direccionEntrega.detalles}
                     </span>
                   </div>
@@ -516,6 +516,14 @@ export default function PedidosPage() {
                     {formatCurrency(pedidoSeleccionado?.costoEnvio ?? 0)}
                   </span>
                 </div>
+                {pedidoSeleccionado?.notasEntrega && (
+                  <div className="flex justify-between border-t pt-1.5 mt-1.5">
+                    <span className="text-stone-500">Notas de Entrega</span>
+                    <span className="text-right max-w-[60%] break-words">
+                      {pedidoSeleccionado.notasEntrega}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -535,13 +543,13 @@ export default function PedidosPage() {
                   <TableBody>
                     {pedidoSeleccionado?.detalles?.map((d, i) => (
                       <TableRow key={i}>
-                        <TableCell className="text-sm font-medium">
+                        <TableCell className="text-sm font-medium w-[calc(100%-120px)] whitespace-normal">
                           {d.productoNombre}
                           <span className="block text-xs text-stone-400 font-normal">
                             {d.productoSku}
                           </span>
                           {d.notaPersonalizacion && (
-                            <span className="block text-xs text-stone-400 italic font-normal">
+                            <span className="block text-xs text-stone-400 italic font-normal break-words">
                               Nota: {d.notaPersonalizacion}
                             </span>
                           )}
