@@ -28,7 +28,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function InventarioPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filtroEstado, setFiltroEstado] = useState<string>("Todos");
+  const [filtroEstado, setFiltroEstado] = useState<string>("");
 
   const { data, error, mutate } = useSWR<InventarioResponse[]>(
     `${API_URL}/api/admin/inventario`,
@@ -70,7 +70,7 @@ export default function InventarioPage() {
       (item.sedeNombre?.toLowerCase() ?? "").includes(searchTerm.toLowerCase());
 
     const itemEstado = item.disponible && item.stock > 0 ? "Disponible" : "Agotado";
-    const matchesEstado = filtroEstado === "Todos" || itemEstado === filtroEstado;
+    const matchesEstado = filtroEstado === "" || itemEstado === filtroEstado;
 
     return matchesSearch && matchesEstado;
   });
@@ -103,7 +103,7 @@ export default function InventarioPage() {
             <SelectValue placeholder="Filtrar estado" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="Todos">Todos</SelectItem>
+            <SelectItem value="">Todos los estados</SelectItem>
             <SelectItem value="Disponible">Disponible</SelectItem>
             <SelectItem value="Agotado">Agotado</SelectItem>
           </SelectContent>
