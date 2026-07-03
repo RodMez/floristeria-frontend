@@ -15,6 +15,7 @@ import ResumenPedido from "@/components/checkout/ResumenPedido";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { LoaderIcon, ShoppingCartIcon, MapPinIcon } from "lucide-react";
 
 const API_PEDIDOS_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/pedidos`;
@@ -28,6 +29,7 @@ export default function CheckoutPage() {
   const [selectedDireccionId, setSelectedDireccionId] = useState<number | null>(null);
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notasEntrega, setNotasEntrega] = useState("");
 
   // ── Fetch de zonas (para calcular costoEnvio) ─────────────
   const { data: zonas } = useSWR<ZonaDomicilioResponse[]>(
@@ -164,6 +166,7 @@ export default function CheckoutPage() {
           sedeId: sedeActual.id,
           direccionId: selectedDireccionId,
           detalles,
+          notasEntrega: notasEntrega || undefined,
         }),
       });
 
@@ -216,6 +219,23 @@ export default function CheckoutPage() {
             selectedDireccionId={selectedDireccionId}
             onSelect={setSelectedDireccionId}
           />
+
+          <div className="mt-4">
+            <Label htmlFor="notas-entrega" className="text-sm text-muted-foreground">
+              Notas de entrega <span className="text-xs text-muted-foreground">(opcional)</span>
+            </Label>
+            <p className="text-xs text-muted-foreground mb-1">
+              Instrucciones sobre cuándo o cómo entregar el pedido
+            </p>
+            <Textarea
+              id="notas-entrega"
+              placeholder="Ej: Llamar antes de llegar, entregar solo en horario de la mañana, dejar con el conserje..."
+              value={notasEntrega}
+              onChange={(e) => setNotasEntrega(e.target.value)}
+              rows={2}
+              className="mt-1"
+            />
+          </div>
         </section>
 
         {/* ── Columna derecha: Resumen + Acción ──────────────── */}

@@ -224,9 +224,16 @@ export default function AdminPage() {
                 </div>
                 <div className="flex items-start gap-1.5 mt-2">
                   <StickyNote className="h-3 w-3 text-stone-400 mt-0.5 shrink-0" />
-                  <p className="text-xs text-stone-500 line-clamp-2">
-                    {pedido.notasEntrega || <span className="text-stone-300 italic">Sin notas</span>}
-                  </p>
+                  {pedido.detalles?.some(d => d.notaPersonalizacion) ? (
+                    <p className="text-xs text-stone-500 line-clamp-2">
+                      {pedido.detalles
+                        .filter(d => d.notaPersonalizacion)
+                        .map(d => `${d.productoNombre}: ${d.notaPersonalizacion}`)
+                        .join(' · ')}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-stone-300 italic">Sin notas</p>
+                  )}
                 </div>
                 {pedido.direccionEntrega && (
                   <div className="flex items-start gap-1.5 mt-1">
