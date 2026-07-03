@@ -56,10 +56,10 @@ function getOpcionesPermitidas(estadoActual: string): string[] {
 }
 
 export default function PedidosPage() {
-  const [filtroEstado, setFiltroEstado] = useState<string>("Todos");
-  const [filtroSede, setFiltroSede] = useState<string>("Todas");
+  const [filtroEstado, setFiltroEstado] = useState<string>("");
+  const [filtroSede, setFiltroSede] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [pedidoACancelar, setPedidoACancelar] = useState<number | null>(null);
+  const [pedidoACancelar, setPedidoACancelar] = useState<string | null>(null);
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState<PedidoAdminResponse | null>(null);
 
   const { data, error, mutate } = useSWR<PedidoAdminResponse[]>(
@@ -72,7 +72,7 @@ export default function PedidosPage() {
 
   const sedesUnicas = [...new Set((data ?? []).map((p) => p.sedeNombre))].sort();
 
-  const handleStatusChange = async (pedidoId: number, nuevoEstado: string) => {
+  const handleStatusChange = async (pedidoId: string, nuevoEstado: string) => {
     const toastId = toast.loading("Actualizando estado...");
     try {
       const token = Cookies.get("token");
@@ -282,9 +282,9 @@ export default function PedidosPage() {
   };
 
   const pedidosFiltrados = [...(data ?? [])]
-    .filter((p) => filtroEstado === "Todos" || p.estado === filtroEstado)
-    .filter((p) => filtroSede === "Todas" || p.sedeNombre === filtroSede)
-    .sort((a, b) => b.id - a.id);
+    .filter((p) => filtroEstado === "" || p.estado === filtroEstado)
+    .filter((p) => filtroSede === "" || p.sedeNombre === filtroSede)
+    .sort((a, b) => (b.id ?? "").localeCompare(a.id ?? ""));
 
   // Filtro de búsqueda local
   const pedidosConBusqueda = pedidosFiltrados.filter((p) =>
@@ -308,7 +308,7 @@ export default function PedidosPage() {
               <SelectValue placeholder="Filtrar estado" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Todos">Todos los estados</SelectItem>
+              <SelectItem value="">Todos los estados</SelectItem>
               {ORDER_STATUSES.map((status) => (
                 <SelectItem key={status} value={status}>
                   {ORDER_STATUS_LABELS[status]}
@@ -321,7 +321,7 @@ export default function PedidosPage() {
               <SelectValue placeholder="Filtrar sede" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Todas">Todas las sedes</SelectItem>
+              <SelectItem value="">Todas las sedes</SelectItem>
               {sedesUnicas.map((sede) => (
                 <SelectItem key={sede} value={sede}>
                   {sede}
@@ -350,6 +350,7 @@ export default function PedidosPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Pedido</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Teléfono</TableHead>
               <TableHead>Sede</TableHead>
@@ -363,6 +364,7 @@ export default function PedidosPage() {
           <TableBody>
                       {pedidosConBusqueda.map((item) => (
               <TableRow key={item.id}>
+                <TableCell className="font-mono text-sm">{item.id}</TableCell>
                 <TableCell className="font-medium">{item.clienteNombre ?? "—"}</TableCell>
                 <TableCell>{item.clienteTelefono ?? "—"}</TableCell>
                 <TableCell>{item.sedeNombre ?? "—"}</TableCell>

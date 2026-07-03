@@ -145,7 +145,7 @@ export interface UsuarioAdminRequest {
 }
 
 export interface PedidoResponse {
-  id: number;
+  id: string;
   clienteNombre: string;
   clienteTelefono: string;
   total: number;
@@ -169,7 +169,7 @@ export interface DetallePedidoAdminDTO {
 }
 
 export interface PedidoAdminResponse {
-  id: number;
+  id: string;
   clienteNombre: string;
   clienteEmail: string;
   clienteTelefono: string;
@@ -184,6 +184,7 @@ export interface PedidoAdminResponse {
   estado: string;
   transaccionId: string;
   creadoEn: string;
+  notasEntrega: string | null;
 }
 
 // Constantes de estados de pedido
@@ -237,7 +238,7 @@ export interface DireccionRequest {
 
 // Respuesta al crear un pedido desde Checkout
 export interface CrearPedidoResponse {
-  pedidoId: number;
+  pedidoId: string;
   total: number;
   referenciaWompi: string;
   montoEnCentavos: number;
@@ -256,7 +257,7 @@ export interface DetallePedidoHistorialDTO {
 
 // Historial de pedidos del cliente (enriquecido)
 export interface PedidoHistorial {
-  id: number;
+  id: string;
   total: number;
   costoEnvio: number;
   zonaDomicilioNombre: string;
