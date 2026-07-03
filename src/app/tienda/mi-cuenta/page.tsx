@@ -18,6 +18,7 @@ import {
 import {
   PedidoHistorial,
   ORDER_STATUS_LABELS,
+  ORDER_STATUS_COLORS,
   DireccionResponse,
   DireccionRequest,
   Sede,
@@ -76,19 +77,6 @@ import jsPDF from "jspdf";
 const API_PEDIDOS_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/pedidos`;
 const API_DIRECCIONES_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/direcciones`;
 const API_SEDES_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/sedes`;
-
-const STATUS_BADGE_STYLES: Record<string, string> = {
-  PENDIENTE_PAGO:
-    "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200",
-  PAGADO: "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200",
-  EN_PREPARACION:
-    "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200",
-  EN_CAMINO:
-    "bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200",
-  ENTREGADO:
-    "bg-green-100 text-green-800 border-green-200 hover:bg-green-200",
-  CANCELADO: "bg-red-100 text-red-800 border-red-200 hover:bg-red-200",
-};
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("es-CO", {
@@ -251,8 +239,8 @@ function PedidosTab() {
                 <TableCell>
                   <Badge
                     className={
-                      STATUS_BADGE_STYLES[pedido.estado] ??
-                      "bg-gray-100 text-gray-800 border-gray-200"
+                      ORDER_STATUS_COLORS[pedido.estado as keyof typeof ORDER_STATUS_COLORS] ??
+                      "bg-stone-100 text-stone-700 border-stone-200"
                     }
                   >
                     {ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado}

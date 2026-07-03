@@ -5,6 +5,7 @@ import { fetcher } from "@/lib/fetcher";
 import {
   PedidoAdminResponse,
   ORDER_STATUS_LABELS,
+  ORDER_STATUS_COLORS,
 } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -23,16 +24,10 @@ import {
 } from "@/components/ui/select";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
-import { Package, ArrowRight, StickyNote } from "lucide-react";
+import { Package, ArrowRight, StickyNote, MapPin } from "lucide-react";
 import Link from "next/link";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
-
-const BADGE_COLORS: Record<string, string> = {
-  PAGADO: "bg-amber-100 text-amber-700 border-amber-200",
-  EN_PREPARACION: "bg-blue-100 text-blue-700 border-blue-200",
-  EN_CAMINO: "bg-purple-100 text-purple-700 border-purple-200",
-};
 
 function getOpcionesPermitidas(estadoActual: string): string[] {
   switch (estadoActual) {
@@ -194,9 +189,9 @@ export default function AdminPage() {
             <Card key={pedido.id}>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>Pedido #{pedido.id}</span>
+                  <span>Pedido {pedido.id}</span>
                   <Badge
-                    className={BADGE_COLORS[pedido.estado] ?? ""}
+                    className={ORDER_STATUS_COLORS[pedido.estado as keyof typeof ORDER_STATUS_COLORS] ?? "bg-stone-100 text-stone-700 border-stone-200"}
                   >
                     {ORDER_STATUS_LABELS[
                       pedido.estado as keyof typeof ORDER_STATUS_LABELS
@@ -227,11 +222,20 @@ export default function AdminPage() {
                     {resumenProductos(pedido)}
                   </p>
                 </div>
-                {pedido.notasEntrega && (
+                <div className="flex items-start gap-1.5 mt-2">
+                  <StickyNote className="h-3 w-3 text-stone-400 mt-0.5 shrink-0" />
+                  <p className="text-xs text-stone-500 line-clamp-2">
+                    {pedido.notasEntrega || <span className="text-stone-300 italic">Sin notas</span>}
+                  </p>
+                </div>
+                {pedido.direccionEntrega && (
                   <div className="flex items-start gap-1.5 mt-1">
-                    <StickyNote className="h-3 w-3 text-stone-400 mt-0.5 shrink-0" />
-                    <p className="text-xs text-stone-500 line-clamp-2">
-                      {pedido.notasEntrega}
+                    <MapPin className="h-3 w-3 text-stone-400 mt-0.5 shrink-0" />
+                    <p className="text-xs text-stone-500 break-words">
+                      {pedido.direccionEntrega.direccion}
+                      {pedido.zonaDomicilioNombre && (
+                        <span className="text-stone-400 ml-1">· {pedido.zonaDomicilioNombre}</span>
+                      )}
                     </p>
                   </div>
                 )}

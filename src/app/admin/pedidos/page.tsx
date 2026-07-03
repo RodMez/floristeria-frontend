@@ -4,7 +4,6 @@ import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { PedidoAdminResponse, ORDER_STATUSES, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from "@/types";
-import { Badge } from "@/components/ui/badge";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import {
@@ -33,6 +32,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Eye, Package, Search, Download } from "lucide-react";
+import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -373,37 +373,40 @@ export default function PedidosPage() {
                   {formatCurrency(item.total)}
                 </TableCell>
                 <TableCell>
-                  <div className="flex gap-2 items-center">
-                    <Badge variant={ORDER_STATUS_COLORS[item.estado as keyof typeof ORDER_STATUS_COLORS] ?? "secondary"}>
-                      {ORDER_STATUS_LABELS[item.estado as keyof typeof ORDER_STATUS_LABELS] ?? item.estado}
-                    </Badge>
-                    <Select
-                      value={item.estado}
-                      onValueChange={(value) => {
-                        if (value === null || value === item.estado) return;
-                        if (value === "CANCELADO") {
-                          setPedidoACancelar(item.id);
-                        } else {
-                          handleStatusChange(item.id, value);
-                        }
-                      }}
-                      disabled={getOpcionesPermitidas(item.estado).length === 0}
+                  <Select
+                    value={item.estado}
+                    onValueChange={(value) => {
+                      if (value === null || value === item.estado) return;
+                      if (value === "CANCELADO") {
+                        setPedidoACancelar(item.id);
+                      } else {
+                        handleStatusChange(item.id, value);
+                      }
+                    }}
+                    disabled={getOpcionesPermitidas(item.estado).length === 0}
+                  >
+                    <SelectTrigger
+                      className={cn(
+                        "h-7 rounded-full border px-3 text-xs font-medium",
+                        ORDER_STATUS_COLORS[item.estado as keyof typeof ORDER_STATUS_COLORS] ?? "bg-stone-100 text-stone-700 border-stone-200",
+                        getOpcionesPermitidas(item.estado).length > 0
+                          ? "cursor-pointer hover:opacity-80"
+                          : "cursor-default"
+                      )}
                     >
-                      <SelectTrigger className="w-[130px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={item.estado}>
-                          {ORDER_STATUS_LABELS[item.estado as keyof typeof ORDER_STATUS_LABELS]}
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={item.estado}>
+                        {ORDER_STATUS_LABELS[item.estado as keyof typeof ORDER_STATUS_LABELS]}
+                      </SelectItem>
+                      {getOpcionesPermitidas(item.estado).map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {ORDER_STATUS_LABELS[status as keyof typeof ORDER_STATUS_LABELS]}
                         </SelectItem>
-                        {getOpcionesPermitidas(item.estado).map((status) => (
-                          <SelectItem key={status} value={status}>
-                            {ORDER_STATUS_LABELS[status as keyof typeof ORDER_STATUS_LABELS]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </TableCell>
                 <TableCell className="text-sm text-stone-600">
                   {formatDate(item.creadoEn)}
