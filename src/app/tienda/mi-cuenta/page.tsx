@@ -1113,11 +1113,16 @@ function DireccionDialog({
               disabled={isSubmitting || !sedes}
             >
               <SelectTrigger id="dialog-ciudad">
-                <SelectValue
-                  placeholder={
-                    !sedes ? "Cargando sedes..." : "Selecciona una sede"
-                  }
-                />
+                {selectedSedeId && sedes
+                  ? (() => {
+                      const sede = sedes.find((s) => s.id === selectedSedeId);
+                      return sede ? `${sede.nombre} - ${sede.ciudad}` : null;
+                    })()
+                  : (
+                    <SelectValue placeholder={
+                      !sedes ? "Cargando sedes..." : "Selecciona una sede"
+                    } />
+                  )}
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__none">Selecciona una sede...</SelectItem>
