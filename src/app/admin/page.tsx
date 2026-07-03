@@ -5,7 +5,6 @@ import { fetcher } from "@/lib/fetcher";
 import {
   PedidoAdminResponse,
   ORDER_STATUS_LABELS,
-  ORDER_STATUS_COLORS,
 } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -24,10 +23,16 @@ import {
 } from "@/components/ui/select";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
-import { Package, ArrowRight } from "lucide-react";
+import { Package, ArrowRight, StickyNote } from "lucide-react";
 import Link from "next/link";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+
+const BADGE_COLORS: Record<string, string> = {
+  PAGADO: "bg-amber-100 text-amber-700 border-amber-200",
+  EN_PREPARACION: "bg-blue-100 text-blue-700 border-blue-200",
+  EN_CAMINO: "bg-purple-100 text-purple-700 border-purple-200",
+};
 
 function getOpcionesPermitidas(estadoActual: string): string[] {
   switch (estadoActual) {
@@ -64,7 +69,7 @@ export default function AdminPage() {
 
   const pedidosActivos = (data ?? [])
     .filter((p) => ["PAGADO", "EN_PREPARACION", "EN_CAMINO"].includes(p.estado))
-    .sort((a, b) => a.id - b.id);
+    .sort((a, b) => (a.id ?? "").localeCompare(b.id ?? ""));
 
   const conteoPorEstado = {
     PAGADO: pedidosActivos.filter((p) => p.estado === "PAGADO").length,
@@ -73,7 +78,7 @@ export default function AdminPage() {
     EN_CAMINO: pedidosActivos.filter((p) => p.estado === "EN_CAMINO").length,
   };
 
-  const handleStatusChange = async (pedidoId: number, nuevoEstado: string) => {
+  const handleStatusChange = async (pedidoId: string, nuevoEstado: string) => {
     const toastId = toast.loading("Actualizando estado...");
     try {
       const token = Cookies.get("token");
@@ -191,11 +196,7 @@ export default function AdminPage() {
                 <CardTitle className="flex items-center justify-between">
                   <span>Pedido #{pedido.id}</span>
                   <Badge
-                    variant={
-                      ORDER_STATUS_COLORS[
-                        pedido.estado as keyof typeof ORDER_STATUS_COLORS
-                      ] ?? "secondary"
-                    }
+                    className={BADGE_COLORS[pedido.estado] ?? ""}
                   >
                     {ORDER_STATUS_LABELS[
                       pedido.estado as keyof typeof ORDER_STATUS_LABELS
@@ -226,13 +227,21 @@ export default function AdminPage() {
                     {resumenProductos(pedido)}
                   </p>
                 </div>
+                {pedido.notasEntrega && (
+                  <div className="flex items-start gap-1.5 mt-1">
+                    <StickyNote className="h-3 w-3 text-stone-400 mt-0.5 shrink-0" />
+                    <p className="text-xs text-stone-500 line-clamp-2">
+                      {pedido.notasEntrega}
+                    </p>
+                  </div>
+                )}
               </CardContent>
 
               <CardFooter>
                 <Select
-                  value={pedido.estado}
+                  value=""
                   onValueChange={(value) => {
-                    if (value === null || value === pedido.estado) return;
+                    if (!value || value === pedido.estado) return;
                     handleStatusChange(pedido.id, value);
                   }}
                   disabled={
@@ -240,13 +249,11 @@ export default function AdminPage() {
                   }
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue />
+                    <SelectValue placeholder={ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={pedido.estado}>
-                      {ORDER_STATUS_LABELS[
-                        pedido.estado as keyof typeof ORDER_STATUS_LABELS
-                      ]}
+                    <SelectItem value="__placeholder__" disabled>
+                      {ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado}
                     </SelectItem>
                     {getOpcionesPermitidas(pedido.estado).map((status) => (
                       <SelectItem key={status} value={status}>

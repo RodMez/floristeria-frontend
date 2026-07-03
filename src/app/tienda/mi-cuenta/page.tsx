@@ -226,7 +226,7 @@ function PedidosTab() {
     );
   }
 
-  const pedidosOrdenados = [...data].sort((a, b) => b.id - a.id);
+  const pedidosOrdenados = [...data].sort((a, b) => (b.id ?? "").localeCompare(a.id ?? ""));
 
   return (
     <div className="mt-6">
