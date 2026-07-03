@@ -22,6 +22,8 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -63,6 +65,7 @@ export default function UsuariosPage() {
   const [editingUsuario, setEditingUsuario] =
     useState<UsuarioAdminResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [usuarioToDelete, setUsuarioToDelete] = useState<UsuarioAdminResponse | null>(null);
 
   const {
     data: usuarios,
@@ -201,8 +204,14 @@ export default function UsuariosPage() {
     }
   };
 
-  const handleDelete = async (usuario: UsuarioAdminResponse) => {
-    if (!window.confirm(`¿Eliminar el usuario "${usuario.nombre}"?`)) return;
+  const handleDelete = (usuario: UsuarioAdminResponse) => {
+    setUsuarioToDelete(usuario);
+  };
+
+  const confirmDelete = async () => {
+    if (!usuarioToDelete) return;
+    const usuario = usuarioToDelete;
+    setUsuarioToDelete(null);
 
     const token = Cookies.get("token");
     try {
@@ -217,7 +226,7 @@ export default function UsuariosPage() {
       );
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.message || "Error al eliminar");
+        throw new Error(errData.mensaje || errData.message || "Error al eliminar");
       }
       toast.success("Usuario eliminado correctamente");
       mutateUsuarios();
@@ -502,6 +511,25 @@ export default function UsuariosPage() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={usuarioToDelete !== null} onOpenChange={(open) => { if (!open) setUsuarioToDelete(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar usuario</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de eliminar el usuario &ldquo;{usuarioToDelete?.nombre}&rdquo;? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUsuarioToDelete(null)}>
+              No, volver
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Sí, eliminar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -16,6 +16,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { ProductDialog } from "@/components/admin/ProductDialog";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Flower2, Plus, Pencil, Trash2, Search } from "lucide-react";
 import Cookies from "js-cookie";
 import Image from "next/image";
@@ -26,6 +34,7 @@ export default function ProductosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [productoToEdit, setProductoToEdit] = useState<ProductoResponse | null>(null);
+  const [productoToDelete, setProductoToDelete] = useState<ProductoResponse | null>(null);
 
   const { data: productos, error, mutate } = useSWR<ProductoResponse[]>(
     `${API_URL}/api/superadmin/productos`,
@@ -49,8 +58,14 @@ export default function ProductosPage() {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (producto: ProductoResponse) => {
-    if (!window.confirm(`¿Eliminar el producto "${producto.nombre}"?`)) return;
+  const handleDelete = (producto: ProductoResponse) => {
+    setProductoToDelete(producto);
+  };
+
+  const confirmDelete = async () => {
+    if (!productoToDelete) return;
+    const producto = productoToDelete;
+    setProductoToDelete(null);
 
     const token = Cookies.get("token");
     try {
@@ -62,7 +77,7 @@ export default function ProductosPage() {
       });
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.message || "Error al eliminar");
+        throw new Error(errData.mensaje || errData.message || "Error al eliminar");
       }
       toast.success("Producto eliminado correctamente");
       mutate();
@@ -213,6 +228,25 @@ export default function ProductosPage() {
         categorias={categorias}
         mutate={mutate}
       />
+
+      <Dialog open={productoToDelete !== null} onOpenChange={(open) => { if (!open) setProductoToDelete(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar producto</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de eliminar el producto &ldquo;{productoToDelete?.nombre}&rdquo;? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProductoToDelete(null)}>
+              No, volver
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Sí, eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
