@@ -25,7 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Building2, Plus, Pencil, Trash2, Search } from "lucide-react";
-import { FaWhatsapp, FaInstagram, FaFacebook } from "react-icons/fa";
+import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 import Cookies from "js-cookie";
 import { z } from "zod";
@@ -38,6 +38,7 @@ const sedeSchema = z.object({
   telefonoWhatsapp: z.string().regex(/^[0-9+ ]+$/, "Solo se permiten números, espacios y el signo +"),
   instagramUrl: z.string().url("URL inválida").optional().or(z.literal("")),
   facebookUrl: z.string().url("URL inválida").optional().or(z.literal("")),
+  tiktokUrl: z.string().url("URL inválida").optional().or(z.literal("")),
   email: z.string().email("Correo inválido").optional().or(z.literal("")),
 });
 
@@ -47,6 +48,7 @@ interface SedeForm {
   telefonoWhatsapp: string;
   instagramUrl: string;
   facebookUrl: string;
+  tiktokUrl: string;
   email: string;
 }
 
@@ -56,6 +58,7 @@ const emptyForm: SedeForm = {
   telefonoWhatsapp: "",
   instagramUrl: "",
   facebookUrl: "",
+  tiktokUrl: "",
   email: "",
 };
 
@@ -87,6 +90,7 @@ export default function SedesPage() {
       telefonoWhatsapp: sede.telefonoWhatsapp,
       instagramUrl: sede.instagramUrl || "",
       facebookUrl: sede.facebookUrl || "",
+      tiktokUrl: sede.tiktokUrl || "",
       email: sede.email || "",
     });
     setDialogOpen(true);
@@ -298,6 +302,17 @@ export default function SedesPage() {
                         <FaFacebook className="h-4 w-4" />
                       </a>
                     )}
+                    {sede.tiktokUrl && (
+                      <a
+                        href={sede.tiktokUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-stone-900 text-white hover:bg-stone-700 transition-colors"
+                        title="TikTok"
+                      >
+                        <FaTiktok className="h-4 w-4" />
+                      </a>
+                    )}
                     {sede.email && (
                       <a
                         href={`mailto:${sede.email}`}
@@ -307,7 +322,7 @@ export default function SedesPage() {
                         <MdEmail className="h-4 w-4" />
                       </a>
                     )}
-                    {!sede.telefonoWhatsapp && !sede.instagramUrl && !sede.facebookUrl && !sede.email && (
+                    {!sede.telefonoWhatsapp && !sede.instagramUrl && !sede.facebookUrl && !sede.tiktokUrl && !sede.email && (
                       <span className="text-stone-400 text-sm">Sin contacto</span>
                     )}
                   </div>
@@ -394,6 +409,16 @@ export default function SedesPage() {
                 value={form.facebookUrl}
                 onChange={(e) => setForm({ ...form, facebookUrl: e.target.value })}
                 placeholder="https://facebook.com/tu-sede"
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tiktokUrl">TikTok URL (opcional)</Label>
+              <Input
+                id="tiktokUrl"
+                value={form.tiktokUrl}
+                onChange={(e) => setForm({ ...form, tiktokUrl: e.target.value })}
+                placeholder="https://tiktok.com/@tu-sede"
                 disabled={isLoading}
               />
             </div>

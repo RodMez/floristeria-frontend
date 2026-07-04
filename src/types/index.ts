@@ -5,6 +5,7 @@ export interface Sede {
   telefonoWhatsapp: string;
   instagramUrl?: string;
   facebookUrl?: string;
+  tiktokUrl?: string;
   email?: string;
 }
 
