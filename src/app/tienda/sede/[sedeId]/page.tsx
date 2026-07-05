@@ -44,7 +44,7 @@ export default function SedePage() {
   } = useSWR<ProductoCatalogo[]>(
     `${process.env.NEXT_PUBLIC_API_URL}/api/v1/catalogo/sede/${sedeId}`,
     fetcher,
-    { revalidateOnFocus: false }
+    { revalidateOnFocus: false, shouldRetryOnError: false }
   );
 
   const {
@@ -53,7 +53,7 @@ export default function SedePage() {
   } = useSWR<CategoriaResponse[]>(
     `${process.env.NEXT_PUBLIC_API_URL}/api/v1/categorias`,
     fetcher,
-    { revalidateOnFocus: false }
+    { revalidateOnFocus: false, shouldRetryOnError: false }
   );
 
   const {
@@ -62,7 +62,7 @@ export default function SedePage() {
   } = useSWR<Sede[]>(
     `${process.env.NEXT_PUBLIC_API_URL}/api/v1/sedes`,
     fetcher,
-    { revalidateOnFocus: false }
+    { revalidateOnFocus: false, shouldRetryOnError: false }
   );
 
   const sede = sedes?.find((s) => s.id === Number(sedeId)) ?? null;

@@ -46,7 +46,7 @@ export default function Home() {
   } = useSWR<Sede[]>(
     `${process.env.NEXT_PUBLIC_API_URL}/api/v1/sedes`,
     fetcher,
-    { revalidateOnFocus: false }
+    { revalidateOnFocus: false, shouldRetryOnError: false }
   );
 
   useEffect(() => {
