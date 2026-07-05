@@ -953,11 +953,12 @@ function DireccionDialog({
   // ── Zona de Domicilio (Selects Dependientes) ───────────────
   const [selectedSedeId, setSelectedSedeId] = useState<number | null>(null);
 
-  const { data: zonas } = useSWR<ZonaDomicilioResponse[]>(
+  const { data: zonas, isLoading: loadingZonas } = useSWR<ZonaDomicilioResponse[]>(
     selectedSedeId
       ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1/zonas-domicilio/sede/${selectedSedeId}`
       : null,
-    fetcher
+    fetcher,
+    { shouldRetryOnError: false }
   );
 
   const [selectedLocalidad, setSelectedLocalidad] = useState<string>("");
@@ -1066,7 +1067,7 @@ function DireccionDialog({
       return;
     }
 
-    if (!form.zonaDomicilioId) {
+    if (!form.zonaDomicilioId && zonas && zonas.length > 0) {
       toast.error("Selecciona una zona de domicilio (localidad y barrio).");
       return;
     }
@@ -1162,7 +1163,21 @@ function DireccionDialog({
           </div>
 
           {/* ── Zona de Domicilio (Selects Dependientes) ─────── */}
-          {zonas && zonas.length > 0 && form.ciudad && (
+          {loadingZonas && selectedSedeId && (
+            <div className="flex items-center gap-2 text-sm text-stone-500 py-2">
+              <LoaderIcon className="size-4 animate-spin" />
+              Cargando zonas de domicilio...
+            </div>
+          )}
+
+          {!loadingZonas && zonas && zonas.length === 0 && selectedSedeId && (
+            <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 rounded-md p-3">
+              <MapPinIcon className="size-4 shrink-0" />
+              No hay zonas de domicilio configuradas para esta sede. Contacta al administrador.
+            </div>
+          )}
+
+          {!loadingZonas && zonas && zonas.length > 0 && form.ciudad && (
             <>
               <div className="space-y-2">
                 <Label>Localidad / Municipio *</Label>
