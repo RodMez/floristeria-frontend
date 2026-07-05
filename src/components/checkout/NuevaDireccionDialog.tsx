@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LoaderIcon } from "lucide-react";
+import { LoaderIcon, MapPin } from "lucide-react";
 
 interface NuevaDireccionDialogProps {
   open: boolean;
@@ -53,11 +53,12 @@ export default function NuevaDireccionDialog({
 
   const sedeActual = useCartStore((s) => s.sedeActual);
 
-  const { data: zonas } = useSWR<ZonaDomicilioResponse[]>(
+  const { data: zonas, isLoading: loadingZonas } = useSWR<ZonaDomicilioResponse[]>(
     sedeActual
       ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1/zonas-domicilio/sede/${sedeActual.id}`
       : null,
-    fetcher
+    fetcher,
+    { shouldRetryOnError: false }
   );
 
   // Localidades únicas
@@ -118,7 +119,7 @@ export default function NuevaDireccionDialog({
       return;
     }
 
-    if (!selectedZonaId) {
+    if (!selectedZonaId && zonas && zonas.length > 0) {
       toast.error("Selecciona una zona de domicilio (localidad y barrio).");
       return;
     }
@@ -205,7 +206,21 @@ export default function NuevaDireccionDialog({
           </div>
 
           {/* ── Zona de Domicilio (Selects Dependientes) ─────── */}
-          {zonas && zonas.length > 0 && (
+          {loadingZonas && sedeActual && (
+            <div className="flex items-center gap-2 text-sm text-stone-500 py-2">
+              <LoaderIcon className="size-4 animate-spin" />
+              Cargando zonas de domicilio...
+            </div>
+          )}
+
+          {!loadingZonas && zonas && zonas.length === 0 && (
+            <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 rounded-md p-3">
+              <MapPin className="size-4 shrink-0" />
+              No hay zonas de domicilio configuradas para esta sede. Contacta al administrador.
+            </div>
+          )}
+
+          {!loadingZonas && zonas && zonas.length > 0 && (
             <>
               <div className="space-y-2">
                 <Label>Localidad / Municipio *</Label>
