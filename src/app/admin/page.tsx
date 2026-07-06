@@ -212,30 +212,24 @@ export default function AdminPage() {
                   <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wider mb-1">
                     Productos
                   </p>
-                  <div className="max-h-[72px] overflow-y-auto space-y-0.5">
+                  <div className="max-h-[108px] overflow-y-auto space-y-1.5">
                     {pedido.detalles?.map((d, i) => (
-                      <p key={i} className="text-xs text-stone-600 flex items-baseline gap-1">
-                        <span className="font-medium shrink-0">{d.cantidad}x</span>
-                        <span className="truncate">{d.productoNombre}</span>
-                      </p>
+                      <div key={i}>
+                        <p className="text-xs text-stone-700 flex items-baseline gap-1">
+                          <span className="font-medium shrink-0">{d.cantidad}x</span>
+                          <span className="truncate">{d.productoNombre}</span>
+                        </p>
+                        {d.notaPersonalizacion && (
+                          <div className="flex items-baseline gap-1 ml-4 mt-0.5">
+                            <StickyNote className="h-2.5 w-2.5 text-stone-400 shrink-0" />
+                            <p className="text-[11px] text-stone-500 italic leading-tight">
+                              {d.notaPersonalizacion}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     )) ?? <p className="text-xs text-stone-400">Sin productos</p>}
                   </div>
-                </div>
-                <div className="flex items-start gap-1.5 mt-2">
-                  <StickyNote className="h-3 w-3 text-stone-400 mt-0.5 shrink-0" />
-                  {pedido.detalles?.some(d => d.notaPersonalizacion) ? (
-                    <div className="max-h-[80px] overflow-y-auto">
-                      {pedido.detalles
-                        .filter(d => d.notaPersonalizacion)
-                        .map((d, i) => (
-                          <p key={i} className="text-xs text-stone-500 italic">
-                            {d.notaPersonalizacion}
-                          </p>
-                        ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-stone-300 italic">Sin notas</p>
-                  )}
                 </div>
                 {pedido.direccionEntrega && (
                   <div className="flex items-start gap-1.5 mt-1">
