@@ -191,7 +191,7 @@ export default function AdminPage() {
                 </CardTitle>
               </CardHeader>
 
-              <CardContent className="space-y-2 text-sm">
+              <CardContent className="flex-1 space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-stone-500">Cliente</span>
                   <span className="font-medium">
@@ -228,8 +228,7 @@ export default function AdminPage() {
                       {pedido.detalles
                         .filter(d => d.notaPersonalizacion)
                         .map((d, i) => (
-                          <p key={i} className="text-xs text-stone-500">
-                            <span className="font-medium">{d.productoNombre}:</span>{" "}
+                          <p key={i} className="text-xs text-stone-500 italic">
                             {d.notaPersonalizacion}
                           </p>
                         ))}
