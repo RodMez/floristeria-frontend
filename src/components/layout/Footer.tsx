@@ -2,7 +2,7 @@
 
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
-import { Sede } from "@/types";
+import { Sede, ConfiguracionTiendaDTO } from "@/types";
 import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 import { Separator } from "@/components/ui/separator";
@@ -11,6 +11,11 @@ import Link from "next/link";
 export default function Footer() {
   const { data: sedes } = useSWR<Sede[]>(
     `${process.env.NEXT_PUBLIC_API_URL}/api/v1/sedes`,
+    fetcher
+  );
+
+  const { data: config } = useSWR<ConfiguracionTiendaDTO>(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/configuracion`,
     fetcher
   );
 
@@ -146,56 +151,64 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li>
                 <a
-                  href="mailto:taoboutiquefloral@gmail.com"
+                  href={`mailto:${config?.correoMaestro || "taoboutiquefloral@gmail.com"}`}
                   className="flex items-center gap-2 hover:text-brand-mustard transition-colors"
                 >
                   <MdEmail className="size-4 shrink-0 text-brand-mustard" />
-                  taoboutiquefloral@gmail.com
+                  {config?.correoMaestro || "taoboutiquefloral@gmail.com"}
                 </a>
               </li>
-              <li>
-                <a
-                  href="https://wa.me/573126439938"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 hover:text-emerald-400 transition-colors"
-                >
-                  <FaWhatsapp className="size-4 shrink-0 text-emerald-400" />
-                  +57 312 643 9938
-                </a>
-              </li>
+              {config?.whatsappGeneral && (
+                <li>
+                  <a
+                    href={`https://wa.me/${config.whatsappGeneral.replace(/[^0-9]/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 hover:text-emerald-400 transition-colors"
+                  >
+                    <FaWhatsapp className="size-4 shrink-0 text-emerald-400" />
+                    {config.whatsappGeneral}
+                  </a>
+                </li>
+              )}
               <li className="flex items-center gap-3 pt-2">
+                {config?.instagramUrl && (
+                  <a
+                    href={config.instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-stone-500 hover:text-pink-400 transition-colors"
+                    aria-label="Instagram"
+                  >
+                    <FaInstagram className="size-5" />
+                  </a>
+                )}
+                {config?.facebookUrl && (
+                  <a
+                    href={config.facebookUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-stone-500 hover:text-blue-400 transition-colors"
+                    aria-label="Facebook"
+                  >
+                    <FaFacebook className="size-5" />
+                  </a>
+                )}
+                {config?.tiktokUrl && (
+                  <a
+                    href={config.tiktokUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-stone-500 hover:text-stone-300 transition-colors"
+                    aria-label="TikTok"
+                  >
+                    <FaTiktok className="size-5" />
+                  </a>
+                )}
                 <a
-                  href="https://www.instagram.com/tao.boutiquefloral/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-stone-500 hover:text-pink-400 transition-colors"
-                  aria-label="Instagram TAO Boutique Floral"
-                >
-                  <FaInstagram className="size-5" />
-                </a>
-                <a
-                  href="https://www.facebook.com/people/TAO-Boutique-Floral/61570793247379/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-stone-500 hover:text-blue-400 transition-colors"
-                  aria-label="Facebook TAO Boutique Floral"
-                >
-                  <FaFacebook className="size-5" />
-                </a>
-                <a
-                  href="https://www.tiktok.com/@tao.boutique.flor"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-stone-500 hover:text-stone-300 transition-colors"
-                  aria-label="TikTok TAO Boutique Floral"
-                >
-                  <FaTiktok className="size-5" />
-                </a>
-                <a
-                  href="mailto:taoboutiquefloral@gmail.com"
+                  href={`mailto:${config?.correoMaestro || "taoboutiquefloral@gmail.com"}`}
                   className="text-stone-500 hover:text-amber-400 transition-colors"
-                  aria-label="Email TAO Boutique Floral"
+                  aria-label="Email"
                 >
                   <MdEmail className="size-5" />
                 </a>

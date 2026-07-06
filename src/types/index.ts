@@ -301,4 +301,10 @@ export interface ZonaDomicilioRequest {
 export interface ConfiguracionTiendaDTO {
   correoMaestro: string | null;
   enviarCopiaMaestro: boolean;
+  whatsappGeneral?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
+  tiktokUrl?: string | null;
+  imagenHeroUrl?: string | null;
+  imagenBannerUrl?: string | null;
 }
