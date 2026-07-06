@@ -9,7 +9,7 @@ import { Sede } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw, Heart, Sparkles } from "lucide-react";
 
 function SedesSkeleton() {
   return (
@@ -84,11 +84,21 @@ export default function Home() {
       <div className="min-h-screen">
         <section className="bg-gradient-to-b from-stone-100 to-stone-50 py-16">
           <div className="container mx-auto px-4 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-stone-800 mb-4">
-              Bienvenido a la Floristeria
+            <img
+              src="/tao-logo-header.png"
+              alt="TAO Boutique Floral"
+              className="mx-auto mb-6 h-16 w-16 rounded-full"
+            />
+            <h1 className="text-4xl md:text-5xl font-bold text-stone-800 mb-2">
+              TAO{" "}
+              <span className="text-brand-mustard">Boutique Floral</span>
             </h1>
-            <p className="text-lg text-stone-600 max-w-2xl mx-auto">
-              Encuentra los arreglos florales mas hermosos y frescos para cada ocasion.
+            <p className="text-lg italic text-stone-500 mb-4">
+              &ldquo;Flores que cuentan historias&rdquo;
+            </p>
+            <p className="text-base text-stone-600 max-w-2xl mx-auto">
+              Transformamos flores en experiencias inolvidables. Diseños exclusivos,
+              flores frescas y atención personalizada para cada ocasión especial.
             </p>
           </div>
         </section>
@@ -106,12 +116,21 @@ export default function Home() {
       {/* Hero Section */}
       <section className="bg-gradient-to-b from-stone-100 to-stone-50 py-16">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-stone-800 mb-4">
-            Bienvenido a la Floristeria
+          <img
+            src="/tao-logo-header.png"
+            alt="TAO Boutique Floral"
+            className="mx-auto mb-6 h-16 w-16 rounded-full"
+          />
+          <h1 className="text-4xl md:text-5xl font-bold text-stone-800 mb-2">
+            TAO{" "}
+            <span className="text-brand-mustard">Boutique Floral</span>
           </h1>
-          <p className="text-lg text-stone-600 max-w-2xl mx-auto">
-            Encuentra los arreglos florales mas hermosos y frescos para cada ocasion.
-            Selecciona tu sede mas cercana para comenzar.
+          <p className="text-lg italic text-stone-500 mb-4">
+            &ldquo;Flores que cuentan historias&rdquo;
+          </p>
+          <p className="text-base text-stone-600 max-w-2xl mx-auto">
+            Transformamos flores en experiencias inolvidables. Selecciona tu sede
+            más cercana para descubrir nuestra colección.
           </p>
         </div>
       </section>
@@ -136,6 +155,57 @@ export default function Home() {
               </Card>
             </Link>
           ))}
+        </div>
+      </section>
+
+      {/* ── Nosotros: Misión + Visión ────────────────────────── */}
+      <section className="border-t border-stone-200 bg-stone-50 py-16">
+        <div className="container mx-auto px-4">
+          <div className="mb-10 text-center">
+            <h2 className="text-2xl font-semibold text-stone-800">
+              Sobre{" "}
+              <span className="text-brand-mustard">TAO Boutique Floral</span>
+            </h2>
+            <p className="mx-auto mt-2 max-w-xl text-stone-500">
+              Creemos que cada flor tiene una historia por contar.
+            </p>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-2">
+            <div className="rounded-xl border border-stone-200 bg-white p-8">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-mustard/10">
+                <Heart className="size-6 text-brand-mustard" />
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-stone-800">
+                Nuestra Misión
+              </h3>
+              <p className="text-sm leading-relaxed text-stone-600">
+                Transformar emociones en experiencias inolvidables mediante el
+                diseño de arreglos florales exclusivos, elaborados con flores de
+                la más alta calidad y una atención personalizada. Nos apasiona
+                acompañar cada celebración, sorpresa y ocasión especial con
+                creaciones que transmitan amor, gratitud, admiración y felicidad,
+                superando las expectativas de nuestros clientes en cada entrega.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-stone-200 bg-white p-8">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-rose/30">
+                <Sparkles className="size-6 text-brand-rose-dark" />
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-stone-800">
+                Nuestra Visión
+              </h3>
+              <p className="text-sm leading-relaxed text-stone-600">
+                Consolidar a TAO Boutique Floral como una marca líder y referente
+                en el diseño floral de alta calidad, reconocida por la excelencia
+                de sus creaciones, la innovación y el servicio personalizado.
+                Aspiramos a expandir nuestra presencia a nivel nacional e
+                internacional, posicionándonos como una marca que inspira
+                confianza, elegancia y emociones auténticas.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
     </div>
