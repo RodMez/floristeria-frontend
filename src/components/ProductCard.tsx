@@ -72,55 +72,56 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
     setTimeout(() => setIsAdding(false), 1000);
   };
 
-  return (
-    <Card className="overflow-hidden h-full">
-      <div className="aspect-square w-full overflow-hidden relative">
-        <Image
-          src={producto.imagenUrl}
-          alt={producto.nombre}
-          fill
-          priority={priority}
-          className="object-cover"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-        />
-        {tieneDescuento && (
-          <div className="discount-ribbon">
-            <span>-{producto.descuentoPorcentaje}% OFF</span>
-          </div>
-        )}
-      </div>
-      <CardContent className="p-4 flex flex-col flex-1">
-        {/* Categorías - Badges */}
-        <div className="flex flex-wrap gap-1 mb-2 min-h-[2rem] items-start">
-          {categorias.map((cat) => (
-            <Badge key={cat.id} variant="secondary" className="text-xs">
-              {cat.nombre}
-            </Badge>
-          ))}
-        </div>
+  const productDetailHref = `/tienda/sede/${sede.id}/producto/${producto.productoId}`;
 
-        <Link
-          href={`/tienda/sede/${sede.id}/producto/${producto.productoId}`}
-          className="font-semibold text-stone-800 line-clamp-1 hover:underline"
-        >
-          {producto.nombre}
-        </Link>
-        <p className="text-sm text-stone-500 line-clamp-2 mt-1 min-h-[2.5rem] flex-1">
-          {producto.descripcion}
-        </p>
-        <p className="text-lg font-semibold text-stone-900 mt-2">
-          {tieneDescuento ? (
-            <>
-              <span className="text-sm font-normal text-stone-400 line-through mr-2">
-                {precioOriginal}
-              </span>
-              <span className="text-green-600">{precioConDescuento}</span>
-            </>
-          ) : (
-            precioOriginal
+  return (
+    <Card className="overflow-hidden h-full transition-shadow duration-200 hover:shadow-lg">
+      <Link href={productDetailHref} className="group block cursor-pointer">
+        <div className="aspect-square w-full overflow-hidden relative">
+          <Image
+            src={producto.imagenUrl}
+            alt={producto.nombre}
+            fill
+            priority={priority}
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+          />
+          {tieneDescuento && (
+            <div className="discount-ribbon">
+              <span>-{producto.descuentoPorcentaje}% OFF</span>
+            </div>
           )}
-        </p>
-      </CardContent>
+        </div>
+        <CardContent className="p-4 flex flex-col flex-1">
+          {/* Categorías - Badges */}
+          <div className="flex flex-wrap gap-1 mb-2 min-h-[2rem] items-start">
+            {categorias.map((cat) => (
+              <Badge key={cat.id} variant="secondary" className="text-xs">
+                {cat.nombre}
+              </Badge>
+            ))}
+          </div>
+
+          <h3 className="font-semibold text-stone-800 line-clamp-1 group-hover:text-brand-mustard transition-colors duration-200">
+            {producto.nombre}
+          </h3>
+          <p className="text-sm text-stone-500 line-clamp-2 mt-1 min-h-[2.5rem] flex-1">
+            {producto.descripcion}
+          </p>
+          <p className="text-lg font-semibold text-stone-900 mt-2">
+            {tieneDescuento ? (
+              <>
+                <span className="text-sm font-normal text-stone-400 line-through mr-2">
+                  {precioOriginal}
+                </span>
+                <span className="text-green-600">{precioConDescuento}</span>
+              </>
+            ) : (
+              precioOriginal
+            )}
+          </p>
+        </CardContent>
+      </Link>
       <CardFooter className="p-4 pt-0 flex items-center justify-between">
         {isAgotado ? (
           <Badge variant="destructive">Agotado</Badge>
