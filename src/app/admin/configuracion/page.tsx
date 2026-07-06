@@ -16,6 +16,8 @@ import {
   Mail,
   Image as ImageIcon,
   Globe,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,6 +25,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Image from "next/image";
+import Cookies from "js-cookie";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -74,6 +77,37 @@ function ImagePreviewCard({
   disabled?: boolean;
   placeholder?: string;
 }) {
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const token = Cookies.get("token");
+      const formData = new FormData();
+      formData.append("archivo", file);
+
+      const res = await fetch(`${API_URL}/api/superadmin/imagenes`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Error al subir la imagen");
+      const data = await res.json();
+      onChange(data.url);
+      toast.success("Imagen subida correctamente");
+    } catch (err) {
+      toast.error(
+        `Error al subir la imagen: ${err instanceof Error ? err.message : "Error desconocido"}`
+      );
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
@@ -95,20 +129,37 @@ function ImagePreviewCard({
         </div>
       )}
 
-      <div className="flex gap-2">
-        <Input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder || "Pega la URL de ImageKit aquí"}
-          disabled={disabled}
-          className="flex-1 font-mono text-sm"
-        />
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={handleFileUpload}
+            disabled={disabled || uploading}
+            className="file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-[var(--color-brand-mustard)] file:text-stone-900 file:cursor-pointer hover:file:bg-[var(--color-brand-mustard-dark)]"
+          />
+        </div>
+        {uploading && (
+          <div className="flex items-center gap-1.5 text-sm text-stone-500 whitespace-nowrap">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Subiendo...
+          </div>
+        )}
       </div>
-      <p className="text-xs text-stone-500">
-        Sube la imagen en{" "}
-        <span className="font-medium text-stone-700">Productos → Imágenes</span>{" "}
-        y pega aquí la URL generada.
-      </p>
+
+      <div className="flex items-center gap-2">
+        <div className="flex-1 border-t border-stone-200" />
+        <span className="text-xs text-stone-400">o pega una URL</span>
+        <div className="flex-1 border-t border-stone-200" />
+      </div>
+
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder || "https://ik.imagekit.io/tao/imagen.jpg"}
+        disabled={disabled || uploading}
+        className="flex-1 font-mono text-sm"
+      />
     </div>
   );
 }
