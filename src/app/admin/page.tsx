@@ -107,15 +107,6 @@ export default function AdminPage() {
     }
   };
 
-  const resumenProductos = (pedido: PedidoAdminResponse) => {
-    const items =
-      pedido.detalles?.slice(0, 3).map((d) => `${d.cantidad}x ${d.productoNombre}`) ?? [];
-    const texto = items.join(", ");
-    return pedido.detalles && pedido.detalles.length > 3
-      ? `${texto} +${pedido.detalles.length - 3} más`
-      : texto || "Sin productos";
-  };
-
   if (error) {
     return (
       <div className="p-6">
@@ -218,19 +209,31 @@ export default function AdminPage() {
                   </span>
                 </div>
                 <div className="border-t pt-2 mt-2">
-                  <p className="text-xs text-stone-400 truncate">
-                    {resumenProductos(pedido)}
+                  <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wider mb-1">
+                    Productos
                   </p>
+                  <div className="max-h-[72px] overflow-y-auto space-y-0.5">
+                    {pedido.detalles?.map((d, i) => (
+                      <p key={i} className="text-xs text-stone-600 flex items-baseline gap-1">
+                        <span className="font-medium shrink-0">{d.cantidad}x</span>
+                        <span className="truncate">{d.productoNombre}</span>
+                      </p>
+                    )) ?? <p className="text-xs text-stone-400">Sin productos</p>}
+                  </div>
                 </div>
                 <div className="flex items-start gap-1.5 mt-2">
                   <StickyNote className="h-3 w-3 text-stone-400 mt-0.5 shrink-0" />
                   {pedido.detalles?.some(d => d.notaPersonalizacion) ? (
-                    <p className="text-xs text-stone-500 line-clamp-2">
+                    <div className="max-h-[80px] overflow-y-auto">
                       {pedido.detalles
                         .filter(d => d.notaPersonalizacion)
-                        .map(d => `${d.productoNombre}: ${d.notaPersonalizacion}`)
-                        .join(' · ')}
-                    </p>
+                        .map((d, i) => (
+                          <p key={i} className="text-xs text-stone-500">
+                            <span className="font-medium">{d.productoNombre}:</span>{" "}
+                            {d.notaPersonalizacion}
+                          </p>
+                        ))}
+                    </div>
                   ) : (
                     <p className="text-xs text-stone-300 italic">Sin notas</p>
                   )}
