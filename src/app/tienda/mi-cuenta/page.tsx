@@ -29,6 +29,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Card,
   CardContent,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -63,6 +64,7 @@ import {
   Download,
   CreditCard,
   Truck,
+  StickyNote,
 } from "lucide-react";
 import {
   Table,
@@ -92,6 +94,154 @@ function formatDate(dateString: string): string {
     month: "long",
     day: "numeric",
   });
+}
+
+const STATUS_BORDER_COLORS: Record<string, string> = {
+  PENDIENTE_PAGO: "border-l-stone-400",
+  PAGADO: "border-l-amber-500",
+  EN_PREPARACION: "border-l-blue-500 animate-pulse",
+  EN_CAMINO: "border-l-purple-500 animate-pulse",
+  ENTREGADO: "border-l-emerald-500",
+  CANCELADO: "border-l-red-500",
+};
+
+const STATUS_DOT_COLORS: Record<string, string> = {
+  PENDIENTE_PAGO: "bg-stone-400",
+  PAGADO: "bg-amber-500",
+  EN_PREPARACION: "bg-blue-500",
+  EN_CAMINO: "bg-purple-500",
+  ENTREGADO: "bg-emerald-500",
+  CANCELADO: "bg-red-500",
+};
+
+function generarPDF(pedido: PedidoHistorial) {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  let y = 20;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.text("Floristeria", pageWidth / 2, y, { align: "center" });
+  y += 8;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text("Comprobante de Pedido", pageWidth / 2, y, { align: "center" });
+  y += 12;
+
+  doc.setDrawColor(200);
+  doc.line(20, y, pageWidth - 20, y);
+  y += 8;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(`Pedido #${pedido.id}`, 20, y);
+  y += 7;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(`Fecha: ${formatDate(pedido.creadoEn)}`, 20, y);
+  y += 6;
+  doc.text(`Estado: ${ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado}`, 20, y);
+  y += 10;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("Informacion del Pago", 20, y);
+  y += 6;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(`Referencia Wompi: ${pedido.referenciaPago || "—"}`, 20, y);
+  y += 6;
+  doc.text(`Metodo de Pago: ${pedido.metodoPago || "—"}`, 20, y);
+  y += 10;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("Informacion de Entrega", 20, y);
+  y += 6;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(`Sede: ${pedido.sedeNombre || "—"}`, 20, y);
+  y += 6;
+  if (pedido.direccionEntrega) {
+    const dir = pedido.direccionEntrega;
+    doc.text(`Direccion: ${dir.direccion}, ${dir.ciudad}`, 20, y);
+    y += 6;
+    if (dir.detalles) {
+      doc.text(`Detalles: ${dir.detalles}`, 20, y);
+      y += 6;
+    }
+  }
+  if (pedido.zonaDomicilioNombre) {
+    doc.text(`Zona de Envio: ${pedido.zonaDomicilioNombre}`, 20, y);
+    y += 6;
+  }
+  y += 4;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("Productos", 20, y);
+  y += 7;
+
+  const colProducto = 20;
+  const colCant = 110;
+  const colPrecio = 135;
+  const colSubtotal = 165;
+
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.text("Producto", colProducto, y);
+  doc.text("Cant", colCant, y);
+  doc.text("Precio", colPrecio, y);
+  doc.text("Subtotal", colSubtotal, y);
+  y += 5;
+  doc.line(20, y, pageWidth - 20, y);
+  y += 5;
+
+  doc.setFont("helvetica", "normal");
+  pedido.detalles?.forEach((d) => {
+    const subtotal = d.cantidad * d.precioUnitario;
+    const nombreLinea = doc.splitTextToSize(d.productoNombre, 85);
+    doc.text(nombreLinea, colProducto, y);
+    doc.text(String(d.cantidad), colCant, y);
+    doc.text(formatCurrency(d.precioUnitario), colPrecio, y);
+    doc.text(formatCurrency(subtotal), colSubtotal, y);
+    y += nombreLinea.length * 5;
+    if (d.notaPersonalizacion) {
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "italic");
+      const notaLinea = doc.splitTextToSize(`Nota: ${d.notaPersonalizacion}`, 85);
+      doc.text(notaLinea, colProducto, y);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      y += notaLinea.length * 4;
+    }
+    y += 2;
+  });
+
+  y += 2;
+  doc.line(20, y, pageWidth - 20, y);
+  y += 7;
+
+  if (pedido.costoEnvio && pedido.costoEnvio > 0) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Costo de Envio (Zona: ${pedido.zonaDomicilioNombre || ""})`, 20, y);
+    doc.text(formatCurrency(pedido.costoEnvio), pageWidth - 20, y, { align: "right" });
+    y += 7;
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(`Total: ${formatCurrency(pedido.total)}`, pageWidth - 20, y, { align: "right" });
+
+  y += 15;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.text("Gracias por su compra", pageWidth / 2, y, { align: "center" });
+
+  doc.save(`pedido-${pedido.id}.pdf`);
 }
 
 const perfilSchema = z.object({
@@ -218,52 +368,82 @@ function PedidosTab() {
 
   return (
     <div className="mt-6">
-      <div className="bg-white rounded-lg border shadow-sm">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[80px]">ID</TableHead>
-              <TableHead>Fecha</TableHead>
-              <TableHead>Sede</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead className="text-right">Total</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {pedidosOrdenados.map((pedido) => (
-              <TableRow key={pedido.id}>
-                <TableCell className="font-mono text-sm">#{pedido.id}</TableCell>
-                <TableCell className="text-sm">{formatDate(pedido.creadoEn)}</TableCell>
-                <TableCell className="text-sm">{pedido.sedeNombre ?? "—"}</TableCell>
-                <TableCell>
-                  <Badge
-                    className={
-                      ORDER_STATUS_COLORS[pedido.estado as keyof typeof ORDER_STATUS_COLORS] ??
-                      "bg-stone-100 text-stone-700 border-stone-200"
-                    }
-                  >
-                    {ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right font-medium">
-                  {formatCurrency(pedido.total)}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setPedidoSeleccionado(pedido)}
-                    className="gap-1.5"
-                  >
-                    <Eye className="size-4" />
-                    Ver Detalles
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {pedidosOrdenados.map((pedido) => (
+          <Card
+            key={pedido.id}
+            className={`flex flex-col border-l-4 ${STATUS_BORDER_COLORS[pedido.estado] ?? "border-l-stone-400"}`}
+          >
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between gap-2">
+                <span className="font-mono text-sm truncate">#{pedido.id}</span>
+                <Badge
+                  className={`${ORDER_STATUS_COLORS[pedido.estado as keyof typeof ORDER_STATUS_COLORS] ?? "bg-stone-100 text-stone-700 border-stone-200"} text-xs px-3 py-1.5 font-semibold flex items-center gap-1.5 shrink-0`}
+                >
+                  <span className={`size-2 rounded-full ${STATUS_DOT_COLORS[pedido.estado] ?? "bg-stone-400"}`} />
+                  {ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent className="flex-1 space-y-2 text-sm">
+              <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                <span>{formatDate(pedido.creadoEn)}</span>
+                <span>·</span>
+                <span>{pedido.sedeNombre}</span>
+              </div>
+
+              <div className="border-t pt-2 mt-2">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                  Productos
+                </p>
+                <div className="max-h-[108px] overflow-y-auto space-y-1.5">
+                  {pedido.detalles?.map((d, i) => (
+                    <div key={i}>
+                      <p className="text-xs flex items-baseline gap-1">
+                        <span className="font-medium shrink-0">{d.cantidad}x</span>
+                        <span className="truncate">{d.productoNombre}</span>
+                      </p>
+                      {d.notaPersonalizacion && (
+                        <div className="flex items-baseline gap-1 ml-4 mt-0.5">
+                          <StickyNote className="h-2.5 w-2.5 text-muted-foreground shrink-0" />
+                          <p className="text-[11px] text-muted-foreground italic leading-tight">
+                            {d.notaPersonalizacion}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )) ?? <p className="text-xs text-muted-foreground">Sin productos</p>}
+                </div>
+              </div>
+
+              <div className="flex justify-between font-bold text-sm pt-2 border-t mt-2">
+                <span>Total</span>
+                <span>{formatCurrency(pedido.total)}</span>
+              </div>
+            </CardContent>
+
+            <CardFooter className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPedidoSeleccionado(pedido)}
+                className="gap-1.5"
+              >
+                <Eye className="size-4" />
+                Ver Detalles
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => generarPDF(pedido)}
+                className="gap-1.5"
+              >
+                <Download className="size-4" />
+                Descargar
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
       </div>
 
       <PedidoDetalleDialog
@@ -284,138 +464,6 @@ interface PedidoDetalleDialogProps {
 }
 
 function PedidoDetalleDialog({ pedido, onOpenChange }: PedidoDetalleDialogProps) {
-  const generarPDF = () => {
-    if (!pedido) return;
-
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    let y = 20;
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.text("Floristeria", pageWidth / 2, y, { align: "center" });
-    y += 8;
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text("Comprobante de Pedido", pageWidth / 2, y, { align: "center" });
-    y += 12;
-
-    doc.setDrawColor(200);
-    doc.line(20, y, pageWidth - 20, y);
-    y += 8;
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text(`Pedido #${pedido.id}`, 20, y);
-    y += 7;
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text(`Fecha: ${formatDate(pedido.creadoEn)}`, 20, y);
-    y += 6;
-    doc.text(`Estado: ${ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado}`, 20, y);
-    y += 10;
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("Informacion del Pago", 20, y);
-    y += 6;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text(`Referencia Wompi: ${pedido.referenciaPago || "—"}`, 20, y);
-    y += 6;
-    doc.text(`Metodo de Pago: ${pedido.metodoPago || "—"}`, 20, y);
-    y += 10;
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("Informacion de Entrega", 20, y);
-    y += 6;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text(`Sede: ${pedido.sedeNombre || "—"}`, 20, y);
-    y += 6;
-    if (pedido.direccionEntrega) {
-      const dir = pedido.direccionEntrega;
-      doc.text(`Direccion: ${dir.direccion}, ${dir.ciudad}`, 20, y);
-      y += 6;
-      if (dir.detalles) {
-        doc.text(`Detalles: ${dir.detalles}`, 20, y);
-        y += 6;
-      }
-    }
-    if (pedido.zonaDomicilioNombre) {
-      doc.text(`Zona de Envio: ${pedido.zonaDomicilioNombre}`, 20, y);
-      y += 6;
-    }
-    y += 4;
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("Productos", 20, y);
-    y += 7;
-
-    const colProducto = 20;
-    const colCant = 110;
-    const colPrecio = 135;
-    const colSubtotal = 165;
-
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.text("Producto", colProducto, y);
-    doc.text("Cant", colCant, y);
-    doc.text("Precio", colPrecio, y);
-    doc.text("Subtotal", colSubtotal, y);
-    y += 5;
-    doc.line(20, y, pageWidth - 20, y);
-    y += 5;
-
-    doc.setFont("helvetica", "normal");
-    pedido.detalles?.forEach((d) => {
-      const subtotal = d.cantidad * d.precioUnitario;
-      const nombreLinea = doc.splitTextToSize(d.productoNombre, 85);
-      doc.text(nombreLinea, colProducto, y);
-      doc.text(String(d.cantidad), colCant, y);
-      doc.text(formatCurrency(d.precioUnitario), colPrecio, y);
-      doc.text(formatCurrency(subtotal), colSubtotal, y);
-      y += nombreLinea.length * 5;
-      if (d.notaPersonalizacion) {
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "italic");
-        const notaLinea = doc.splitTextToSize(`Nota: ${d.notaPersonalizacion}`, 85);
-        doc.text(notaLinea, colProducto, y);
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        y += notaLinea.length * 4;
-      }
-      y += 2;
-    });
-
-    y += 2;
-    doc.line(20, y, pageWidth - 20, y);
-    y += 7;
-
-    if (pedido.costoEnvio && pedido.costoEnvio > 0) {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.text(`Costo de Envio (Zona: ${pedido.zonaDomicilioNombre || ""})`, 20, y);
-      doc.text(formatCurrency(pedido.costoEnvio), pageWidth - 20, y, { align: "right" });
-      y += 7;
-    }
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text(`Total: ${formatCurrency(pedido.total)}`, pageWidth - 20, y, { align: "right" });
-
-    y += 15;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.text("Gracias por su compra", pageWidth / 2, y, { align: "center" });
-
-    doc.save(`pedido-${pedido.id}.pdf`);
-  };
-
   return (
     <Dialog open={pedido !== null} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
@@ -558,7 +606,7 @@ function PedidoDetalleDialog({ pedido, onOpenChange }: PedidoDetalleDialogProps)
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cerrar
           </Button>
-          <Button onClick={generarPDF} className="gap-1.5">
+          <Button onClick={() => pedido && generarPDF(pedido)} className="gap-1.5">
             <Download className="size-4" />
             Descargar Comprobante
           </Button>
