@@ -47,6 +47,15 @@ function getOpcionesPermitidas(estadoActual: string): string[] {
   }
 }
 
+const STATUS_BORDER_COLORS: Record<string, string> = {
+  PENDIENTE_PAGO: "border-l-stone-400",
+  PAGADO: "border-l-amber-500",
+  EN_PREPARACION: "border-l-blue-500 animate-pulse",
+  EN_CAMINO: "border-l-purple-500 animate-pulse",
+  ENTREGADO: "border-l-emerald-500",
+  CANCELADO: "border-l-red-500",
+};
+
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("es-CO", {
     style: "currency",
@@ -177,13 +186,17 @@ export default function AdminPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {pedidosActivos.map((pedido) => (
-            <Card key={pedido.id}>
+            <Card
+              key={pedido.id}
+              className={`flex flex-col border-l-4 ${STATUS_BORDER_COLORS[pedido.estado] ?? "border-l-stone-400"}`}
+            >
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
+                <CardTitle className="flex items-center justify-between gap-2">
                   <span>Pedido {pedido.id}</span>
                   <Badge
-                    className={ORDER_STATUS_COLORS[pedido.estado as keyof typeof ORDER_STATUS_COLORS] ?? "bg-stone-100 text-stone-700 border-stone-200"}
+                    className={`${ORDER_STATUS_COLORS[pedido.estado as keyof typeof ORDER_STATUS_COLORS] ?? "bg-stone-100 text-stone-700 border-stone-200"} text-xs px-3 py-1.5 font-semibold flex items-center gap-1.5 shrink-0`}
                   >
+                    <span className="size-2 rounded-full bg-current" />
                     {ORDER_STATUS_LABELS[
                       pedido.estado as keyof typeof ORDER_STATUS_LABELS
                     ] ?? pedido.estado}
