@@ -191,15 +191,12 @@ function handleSessionExpired(): void {
     duration: 5000,
   });
 
-  // 4. Redirigir via router navigación suave, NO con window.location.href
-  //    que destruye todo el state de Zustand en memoria.
-  const currentPath = window.location.pathname;
-  if (!currentPath.startsWith('/tienda/auth')) {
-    // Navegación suave con Next.js: push a /tienda/auth sin recarga completa
-    // Usamos replaceState + popstate para que el router de Next.js reaccione
-    // sin perder el state de Zustand persistido en localStorage
-    window.history.replaceState(null, '', '/tienda/auth');
-    window.dispatchEvent(new PopStateEvent('popstate'));
+  // 4. Redirigir a /tienda/auth
+  // El state de Zustand ya fue limpiado (vía evento + persist a localStorage)
+  // y la cookie eliminada, por lo que window.location.href es seguro
+  // y evita corromper el historial del navegador.
+  if (window.location.pathname !== '/tienda/auth') {
+    window.location.href = '/tienda/auth';
   }
 
   // Reset del flag después de 2s para permitir re-intento si el usuario
