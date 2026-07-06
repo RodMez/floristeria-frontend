@@ -14,17 +14,24 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useCartStore, getPrecioFinal } from "@/store/useCartStore";
+import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "next/navigation";
 
 export default function CartDrawer() {
   const { items, sedeActual, removeItem, updateQuantity, updateNota, clearCart, drawerOpen, setDrawerOpen } =
     useCartStore();
+  const { isAuthenticated, rol, isHydrated } = useAuthStore();
   const router = useRouter();
 
   const total = items.reduce((sum, item) => sum + getPrecioFinal(item) * item.cantidad, 0);
 
   const handlePagar = () => {
     setDrawerOpen(false);
+    if (!isHydrated) return;
+    if (!isAuthenticated || rol !== "CLIENTE") {
+      router.push("/tienda/auth?redirect=/tienda/checkout");
+      return;
+    }
     router.push("/tienda/checkout");
   };
 

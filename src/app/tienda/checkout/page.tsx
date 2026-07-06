@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LoaderIcon, ShoppingCartIcon, MapPinIcon } from "lucide-react";
+import { LoaderIcon, ShoppingCartIcon, MapPinIcon, LogInIcon } from "lucide-react";
 
 const API_PEDIDOS_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/pedidos`;
 const API_DIRECCIONES_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/direcciones`;
@@ -74,9 +74,25 @@ export default function CheckoutPage() {
     );
   }
 
-  // ── No autenticado → no renderizar nada (ya se redirigió) ───
+  // ── No autenticado → mensaje para iniciar sesión ────────────
   if (!isAuthenticated || rol !== "CLIENTE") {
-    return null;
+    return (
+      <div className="container mx-auto max-w-5xl px-4 py-10">
+        <div className="text-center py-16">
+          <LogInIcon className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <h2 className="text-xl font-semibold mb-2">Inicia sesión para continuar</h2>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            Debes iniciar sesión o registrarte para ver tus direcciones de entrega y
+            poder completar la compra.
+          </p>
+          <Button
+            onClick={() => router.replace("/tienda/auth?redirect=/tienda/checkout")}
+          >
+            Iniciar sesión / Registrarse
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   // ── Carrito vacío ────────────────────────────────────────────

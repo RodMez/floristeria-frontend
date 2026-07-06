@@ -3,15 +3,15 @@ import type { NextRequest } from 'next/server';
 
 export function proxy(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
-  const isAuthPage = request.nextUrl.pathname.startsWith('/login');
+  const isAuthPage = request.nextUrl.pathname.startsWith('/tienda/login');
   const isAdminPage = request.nextUrl.pathname.startsWith('/admin');
 
-  // Si intenta entrar a /admin sin token, redirigir a /login
+  // Si intenta entrar a /admin sin token, redirigir a /tienda/login
   if (isAdminPage && !token) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return NextResponse.redirect(new URL('/tienda/login', request.url));
   }
 
-  // Si intenta entrar a /login teniendo ya un token, redirigir a /admin
+  // Si intenta entrar a /tienda/login teniendo ya un token, redirigir a /admin
   if (isAuthPage && token) {
     return NextResponse.redirect(new URL('/admin', request.url));
   }
@@ -20,5 +20,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/login'],
+  matcher: ['/admin/:path*', '/tienda/login'],
 };
