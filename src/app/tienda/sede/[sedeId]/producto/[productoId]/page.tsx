@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import useSWR from "swr";
@@ -11,7 +11,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ShoppingCart, ArrowLeft, Minus, Plus, PackageX } from "lucide-react";
+import {
+  ShoppingCart,
+  ArrowLeft,
+  Minus,
+  Plus,
+  PackageX,
+  Star,
+  Barcode,
+  Package,
+} from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import BannerCarousel from "@/components/banner/BannerCarousel";
@@ -24,19 +33,40 @@ function formatPrecio(value: number): string {
   }).format(value);
 }
 
+function Stars({ rating = 0 }: { rating?: number }) {
+  return (
+    <div className="flex items-center gap-0.5" aria-label={`${rating} de 5 estrellas`}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star
+          key={i}
+          className={`h-4 w-4 ${
+            i <= rating
+              ? "fill-[var(--color-brand-mustard)] text-[var(--color-brand-mustard)]"
+              : "fill-stone-200 text-stone-200"
+          }`}
+        />
+      ))}
+      <span className="ml-1.5 text-xs text-stone-400">(0 reseñas)</span>
+    </div>
+  );
+}
+
 function ProductSkeleton() {
   return (
-    <div className="container mx-auto max-w-6xl px-4 py-8">
+    <div className="container mx-auto max-w-7xl px-4 py-8">
       <Skeleton className="h-5 w-48 mb-8" />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-        <Skeleton className="aspect-square w-full rounded-2xl" />
-        <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
+        <div className="lg:col-span-3">
+          <Skeleton className="aspect-square w-full rounded-2xl" />
+        </div>
+        <div className="lg:col-span-2 space-y-6">
           <div className="flex gap-2">
             <Skeleton className="h-5 w-16" />
             <Skeleton className="h-5 w-20" />
           </div>
           <Skeleton className="h-10 w-3/4" />
           <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-4 w-48" />
           <Skeleton className="h-12 w-48" />
           <Separator className="my-6" />
           <div className="space-y-3">
@@ -48,6 +78,8 @@ function ProductSkeleton() {
             <Skeleton className="h-12 w-32" />
             <Skeleton className="h-14 flex-1" />
           </div>
+          <Separator />
+          <Skeleton className="aspect-square w-full max-w-sm rounded-xl" />
         </div>
       </div>
     </div>
@@ -56,6 +88,7 @@ function ProductSkeleton() {
 
 export default function ProductoPage() {
   const params = useParams();
+  const router = useRouter();
   const sedeId = params.sedeId as string;
   const productoId = params.productoId as string;
 
@@ -79,7 +112,6 @@ export default function ProductoPage() {
   );
 
   const tieneDescuento = (producto?.descuentoPorcentaje ?? 0) > 0;
-
   const isAgotado = producto ? !producto.disponible || producto.stock === 0 : false;
 
   const handleAddToCart = () => {
@@ -107,6 +139,10 @@ export default function ProductoPage() {
     setCantidad(1);
   };
 
+  const handleCategoryClick = (catNombre: string) => {
+    router.push(`/tienda/sede/${sedeId}?categoria=${encodeURIComponent(catNombre)}`);
+  };
+
   if (isLoading) {
     return <ProductSkeleton />;
   }
@@ -130,52 +166,81 @@ export default function ProductoPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-6xl px-4 py-8">
-      {/* Banners PRODUCTO_INDIVIDUAL */}
-      <BannerCarousel ubicacion="PRODUCTO_INDIVIDUAL" sedeId={Number(sedeId)} />
-
-      {/* Breadcrumb / Volver */}
+    <div className="container mx-auto max-w-7xl px-4 py-8">
+      {/* Breadcrumb */}
       <Link
         href={`/tienda/sede/${sedeId}`}
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
+        className="inline-flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 transition-colors mb-6"
       >
         <ArrowLeft className="h-4 w-4" />
         Volver al catálogo
       </Link>
 
-      {/* Grid principal */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-        {/* Columna izquierda - Imagen */}
-        <div className="relative aspect-square w-full overflow-hidden rounded-2xl shadow-lg bg-stone-100">
-          <Image
-            src={producto.imagenUrl}
-            alt={producto.nombre}
-            fill
-            priority
-            className="object-cover transition-transform duration-300 hover:scale-[1.02]"
-            sizes="(max-width: 1024px) 100vw, 50vw"
-          />
-          {tieneDescuento && (
-            <div className="discount-ribbon">
-              <span>-{producto.descuentoPorcentaje}% OFF</span>
-            </div>
-          )}
+      {/* Grid: 3/5 imagen + 2/5 info + banners */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
+        {/* ── Columna izquierda: Imagen + Descripción ───────── */}
+        <div className="lg:col-span-3 space-y-8">
+          {/* Imagen */}
+          <div className="relative aspect-square w-full overflow-hidden rounded-2xl shadow-lg bg-stone-100">
+            <Image
+              src={producto.imagenUrl}
+              alt={producto.nombre}
+              fill
+              priority
+              className="object-cover transition-transform duration-300 hover:scale-[1.02]"
+              sizes="(max-width: 1024px) 100vw, 60vw"
+            />
+            {tieneDescuento && (
+              <div className="discount-ribbon">
+                <span>-{producto.descuentoPorcentaje}% OFF</span>
+              </div>
+            )}
+          </div>
+
+          {/* Descripción (solo visible en desktop en la columna izquierda) */}
+          <div className="hidden lg:block">
+            <h2 className="text-sm font-semibold text-stone-800 uppercase tracking-wide mb-3">
+              Descripción
+            </h2>
+            <p className="text-stone-600 leading-relaxed whitespace-pre-line">
+              {producto.descripcion}
+            </p>
+          </div>
         </div>
 
-        {/* Columna derecha - Información */}
-        <div className="flex flex-col">
+        {/* ── Columna derecha: Info + Carrusel ──────────────── */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Categorías */}
+          {producto.categoriasNombres && producto.categoriasNombres.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {producto.categoriasNombres.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => handleCategoryClick(cat)}
+                  className="inline-flex items-center rounded-full bg-[var(--color-brand-rose)]/20 px-3 py-1 text-xs font-medium text-stone-700 transition-colors hover:bg-[var(--color-brand-rose)]/40 cursor-pointer"
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Título */}
-          <h1 className="text-3xl font-bold text-stone-800 mb-2">
+          <h1 className="text-3xl font-bold text-stone-800">
             {producto.nombre}
           </h1>
 
+          {/* Estrellas */}
+          <Stars />
+
           {/* SKU */}
-          <p className="text-sm text-muted-foreground mb-4">
+          <div className="flex items-center gap-1.5 text-sm text-stone-400">
+            <Barcode className="h-3.5 w-3.5" />
             SKU: {producto.sku}
-          </p>
+          </div>
 
           {/* Precio */}
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3">
             {tieneDescuento ? (
               <>
                 <Badge variant="destructive" className="text-sm px-2.5 py-1">
@@ -184,21 +249,37 @@ export default function ProductoPage() {
                 <span className="text-lg text-stone-400 line-through">
                   {formatPrecio(producto.precioBase)}
                 </span>
-                <span className="text-4xl font-extrabold text-primary">
+                <span className="text-4xl font-extrabold text-[var(--color-brand-sage)]">
                   {formatPrecio(producto.precioFinal)}
                 </span>
               </>
             ) : (
-              <span className="text-4xl font-extrabold text-primary">
+              <span className="text-4xl font-extrabold text-stone-900">
                 {formatPrecio(producto.precioBase)}
               </span>
             )}
           </div>
 
-          <Separator className="my-6" />
+          {/* Stock */}
+          <div className="flex items-center gap-1.5">
+            <Package className="h-4 w-4 text-stone-400" />
+            {isAgotado ? (
+              <span className="text-sm font-medium text-red-500">Agotado</span>
+            ) : producto.stock <= 5 ? (
+              <span className="text-sm text-amber-600">
+                ¡Últimas {producto.stock} unidades!
+              </span>
+            ) : (
+              <span className="text-sm text-stone-500">
+                {producto.stock} unidades disponibles
+              </span>
+            )}
+          </div>
 
-          {/* Descripción */}
-          <div className="mb-8">
+          <Separator />
+
+          {/* Descripción (mobile) */}
+          <div className="lg:hidden">
             <h2 className="text-sm font-semibold text-stone-800 uppercase tracking-wide mb-2">
               Descripción
             </h2>
@@ -207,24 +288,14 @@ export default function ProductoPage() {
             </p>
           </div>
 
-          {/* Stock disponible */}
-          {producto.stock > 0 && (
-            <p className="text-sm text-muted-foreground mb-4">
-              {producto.stock} unidades disponibles
-            </p>
-          )}
-
-          {/* Selector de cantidad + Botón agregar */}
+          {/* Selector de cantidad + Botón */}
           {isAgotado ? (
-            <div className="mt-auto">
-              <Button disabled className="w-full h-14 text-base" size="lg">
-                Producto Agotado
-              </Button>
-            </div>
+            <Button disabled className="w-full h-14 text-base" size="lg">
+              Producto Agotado
+            </Button>
           ) : (
-            <div className="flex items-center gap-4 mt-auto">
-              {/* Selector cantidad */}
-              <div className="flex items-center border rounded-lg overflow-hidden">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center border rounded-lg overflow-hidden shrink-0">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -248,10 +319,9 @@ export default function ProductoPage() {
                 </Button>
               </div>
 
-              {/* Botón agregar al carrito */}
               <Button
                 size="lg"
-                className="flex-1 h-14 text-base font-semibold"
+                className="flex-1 h-14 text-base font-semibold bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]"
                 onClick={handleAddToCart}
               >
                 <ShoppingCart className="mr-2 h-5 w-5" />
@@ -259,6 +329,15 @@ export default function ProductoPage() {
               </Button>
             </div>
           )}
+
+          <Separator />
+
+          {/* Banners promocionales (cuadrados, aside) */}
+          <BannerCarousel
+            ubicacion="PRODUCTO_INDIVIDUAL"
+            sedeId={Number(sedeId)}
+            aspectRatio="1/1"
+          />
         </div>
       </div>
     </div>

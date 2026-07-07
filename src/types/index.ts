@@ -38,6 +38,7 @@ export interface ProductoDetalleDTO {
   precioFinal: number;
   stock: number;
   disponible: boolean;
+  categoriasNombres?: string[];
 }
 
 export interface DetallePedidoRequest {
