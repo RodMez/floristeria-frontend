@@ -21,9 +21,10 @@ function imageKitUrl(base: string, w: number, h: number): string {
 interface BannerCarouselProps {
   ubicacion: UbicacionBanner;
   sedeId?: number;
+  aspectRatio?: string;
 }
 
-export default function BannerCarousel({ ubicacion, sedeId }: BannerCarouselProps) {
+export default function BannerCarousel({ ubicacion, sedeId, aspectRatio = "21/9" }: BannerCarouselProps) {
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -60,8 +61,8 @@ export default function BannerCarousel({ ubicacion, sedeId }: BannerCarouselProp
   const banner = banners[current];
 
   const content = (
-    <div
-      className="relative w-full overflow-hidden aspect-[21/9] max-h-[400px] md:aspect-[21/9] sm:aspect-[16/9]"
+      <div
+          className={`relative w-full overflow-hidden ${aspectRatio === "1/1" ? "aspect-square max-w-sm" : "aspect-[21/9] max-h-[400px]"}`}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onFocus={() => setIsPaused(true)}
