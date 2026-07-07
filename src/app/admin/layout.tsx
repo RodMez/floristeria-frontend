@@ -18,6 +18,7 @@ import {
   MapPin,
   Settings,
   LayoutDashboard,
+  Image as ImageIcon,
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -60,6 +61,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/productos", label: "Productos", icon: Flower2 },
     { href: "/admin/categorias", label: "Categorías", icon: Tags },
     { href: "/admin/sedes", label: "Sedes", icon: Building2 },
+    { href: "/admin/banners", label: "Banners", icon: ImageIcon },
     { href: "/admin/usuarios", label: "Usuarios", icon: Users },
     { href: "/admin/configuracion", label: "Configuración", icon: Settings },
   ];

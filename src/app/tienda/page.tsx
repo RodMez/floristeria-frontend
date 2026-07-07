@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw, Heart, Sparkles } from "lucide-react";
+import BannerCarousel from "@/components/banner/BannerCarousel";
 
 function SedesSkeleton() {
   return (
@@ -134,6 +135,9 @@ export default function Home() {
           </p>
         </div>
       </section>
+
+      {/* Banners SELECTOR_SEDE */}
+      <BannerCarousel ubicacion="SELECTOR_SEDE" />
 
       {/* Grid de Sedes */}
       <section className="container mx-auto px-4 py-12">

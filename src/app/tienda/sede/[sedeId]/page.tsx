@@ -8,6 +8,7 @@ import { ProductGrid } from "@/components/ProductGrid";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import BannerCarousel from "@/components/banner/BannerCarousel";
 
 function SedeSkeleton() {
   return (
@@ -105,6 +106,8 @@ export default function SedePage() {
       <p className="text-stone-600 mb-8">
         Explora nuestros productos disponibles en {sede.ciudad}
       </p>
+
+      <BannerCarousel ubicacion="HOME_SEDE" sedeId={sede.id} />
 
       <ProductGrid
         productos={productos ?? []}
