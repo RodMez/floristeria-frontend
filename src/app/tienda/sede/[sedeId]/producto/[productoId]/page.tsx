@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ShoppingCart, ArrowLeft, Minus, Plus, PackageX } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import BannerCarousel from "@/components/banner/BannerCarousel";
 
 function formatPrecio(value: number): string {
   return new Intl.NumberFormat("es-CO", {
@@ -130,6 +131,9 @@ export default function ProductoPage() {
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-8">
+      {/* Banners PRODUCTO_INDIVIDUAL */}
+      <BannerCarousel ubicacion="PRODUCTO_INDIVIDUAL" sedeId={Number(sedeId)} />
+
       {/* Breadcrumb / Volver */}
       <Link
         href={`/tienda/sede/${sedeId}`}

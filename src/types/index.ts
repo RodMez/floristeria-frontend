@@ -308,3 +308,30 @@ export interface ConfiguracionTiendaDTO {
   imagenHeroUrl?: string | null;
   imagenBannerUrl?: string | null;
 }
+
+export type UbicacionBanner = "SELECTOR_SEDE" | "HOME_SEDE" | "PRODUCTO_INDIVIDUAL";
+
+export interface BannerDTO {
+  id: number;
+  sedeId: number | null;
+  ubicacion: UbicacionBanner;
+  titulo: string | null;
+  texto: string | null;
+  imagenUrl: string;
+  enlaceUrl: string | null;
+  orden: number;
+  activo: boolean;
+  creadoEn: string;
+  actualizadoEn: string;
+}
+
+export interface BannerRequest {
+  sedeId: number | null;
+  ubicacion: UbicacionBanner;
+  titulo?: string;
+  texto?: string;
+  imagenUrl: string;
+  enlaceUrl?: string;
+  orden?: number;
+  activo?: boolean;
+}
