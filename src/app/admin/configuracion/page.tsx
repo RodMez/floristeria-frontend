@@ -9,12 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import Image from "next/image";
 import {
   Settings,
   Save,
   Copy,
   Mail,
   Globe,
+  Tag,
+  ImageIcon,
 } from "lucide-react";
 import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +35,11 @@ const configSchema = z.object({
   instagramUrl: z.string().url("URL inválida").optional().or(z.literal("")),
   facebookUrl: z.string().url("URL inválida").optional().or(z.literal("")),
   tiktokUrl: z.string().url("URL inválida").optional().or(z.literal("")),
+  nombreSitio: z.string().optional().or(z.literal("")),
+  tagline: z.string().optional().or(z.literal("")),
+  descripcion: z.string().optional().or(z.literal("")),
+  logoUrl: z.string().optional().or(z.literal("")),
+  iconUrl: z.string().optional().or(z.literal("")),
 });
 
 type ConfigFormData = z.infer<typeof configSchema>;
@@ -59,6 +68,8 @@ function CardSection({
 
 export default function ConfiguracionPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingIcon, setUploadingIcon] = useState(false);
 
   const {
     data: configuracion,
@@ -86,10 +97,36 @@ export default function ConfiguracionPage() {
       instagramUrl: "",
       facebookUrl: "",
       tiktokUrl: "",
+      nombreSitio: "",
+      tagline: "",
+      descripcion: "",
+      logoUrl: "",
+      iconUrl: "",
     },
   });
 
   const watchedEnviarCopia = watch("enviarCopiaMaestro");
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: "logoUrl" | "iconUrl") => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const setter = field === "logoUrl" ? setUploadingLogo : setUploadingIcon;
+    setter(true);
+    try {
+      const formData = new FormData();
+      formData.append("archivo", file);
+      const res = await authFetch<{ url: string }>(
+        `${API_URL}/api/superadmin/imagenes`,
+        { method: "POST", body: formData }
+      );
+      setValue(field, res.url, { shouldValidate: true });
+      toast.success(`${field === "logoUrl" ? "Logo" : "Favicon"} subido correctamente`);
+    } catch {
+      toast.error("Error al subir imagen");
+    } finally {
+      setter(false);
+    }
+  };
 
   const metaFeedUrl = `${API_URL}/api/v1/catalogo/meta-feed`;
 
@@ -107,6 +144,11 @@ export default function ConfiguracionPage() {
         instagramUrl: configuracion.instagramUrl ?? "",
         facebookUrl: configuracion.facebookUrl ?? "",
         tiktokUrl: configuracion.tiktokUrl ?? "",
+        nombreSitio: configuracion.nombreSitio ?? "",
+        tagline: configuracion.tagline ?? "",
+        descripcion: configuracion.descripcion ?? "",
+        logoUrl: configuracion.logoUrl ?? "",
+        iconUrl: configuracion.iconUrl ?? "",
       });
     }
   }, [configuracion, reset]);
@@ -132,6 +174,11 @@ export default function ConfiguracionPage() {
       instagramUrl: data.instagramUrl || null,
       facebookUrl: data.facebookUrl || null,
       tiktokUrl: data.tiktokUrl || null,
+      nombreSitio: data.nombreSitio || null,
+      tagline: data.tagline || null,
+      descripcion: data.descripcion || null,
+      logoUrl: data.logoUrl || null,
+      iconUrl: data.iconUrl || null,
     };
 
     try {
@@ -186,7 +233,7 @@ export default function ConfiguracionPage() {
           Configuración de Tienda
         </h1>
         <p className="mt-1 text-sm text-stone-500">
-          Gestiona la configuración general de TAO Boutique Floral
+          Gestiona la configuración general de la tienda
         </p>
       </div>
 
@@ -311,6 +358,122 @@ export default function ConfiguracionPage() {
                   {errors.tiktokUrl.message}
                 </p>
               )}
+            </div>
+          </div>
+        </CardSection>
+
+        {/* Marca e Identidad */}
+        <CardSection title="Marca e Identidad" icon={Tag}>
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="nombreSitio">Nombre del sitio</Label>
+              <Input
+                id="nombreSitio"
+                {...register("nombreSitio")}
+                placeholder="TAO Boutique Floral"
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tagline">Tagline / Eslogan</Label>
+              <Input
+                id="tagline"
+                {...register("tagline")}
+                placeholder="Flores que cuentan historias"
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="descripcion">Descripción</Label>
+              <Textarea
+                id="descripcion"
+                {...register("descripcion")}
+                placeholder="Transformamos flores en experiencias inolvidables..."
+                disabled={isLoading}
+                rows={3}
+              />
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="logoUrl">Logo</Label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    id="logoUrl"
+                    type="text"
+                    {...register("logoUrl")}
+                    placeholder="URL del logo"
+                    disabled={isLoading}
+                    className="flex-1"
+                  />
+                  <Label
+                    htmlFor="logoUpload"
+                    className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md bg-[var(--color-brand-mustard)] px-3 py-2 text-sm font-medium text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]"
+                  >
+                    <ImageIcon className="size-4" />
+                    {uploadingLogo ? "..." : "Subir"}
+                  </Label>
+                  <input
+                    id="logoUpload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleImageUpload(e, "logoUrl")}
+                    disabled={uploadingLogo}
+                  />
+                </div>
+                {watch("logoUrl") && (
+                  <div className="relative mt-2 h-16 w-16 overflow-hidden rounded-lg border">
+                    <Image
+                      src={watch("logoUrl") || ""}
+                      alt="Logo preview"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="iconUrl">Favicon (ícono de pestaña)</Label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    id="iconUrl"
+                    type="text"
+                    {...register("iconUrl")}
+                    placeholder="URL del favicon"
+                    disabled={isLoading}
+                    className="flex-1"
+                  />
+                  <Label
+                    htmlFor="iconUpload"
+                    className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md bg-[var(--color-brand-mustard)] px-3 py-2 text-sm font-medium text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]"
+                  >
+                    <ImageIcon className="size-4" />
+                    {uploadingIcon ? "..." : "Subir"}
+                  </Label>
+                  <input
+                    id="iconUpload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleImageUpload(e, "iconUrl")}
+                    disabled={uploadingIcon}
+                  />
+                </div>
+                {watch("iconUrl") && (
+                  <div className="relative mt-2 h-10 w-10 overflow-hidden rounded border">
+                    <Image
+                      src={watch("iconUrl") || ""}
+                      alt="Favicon preview"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </CardSection>
