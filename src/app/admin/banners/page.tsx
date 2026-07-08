@@ -405,6 +405,10 @@ export default function BannersPage() {
                   />
                 </div>
               )}
+              <p className="text-xs text-stone-500 mt-2">
+                <strong>Tamaño recomendado:</strong> 1920 × 640 px (relación 3:1).
+                Mantén el contenido importante en la zona central para evitar recortes en diferentes dispositivos.
+              </p>
             </div>
 
             {/* Enlace */}

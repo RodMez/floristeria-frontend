@@ -125,6 +125,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
+      {/* Banners SELECTOR_SEDE — al inicio, antes del hero */}
+      <BannerCarousel ubicacion="SELECTOR_SEDE" maxHeight={640} />
+
       {/* Hero Section */}
       <section className="bg-gradient-to-b from-stone-100 to-stone-50 py-16">
         <div className="container mx-auto px-4 text-center">
@@ -144,9 +147,6 @@ export default function Home() {
           </p>
         </div>
       </section>
-
-      {/* Banners SELECTOR_SEDE */}
-      <BannerCarousel ubicacion="SELECTOR_SEDE" />
 
       {/* Grid de Sedes */}
       <section className="container mx-auto px-4 py-12">

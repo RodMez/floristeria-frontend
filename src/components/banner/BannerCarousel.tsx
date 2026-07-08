@@ -22,9 +22,31 @@ interface BannerCarouselProps {
   ubicacion: UbicacionBanner;
   sedeId?: number;
   aspectRatio?: string;
+  maxHeight?: number;
 }
 
-export default function BannerCarousel({ ubicacion, sedeId, aspectRatio = "21/9" }: BannerCarouselProps) {
+function BannerSkeleton({ maxHeight }: { maxHeight: number }) {
+  return (
+    <div
+      className="w-full aspect-[16/9] sm:aspect-[16/9] md:aspect-[3/1] lg:aspect-[3/1] xl:aspect-[3/1] 2xl:aspect-[3/1] overflow-hidden bg-stone-100 animate-pulse"
+      style={{ maxHeight }}
+    >
+      <div className="flex h-full items-end p-6 md:p-10">
+        <div className="space-y-3 w-full max-w-xl">
+          <div className="h-8 w-3/4 rounded bg-stone-200" />
+          <div className="h-4 w-1/2 rounded bg-stone-200" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function BannerCarousel({
+  ubicacion,
+  sedeId,
+  aspectRatio,
+  maxHeight = 640,
+}: BannerCarouselProps) {
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -56,29 +78,41 @@ export default function BannerCarousel({ ubicacion, sedeId, aspectRatio = "21/9"
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [total, isPaused, goNext]);
 
-  if (!banners || banners.length === 0) return null;
+  if (!banners) return <BannerSkeleton maxHeight={maxHeight} />;
+  if (banners.length === 0) return null;
 
   const banner = banners[current];
 
+  const containerClass = aspectRatio
+    ? `relative w-full overflow-hidden ${
+        aspectRatio === "1/1" ? "aspect-square max-w-sm" :
+        aspectRatio === "16/9" ? "aspect-[16/9]" :
+        "aspect-[21/9] max-h-[400px]"
+      }`
+    : "relative w-full overflow-hidden aspect-[16/9] sm:aspect-[16/9] md:aspect-[3/1] lg:aspect-[3/1] xl:aspect-[3/1] 2xl:aspect-[3/1]";
+
   const content = (
-      <div
-          className={`relative w-full overflow-hidden ${
-            aspectRatio === "1/1" ? "aspect-square max-w-sm" :
-            aspectRatio === "16/9" ? "aspect-[16/9]" :
-            "aspect-[21/9] max-h-[400px]"
-          }`}
+    <div
+      className={containerClass}
+      style={aspectRatio ? undefined : { maxHeight }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onFocus={() => setIsPaused(true)}
       onBlur={() => setIsPaused(false)}
     >
       <Image
-        src={imageKitUrl(banner.imagenUrl, aspectRatio === "1/1" ? 600 : 1200, aspectRatio === "1/1" ? 600 : aspectRatio === "16/9" ? 338 : 400)}
+        src={aspectRatio
+          ? imageKitUrl(banner.imagenUrl, aspectRatio === "1/1" ? 600 : 1200, aspectRatio === "1/1" ? 600 : aspectRatio === "16/9" ? 338 : 400)
+          : imageKitUrl(banner.imagenUrl, 1920, 640)
+        }
         alt={banner.titulo ?? "Banner promocional"}
         fill
         className="object-cover"
         priority={current === 0}
-        sizes={aspectRatio === "1/1" ? "(max-width: 640px) 100vw, 300px" : "(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1200px"}
+        sizes={aspectRatio
+          ? aspectRatio === "1/1" ? "(max-width: 640px) 100vw, 300px" : "(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1200px"
+          : "(max-width: 767px) 100vw, 1920px"
+        }
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">

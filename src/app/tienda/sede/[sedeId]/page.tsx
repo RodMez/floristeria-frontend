@@ -107,7 +107,9 @@ export default function SedePage() {
         Explora nuestros productos disponibles en {sede.ciudad}
       </p>
 
-      <BannerCarousel ubicacion="HOME_SEDE" sedeId={sede.id} />
+      <div className="mb-12">
+        <BannerCarousel ubicacion="HOME_SEDE" sedeId={sede.id} maxHeight={640} />
+      </div>
 
       <ProductGrid
         productos={productos ?? []}
