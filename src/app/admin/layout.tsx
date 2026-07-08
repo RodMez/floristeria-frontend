@@ -19,6 +19,7 @@ import {
   Settings,
   LayoutDashboard,
   Image as ImageIcon,
+  MessageSquare,
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -62,6 +63,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/categorias", label: "Categorías", icon: Tags },
     { href: "/admin/sedes", label: "Sedes", icon: Building2 },
     { href: "/admin/banners", label: "Banners", icon: ImageIcon },
+    { href: "/admin/resenas", label: "Reseñas", icon: MessageSquare },
     { href: "/admin/usuarios", label: "Usuarios", icon: Users },
     { href: "/admin/configuracion", label: "Configuración", icon: Settings },
   ];
