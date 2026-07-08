@@ -40,16 +40,16 @@ const sedeSchema = z.object({
     "Formato: +57 300 123 4567"
   ),
   instagramUrl: z.string().regex(
-    /^https:\/\/(www\.)?instagram\.com\/.+$/i,
-    "Debe ser una URL de Instagram válida"
+    /^https:\/\/(www\.)?instagram\.com(\/.*)?$/i,
+    "Debe ser una URL de Instagram válida (ej: https://instagram.com/tu-cuenta)"
   ).optional().or(z.literal("")),
   facebookUrl: z.string().regex(
-    /^https:\/\/(www\.)?facebook\.com\/.+$/i,
-    "Debe ser una URL de Facebook válida"
+    /^https:\/\/(www\.|m\.|business\.)?(facebook|fb)\.com(\/.*)?$/i,
+    "Debe ser una URL de Facebook válida (ej: https://facebook.com/tu-pagina)"
   ).optional().or(z.literal("")),
   tiktokUrl: z.string().regex(
-    /^https:\/\/(www\.)?tiktok\.com\/.+$/i,
-    "Debe ser una URL de TikTok válida"
+    /^https:\/\/(www\.|vm\.|m\.)?tiktok\.com(\/.*)?$/i,
+    "Debe ser una URL de TikTok válida (ej: https://tiktok.com/@tu-cuenta)"
   ).optional().or(z.literal("")),
   email: z.string().email("Correo inválido").optional().or(z.literal("")),
 });
