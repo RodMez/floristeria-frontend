@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useDeferredValue, useEffect } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { Sede } from "@/types";
@@ -24,7 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Building2, Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Search, ArrowUpDown } from "lucide-react";
 import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 import Cookies from "js-cookie";
@@ -35,10 +35,22 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 const sedeSchema = z.object({
   nombre: z.string().min(1, "El nombre es requerido"),
   ciudad: z.string().min(1, "La ciudad es requerida"),
-  telefonoWhatsapp: z.string().regex(/^[0-9+ ]+$/, "Solo se permiten números, espacios y el signo +"),
-  instagramUrl: z.string().url("URL inválida").optional().or(z.literal("")),
-  facebookUrl: z.string().url("URL inválida").optional().or(z.literal("")),
-  tiktokUrl: z.string().url("URL inválida").optional().or(z.literal("")),
+  telefonoWhatsapp: z.string().regex(
+    /^\+57 3\d{2} \d{3} \d{4}$/,
+    "Formato: +57 300 123 4567"
+  ),
+  instagramUrl: z.string().regex(
+    /^https:\/\/(www\.)?instagram\.com\/.+$/i,
+    "Debe ser una URL de Instagram válida"
+  ).optional().or(z.literal("")),
+  facebookUrl: z.string().regex(
+    /^https:\/\/(www\.)?facebook\.com\/.+$/i,
+    "Debe ser una URL de Facebook válida"
+  ).optional().or(z.literal("")),
+  tiktokUrl: z.string().regex(
+    /^https:\/\/(www\.)?tiktok\.com\/.+$/i,
+    "Debe ser una URL de TikTok válida"
+  ).optional().or(z.literal("")),
   email: z.string().email("Correo inválido").optional().or(z.literal("")),
 });
 
@@ -63,12 +75,16 @@ const emptyForm: SedeForm = {
 };
 
 export default function SedesPage() {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const searchTerm = useDeferredValue(searchInput);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSede, setEditingSede] = useState<Sede | null>(null);
   const [form, setForm] = useState<SedeForm>(emptyForm);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [sedeToDelete, setSedeToDelete] = useState<Sede | null>(null);
+  const [sortField, setSortField] = useState<string | null>("id");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const { data: sedes, error, mutate } = useSWR<Sede[]>(
     `${API_URL}/api/superadmin/sedes`,
@@ -76,11 +92,42 @@ export default function SedesPage() {
     { revalidateOnFocus: false }
   );
 
+  const validateField = (field: keyof SedeForm, value: string) => {
+    const fieldSchema = z.object({ [field]: sedeSchema.shape[field] })
+    const result = fieldSchema.safeParse({ [field]: value })
+    setErrors(prev => ({
+      ...prev,
+      [field]: result.success ? "" : result.error.issues[0].message
+    }))
+  }
+
+  const formatWhatsApp = (value: string): string => {
+    let digits = value.replace(/\D/g, "")
+    if (!digits.startsWith("57")) digits = "57" + digits.replace(/^57/, "")
+    digits = digits.slice(0, 12)
+    if (digits.length <= 2) return `+${digits}`
+    if (digits.length <= 5) return `+${digits.slice(0, 2)} ${digits.slice(2)}`
+    if (digits.length <= 8) return `+${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5)}`
+    return `+${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5, 8)} ${digits.slice(8)}`
+  }
+
   const handleNew = () => {
     setEditingSede(null);
     setForm(emptyForm);
+    setErrors({});
     setDialogOpen(true);
   };
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.key === 'n' || e.key === 'N') && (e.metaKey || e.ctrlKey) && !dialogOpen) {
+        e.preventDefault()
+        handleNew()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [dialogOpen])
 
   const handleEdit = (sede: Sede) => {
     setEditingSede(sede);
@@ -93,6 +140,7 @@ export default function SedesPage() {
       tiktokUrl: sede.tiktokUrl || "",
       email: sede.email || "",
     });
+    setErrors({});
     setDialogOpen(true);
   };
 
@@ -101,8 +149,13 @@ export default function SedesPage() {
 
     const validation = sedeSchema.safeParse(form);
     if (!validation.success) {
-      const firstError = validation.error.issues[0]?.message || "Error de validación";
-      toast.error(firstError);
+      const fieldErrors: Record<string, string> = {}
+      validation.error.issues.forEach(issue => {
+        const field = issue.path[0] as string
+        if (!fieldErrors[field]) fieldErrors[field] = issue.message
+      })
+      setErrors(fieldErrors)
+      toast.error("Corrige los errores en el formulario antes de guardar");
       return;
     }
 
@@ -181,6 +234,11 @@ export default function SedesPage() {
     }
   };
 
+  const handleSort = (field: string) => {
+    setSortDir(prev => (sortField === field ? (prev === "asc" ? "desc" : "asc") : "desc"))
+    setSortField(field)
+  }
+
   if (error) {
     return (
       <div className="p-6">
@@ -202,10 +260,17 @@ export default function SedesPage() {
     );
   }
 
-  // Ordenamiento estable por ID descendente
-  const sortedSedes = sedes ? [...sedes].sort((a, b) => b.id - a.id) : [];
+  // Ordenamiento por columna
+  const sortedSedes = [...(sedes ?? [])].sort((a, b) => {
+    let cmp = 0
+    if (sortField === "id") cmp = a.id - b.id
+    else if (sortField === "nombre") cmp = a.nombre.localeCompare(b.nombre)
+    else if (sortField === "ciudad") cmp = a.ciudad.localeCompare(b.ciudad)
+    else cmp = a.id - b.id
+    return sortDir === "asc" ? cmp : -cmp
+  });
 
-  // Filtro de búsqueda local
+  // Filtro de búsqueda local (usando deferred value)
   const sedesFiltradas = sortedSedes.filter((s) =>
     s.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.ciudad.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -235,9 +300,9 @@ export default function SedesPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
           <Input
             type="text"
-            placeholder="Buscar por nombre, ciudad, WhatsApp, correo o ID..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Buscar (nombre, ciudad, WhatsApp, correo o ID)"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="pl-10"
           />
         </div>
@@ -247,9 +312,27 @@ export default function SedesPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Ciudad</TableHead>
+              <TableHead
+                className="cursor-pointer select-none"
+                onClick={() => handleSort("id")}
+                aria-sort={sortField === "id" ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
+              >
+                ID {sortField === "id" && <ArrowUpDown className="inline h-3 w-3 ml-1" />}
+              </TableHead>
+              <TableHead
+                className="cursor-pointer select-none"
+                onClick={() => handleSort("nombre")}
+                aria-sort={sortField === "nombre" ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
+              >
+                Nombre {sortField === "nombre" && <ArrowUpDown className="inline h-3 w-3 ml-1" />}
+              </TableHead>
+              <TableHead
+                className="cursor-pointer select-none"
+                onClick={() => handleSort("ciudad")}
+                aria-sort={sortField === "ciudad" ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
+              >
+                Ciudad {sortField === "ciudad" && <ArrowUpDown className="inline h-3 w-3 ml-1" />}
+              </TableHead>
               <TableHead>Contacto</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
@@ -352,7 +435,7 @@ export default function SedesPage() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
               {editingSede ? "Editar Sede" : "Nueva Sede"}
@@ -364,63 +447,112 @@ export default function SedesPage() {
               <Input
                 id="nombre"
                 value={form.nombre}
-                onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+                onChange={(e) => {
+                  setForm({ ...form, nombre: e.target.value })
+                  validateField("nombre", e.target.value)
+                }}
                 placeholder="Nombre de la sede"
                 disabled={isLoading}
                 required
+                aria-invalid={!!errors.nombre}
+                aria-describedby={errors.nombre ? "error-nombre" : undefined}
               />
+              {errors.nombre && (
+                <span id="error-nombre" className="text-xs text-red-500" role="alert">{errors.nombre}</span>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="ciudad">Ciudad</Label>
               <Input
                 id="ciudad"
                 value={form.ciudad}
-                onChange={(e) => setForm({ ...form, ciudad: e.target.value })}
+                onChange={(e) => {
+                  setForm({ ...form, ciudad: e.target.value })
+                  validateField("ciudad", e.target.value)
+                }}
                 placeholder="Ciudad"
                 disabled={isLoading}
                 required
+                aria-invalid={!!errors.ciudad}
+                aria-describedby={errors.ciudad ? "error-ciudad" : undefined}
               />
+              {errors.ciudad && (
+                <span id="error-ciudad" className="text-xs text-red-500" role="alert">{errors.ciudad}</span>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="telefonoWhatsapp">WhatsApp</Label>
               <Input
                 id="telefonoWhatsapp"
                 value={form.telefonoWhatsapp}
-                onChange={(e) => setForm({ ...form, telefonoWhatsapp: e.target.value.replace(/[^0-9+ ]/g, "") })}
-                placeholder="Ej: +57 300 1234567"
+                onChange={(e) => {
+                  const formatted = formatWhatsApp(e.target.value)
+                  setForm({ ...form, telefonoWhatsapp: formatted })
+                  validateField("telefonoWhatsapp", formatted)
+                }}
+                placeholder="+57 300 123 4567"
                 disabled={isLoading}
                 required
+                aria-invalid={!!errors.telefonoWhatsapp}
+                aria-describedby={errors.telefonoWhatsapp ? "error-telefonoWhatsapp" : undefined}
               />
+              {errors.telefonoWhatsapp && (
+                <span id="error-telefonoWhatsapp" className="text-xs text-red-500" role="alert">{errors.telefonoWhatsapp}</span>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="instagramUrl">Instagram URL (opcional)</Label>
               <Input
                 id="instagramUrl"
                 value={form.instagramUrl}
-                onChange={(e) => setForm({ ...form, instagramUrl: e.target.value })}
+                onChange={(e) => {
+                  setForm({ ...form, instagramUrl: e.target.value })
+                  validateField("instagramUrl", e.target.value)
+                }}
                 placeholder="https://instagram.com/tu-sede"
                 disabled={isLoading}
+                aria-invalid={!!errors.instagramUrl}
+                aria-describedby={errors.instagramUrl ? "error-instagramUrl" : undefined}
               />
+              {errors.instagramUrl && (
+                <span id="error-instagramUrl" className="text-xs text-red-500" role="alert">{errors.instagramUrl}</span>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="facebookUrl">Facebook URL (opcional)</Label>
               <Input
                 id="facebookUrl"
                 value={form.facebookUrl}
-                onChange={(e) => setForm({ ...form, facebookUrl: e.target.value })}
+                onChange={(e) => {
+                  setForm({ ...form, facebookUrl: e.target.value })
+                  validateField("facebookUrl", e.target.value)
+                }}
                 placeholder="https://facebook.com/tu-sede"
                 disabled={isLoading}
+                aria-invalid={!!errors.facebookUrl}
+                aria-describedby={errors.facebookUrl ? "error-facebookUrl" : undefined}
               />
+              {errors.facebookUrl && (
+                <span id="error-facebookUrl" className="text-xs text-red-500" role="alert">{errors.facebookUrl}</span>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="tiktokUrl">TikTok URL (opcional)</Label>
               <Input
                 id="tiktokUrl"
                 value={form.tiktokUrl}
-                onChange={(e) => setForm({ ...form, tiktokUrl: e.target.value })}
+                onChange={(e) => {
+                  setForm({ ...form, tiktokUrl: e.target.value })
+                  validateField("tiktokUrl", e.target.value)
+                }}
                 placeholder="https://tiktok.com/@tu-sede"
                 disabled={isLoading}
+                aria-invalid={!!errors.tiktokUrl}
+                aria-describedby={errors.tiktokUrl ? "error-tiktokUrl" : undefined}
               />
+              {errors.tiktokUrl && (
+                <span id="error-tiktokUrl" className="text-xs text-red-500" role="alert">{errors.tiktokUrl}</span>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Correo electrónico (opcional)</Label>
@@ -428,10 +560,18 @@ export default function SedesPage() {
                 id="email"
                 type="email"
                 value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                onChange={(e) => {
+                  setForm({ ...form, email: e.target.value })
+                  validateField("email", e.target.value)
+                }}
                 placeholder="sede@floristeria.com"
                 disabled={isLoading}
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? "error-email" : undefined}
               />
+              {errors.email && (
+                <span id="error-email" className="text-xs text-red-500" role="alert">{errors.email}</span>
+              )}
             </div>
             <div className="flex justify-end gap-2 pt-4">
               <Button
@@ -455,7 +595,7 @@ export default function SedesPage() {
           <DialogHeader>
             <DialogTitle>Eliminar sede</DialogTitle>
             <DialogDescription>
-              ¿Estás seguro de eliminar la sede &ldquo;{sedeToDelete?.nombre}&rdquo;? Esta acción no se puede deshacer.
+              ¿Estás seguro de eliminar la sede &ldquo;{sedeToDelete?.nombre}&rdquo; en {sedeToDelete?.ciudad}? Esta acción es irreversible y ocultará la sede, su inventario, usuarios y zonas de domicilio asociados.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
