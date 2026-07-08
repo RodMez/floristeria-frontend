@@ -40,6 +40,9 @@ const configSchema = z.object({
   descripcion: z.string().optional().or(z.literal("")),
   logoUrl: z.string().optional().or(z.literal("")),
   iconUrl: z.string().optional().or(z.literal("")),
+  historia: z.string().optional().or(z.literal("")),
+  mision: z.string().optional().or(z.literal("")),
+  vision: z.string().optional().or(z.literal("")),
 });
 
 type ConfigFormData = z.infer<typeof configSchema>;
@@ -102,6 +105,9 @@ export default function ConfiguracionPage() {
       descripcion: "",
       logoUrl: "",
       iconUrl: "",
+      historia: "",
+      mision: "",
+      vision: "",
     },
   });
 
@@ -149,6 +155,9 @@ export default function ConfiguracionPage() {
         descripcion: configuracion.descripcion ?? "",
         logoUrl: configuracion.logoUrl ?? "",
         iconUrl: configuracion.iconUrl ?? "",
+        historia: configuracion.historia ?? "",
+        mision: configuracion.mision ?? "",
+        vision: configuracion.vision ?? "",
       });
     }
   }, [configuracion, reset]);
@@ -179,6 +188,9 @@ export default function ConfiguracionPage() {
       descripcion: data.descripcion || null,
       logoUrl: data.logoUrl || null,
       iconUrl: data.iconUrl || null,
+      historia: data.historia || null,
+      mision: data.mision || null,
+      vision: data.vision || null,
     };
 
     try {
@@ -473,6 +485,40 @@ export default function ConfiguracionPage() {
                     />
                   </div>
                 )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="historia">Historia de la empresa</Label>
+              <Textarea
+                id="historia"
+                {...register("historia")}
+                placeholder="TAO Boutique Floral nace del arte de transformar flores..."
+                disabled={isLoading}
+                rows={4}
+              />
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="mision">Misión</Label>
+                <Textarea
+                  id="mision"
+                  {...register("mision")}
+                  placeholder="Nuestra misión es transformar emociones..."
+                  disabled={isLoading}
+                  rows={4}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="vision">Visión</Label>
+                <Textarea
+                  id="vision"
+                  {...register("vision")}
+                  placeholder="Nuestra visión es consolidar..."
+                  disabled={isLoading}
+                  rows={4}
+                />
               </div>
             </div>
           </div>
