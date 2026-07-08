@@ -62,19 +62,23 @@ export default function BannerCarousel({ ubicacion, sedeId, aspectRatio = "21/9"
 
   const content = (
       <div
-          className={`relative w-full overflow-hidden ${aspectRatio === "1/1" ? "aspect-square max-w-sm" : "aspect-[21/9] max-h-[400px]"}`}
+          className={`relative w-full overflow-hidden ${
+            aspectRatio === "1/1" ? "aspect-square max-w-sm" :
+            aspectRatio === "16/9" ? "aspect-[16/9]" :
+            "aspect-[21/9] max-h-[400px]"
+          }`}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onFocus={() => setIsPaused(true)}
       onBlur={() => setIsPaused(false)}
     >
       <Image
-        src={imageKitUrl(banner.imagenUrl, 1200, 400)}
+        src={imageKitUrl(banner.imagenUrl, aspectRatio === "1/1" ? 600 : 1200, aspectRatio === "1/1" ? 600 : aspectRatio === "16/9" ? 338 : 400)}
         alt={banner.titulo ?? "Banner promocional"}
         fill
         className="object-cover"
         priority={current === 0}
-        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1200px"
+        sizes={aspectRatio === "1/1" ? "(max-width: 640px) 100vw, 300px" : "(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1200px"}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">

@@ -176,11 +176,10 @@ export default function ProductoPage() {
         Volver al catálogo
       </Link>
 
-      {/* Grid: 3/5 imagen + 2/5 info + banners */}
+      {/* Grid: 3/5 imagen + 2/5 info */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
-        {/* ── Columna izquierda: Imagen + Descripción ───────── */}
-        <div className="lg:col-span-3 space-y-8">
-          {/* Imagen */}
+        {/* Columna izquierda: Imagen */}
+        <div className="lg:col-span-3">
           <div className="relative aspect-square w-full overflow-hidden rounded-2xl shadow-lg bg-stone-100">
             <Image
               src={producto.imagenUrl}
@@ -196,20 +195,15 @@ export default function ProductoPage() {
               </div>
             )}
           </div>
-
-          {/* Descripción (solo visible en desktop en la columna izquierda) */}
-          <div className="hidden lg:block">
-            <h2 className="text-sm font-semibold text-stone-800 uppercase tracking-wide mb-3">
-              Descripción
-            </h2>
-            <p className="text-stone-600 leading-relaxed whitespace-pre-line">
-              {producto.descripcion}
-            </p>
-          </div>
         </div>
 
-        {/* ── Columna derecha: Info + Carrusel ──────────────── */}
-        <div className="lg:col-span-2 space-y-6">
+        {/* Columna derecha: Info */}
+        <div className="lg:col-span-2 space-y-5">
+          {/* Título */}
+          <h1 className="text-3xl font-bold text-stone-800">
+            {producto.nombre}
+          </h1>
+
           {/* Categorías */}
           {producto.categoriasNombres && producto.categoriasNombres.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
@@ -225,10 +219,12 @@ export default function ProductoPage() {
             </div>
           )}
 
-          {/* Título */}
-          <h1 className="text-3xl font-bold text-stone-800">
-            {producto.nombre}
-          </h1>
+          {/* Descripción */}
+          <div>
+            <p className="text-stone-600 leading-relaxed whitespace-pre-line">
+              {producto.descripcion}
+            </p>
+          </div>
 
           {/* Estrellas */}
           <Stars />
@@ -278,16 +274,6 @@ export default function ProductoPage() {
 
           <Separator />
 
-          {/* Descripción (mobile) */}
-          <div className="lg:hidden">
-            <h2 className="text-sm font-semibold text-stone-800 uppercase tracking-wide mb-2">
-              Descripción
-            </h2>
-            <p className="text-stone-600 leading-relaxed whitespace-pre-line">
-              {producto.descripcion}
-            </p>
-          </div>
-
           {/* Selector de cantidad + Botón */}
           {isAgotado ? (
             <Button disabled className="w-full h-14 text-base" size="lg">
@@ -332,11 +318,11 @@ export default function ProductoPage() {
 
           <Separator />
 
-          {/* Banners promocionales (cuadrados, aside) */}
+          {/* Banners promocionales */}
           <BannerCarousel
             ubicacion="PRODUCTO_INDIVIDUAL"
             sedeId={Number(sedeId)}
-            aspectRatio="1/1"
+            aspectRatio="16/9"
           />
         </div>
       </div>
