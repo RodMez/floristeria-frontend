@@ -4,8 +4,8 @@ import useSWR from "swr";
 import Link from "next/link";
 import Image from "next/image";
 import { fetcher } from "@/lib/fetcher";
-import { ConfiguracionTiendaDTO } from "@/types";
-import { Heart, Sparkles, Target, ChevronRight } from "lucide-react";
+import { ConfiguracionTiendaDTO, Sede } from "@/types";
+import { Heart, Sparkles, Target, ChevronRight, MapPin } from "lucide-react";
 import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 
@@ -15,9 +15,15 @@ export default function NosotrosPage() {
     fetcher
   );
 
+  const { data: sedes } = useSWR<Sede[]>(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/sedes`,
+    fetcher
+  );
+
   const sitioNombre = config?.nombreSitio || "TAO Boutique Floral";
   const logoUrl = config?.logoUrl || "/tao-logo-header.png";
   const tagline = config?.tagline || "Flores que cuentan historias";
+  const descripcion = config?.descripcion || "";
   const historia = config?.historia || "";
   const mision = config?.mision || "";
   const vision = config?.vision || "";
@@ -44,6 +50,15 @@ export default function NosotrosPage() {
           <p className="text-lg italic text-stone-500">&ldquo;{tagline}&rdquo;</p>
         </div>
       </section>
+
+      {/* Descripción */}
+      {descripcion && (
+        <section className="py-12">
+          <div className="container mx-auto max-w-3xl px-4 text-center">
+            <p className="text-lg text-stone-600 leading-relaxed">{descripcion}</p>
+          </div>
+        </section>
+      )}
 
       {/* Historia */}
       {historia && (
@@ -91,40 +106,84 @@ export default function NosotrosPage() {
       {/* Contacto */}
       <section className="py-16">
         <div className="container mx-auto max-w-3xl px-4 text-center">
-          <h2 className="text-2xl font-semibold text-stone-800 mb-8">Contáctanos</h2>
-          <div className="flex flex-wrap justify-center gap-6">
-            {config?.whatsappGeneral && (
-              <a href={`https://wa.me/${config.whatsappGeneral.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-5 py-3 text-sm font-medium text-stone-700 transition-colors hover:border-emerald-300 hover:text-emerald-600">
-                <FaWhatsapp className="size-5 text-emerald-500" />
-                WhatsApp
+          <h2 className="text-2xl font-semibold text-stone-800 mb-4">Contáctanos</h2>
+          <p className="text-stone-500 mb-8 max-w-xl mx-auto">
+            Estamos aquí para ayudarte. Ya sea que tengas una consulta, necesites un arreglo especial o quieras hacer un pedido, no dudes en comunicarte con nosotros.
+          </p>
+
+          <div className="grid gap-4 sm:grid-cols-2 max-w-lg mx-auto mb-8">
+            {config?.correoMaestro && (
+              <a href={`mailto:${config.correoMaestro}`} className="flex items-center gap-3 rounded-lg border border-stone-200 bg-white px-5 py-4 text-left text-sm font-medium text-stone-700 transition-colors hover:border-amber-300 hover:text-amber-600">
+                <MdEmail className="size-5 shrink-0 text-amber-500" />
+                <div>
+                  <p className="text-xs text-stone-400">Email</p>
+                  <p className="truncate">{config.correoMaestro}</p>
+                </div>
               </a>
             )}
+            {config?.whatsappGeneral && (
+              <a href={`https://wa.me/${config.whatsappGeneral.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-lg border border-stone-200 bg-white px-5 py-4 text-left text-sm font-medium text-stone-700 transition-colors hover:border-emerald-300 hover:text-emerald-600">
+                <FaWhatsapp className="size-5 shrink-0 text-emerald-500" />
+                <div>
+                  <p className="text-xs text-stone-400">WhatsApp</p>
+                  <p>{config.whatsappGeneral}</p>
+                </div>
+              </a>
+            )}
+          </div>
+
+          {/* Sedes */}
+          {sedes && sedes.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wider mb-4">Nuestras Sedes</h3>
+              <div className="grid gap-4 sm:grid-cols-2 max-w-xl mx-auto">
+                {sedes.map((sede) => (
+                  <div key={sede.id} className="rounded-lg border border-stone-200 bg-white px-5 py-4 text-left">
+                    <div className="flex items-center gap-2 mb-1">
+                      <MapPin className="size-4 text-brand-mustard" />
+                      <p className="font-medium text-stone-800 text-sm">{sede.nombre}</p>
+                    </div>
+                    <p className="text-xs text-stone-500 ml-6">{sede.ciudad}</p>
+                    {sede.telefonoWhatsapp && (
+                      <a
+                        href={`https://wa.me/${sede.telefonoWhatsapp.replace(/[^0-9]/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 ml-6 inline-flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+                      >
+                        <FaWhatsapp className="size-3" />
+                        {sede.telefonoWhatsapp}
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Redes sociales */}
+          <div className="flex flex-wrap justify-center gap-4">
             {config?.instagramUrl && (
-              <a href={config.instagramUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-5 py-3 text-sm font-medium text-stone-700 transition-colors hover:border-pink-300 hover:text-pink-600">
-                <FaInstagram className="size-5 text-pink-500" />
+              <a href={config.instagramUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:border-pink-300 hover:text-pink-600">
+                <FaInstagram className="size-4 text-pink-500" />
                 Instagram
               </a>
             )}
             {config?.facebookUrl && (
-              <a href={config.facebookUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-5 py-3 text-sm font-medium text-stone-700 transition-colors hover:border-blue-300 hover:text-blue-600">
-                <FaFacebook className="size-5 text-blue-600" />
+              <a href={config.facebookUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:border-blue-300 hover:text-blue-600">
+                <FaFacebook className="size-4 text-blue-600" />
                 Facebook
               </a>
             )}
             {config?.tiktokUrl && (
-              <a href={config.tiktokUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-5 py-3 text-sm font-medium text-stone-700 transition-colors hover:border-stone-400 hover:text-stone-900">
-                <FaTiktok className="size-5" />
+              <a href={config.tiktokUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:border-stone-400 hover:text-stone-900">
+                <FaTiktok className="size-4" />
                 TikTok
               </a>
             )}
-            {config?.correoMaestro && (
-              <a href={`mailto:${config.correoMaestro}`} className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-5 py-3 text-sm font-medium text-stone-700 transition-colors hover:border-amber-300 hover:text-amber-600">
-                <MdEmail className="size-5 text-amber-500" />
-                Email
-              </a>
-            )}
           </div>
-          <div className="mt-8">
+
+          <div className="mt-10">
             <Link href="/tienda" className="inline-flex items-center gap-1 text-brand-mustard hover:text-brand-mustard-dark font-medium transition-colors">
               Volver a la tienda <ChevronRight className="size-4" />
             </Link>

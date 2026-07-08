@@ -31,21 +31,31 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 const configSchema = z.object({
   enviarCopiaMaestro: z.boolean(),
   correoMaestro: z.string().email("Correo inválido").optional().or(z.literal("")),
-  whatsappGeneral: z.string().optional().or(z.literal("")),
-  instagramUrl: z.string().url("URL inválida").optional().or(z.literal("")),
-  facebookUrl: z.string().url("URL inválida").optional().or(z.literal("")),
-  tiktokUrl: z.string().url("URL inválida").optional().or(z.literal("")),
-  nombreSitio: z.string().optional().or(z.literal("")),
-  tagline: z.string().optional().or(z.literal("")),
-  descripcion: z.string().optional().or(z.literal("")),
-  logoUrl: z.string().optional().or(z.literal("")),
-  iconUrl: z.string().optional().or(z.literal("")),
-  historia: z.string().optional().or(z.literal("")),
-  mision: z.string().optional().or(z.literal("")),
-  vision: z.string().optional().or(z.literal("")),
+  whatsappGeneral: z.string().max(20, "Máximo 20 caracteres").optional().or(z.literal("")),
+  instagramUrl: z.string().url("URL inválida").max(500, "Máximo 500 caracteres").optional().or(z.literal("")),
+  facebookUrl: z.string().url("URL inválida").max(500, "Máximo 500 caracteres").optional().or(z.literal("")),
+  tiktokUrl: z.string().url("URL inválida").max(500, "Máximo 500 caracteres").optional().or(z.literal("")),
+  nombreSitio: z.string().max(100, "Máximo 100 caracteres").optional().or(z.literal("")),
+  tagline: z.string().max(150, "Máximo 150 caracteres").optional().or(z.literal("")),
+  descripcion: z.string().max(500, "Máximo 500 caracteres").optional().or(z.literal("")),
+  logoUrl: z.string().max(500, "Máximo 500 caracteres").optional().or(z.literal("")),
+  iconUrl: z.string().max(500, "Máximo 500 caracteres").optional().or(z.literal("")),
+  historia: z.string().max(10000, "Máximo 10000 caracteres").optional().or(z.literal("")),
+  mision: z.string().max(10000, "Máximo 10000 caracteres").optional().or(z.literal("")),
+  vision: z.string().max(10000, "Máximo 10000 caracteres").optional().or(z.literal("")),
 });
 
 type ConfigFormData = z.infer<typeof configSchema>;
+
+function CharCounter({ current, max }: { current: number; max: number }) {
+  const pct = (current / max) * 100;
+  const color = pct > 90 ? "text-red-500" : pct > 70 ? "text-amber-500" : "text-stone-400";
+  return (
+    <p className={`text-xs text-right ${color}`}>
+      {current}/{max}
+    </p>
+  );
+}
 
 function CardSection({
   title,
@@ -304,6 +314,7 @@ export default function ConfiguracionPage() {
                 {...register("whatsappGeneral")}
                 placeholder="+57 300 123 4567"
                 disabled={isLoading}
+                maxLength={20}
               />
               {errors.whatsappGeneral && (
                 <p className="text-xs text-red-500" role="alert">
@@ -384,7 +395,9 @@ export default function ConfiguracionPage() {
                 {...register("nombreSitio")}
                 placeholder="TAO Boutique Floral"
                 disabled={isLoading}
+                maxLength={100}
               />
+              <CharCounter current={watch("nombreSitio")?.length || 0} max={100} />
             </div>
 
             <div className="space-y-2">
@@ -394,7 +407,9 @@ export default function ConfiguracionPage() {
                 {...register("tagline")}
                 placeholder="Flores que cuentan historias"
                 disabled={isLoading}
+                maxLength={150}
               />
+              <CharCounter current={watch("tagline")?.length || 0} max={150} />
             </div>
 
             <div className="space-y-2">
@@ -405,7 +420,9 @@ export default function ConfiguracionPage() {
                 placeholder="Transformamos flores en experiencias inolvidables..."
                 disabled={isLoading}
                 rows={3}
+                maxLength={500}
               />
+              <CharCounter current={watch("descripcion")?.length || 0} max={500} />
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
@@ -496,7 +513,9 @@ export default function ConfiguracionPage() {
                 placeholder="TAO Boutique Floral nace del arte de transformar flores..."
                 disabled={isLoading}
                 rows={4}
+                maxLength={10000}
               />
+              <CharCounter current={watch("historia")?.length || 0} max={10000} />
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
@@ -508,7 +527,9 @@ export default function ConfiguracionPage() {
                   placeholder="Nuestra misión es transformar emociones..."
                   disabled={isLoading}
                   rows={4}
+                  maxLength={10000}
                 />
+                <CharCounter current={watch("mision")?.length || 0} max={10000} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="vision">Visión</Label>
@@ -518,7 +539,9 @@ export default function ConfiguracionPage() {
                   placeholder="Nuestra visión es consolidar..."
                   disabled={isLoading}
                   rows={4}
+                  maxLength={10000}
                 />
+                <CharCounter current={watch("vision")?.length || 0} max={10000} />
               </div>
             </div>
           </div>
