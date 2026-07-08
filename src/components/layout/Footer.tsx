@@ -19,6 +19,10 @@ export default function Footer() {
     fetcher
   );
 
+  const sitioNombre = config?.nombreSitio || "TAO Boutique Floral";
+  const tagline = config?.tagline || "Flores que cuentan historias";
+  const descripcion = config?.descripcion || "";
+
   return (
     <footer className="bg-stone-950 text-stone-400">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
@@ -26,16 +30,18 @@ export default function Footer() {
           {/* ── Col 1: Brand ───────────────────────────────── */}
           <div className="space-y-4">
             <h3 className="text-xl font-semibold tracking-tight text-stone-100">
-              TAO
-              <span className="text-brand-mustard"> Boutique Floral</span>
+              {sitioNombre}
             </h3>
-            <p className="text-sm leading-relaxed italic text-stone-500">
-              &ldquo;Flores que cuentan historias&rdquo;
-            </p>
-            <p className="text-sm leading-relaxed text-stone-400">
-              Transformamos flores en experiencias inolvidables. Diseños exclusivos,
-              flores frescas y atención personalizada para cada ocasión especial.
-            </p>
+            {tagline && (
+              <p className="text-sm leading-relaxed italic text-stone-500">
+                &ldquo;{tagline}&rdquo;
+              </p>
+            )}
+            {descripcion && (
+              <p className="text-sm leading-relaxed text-stone-400">
+                {descripcion}
+              </p>
+            )}
           </div>
 
           {/* ── Col 2: Sedes & Redes Sociales ──────────────── */}
@@ -221,7 +227,7 @@ export default function Footer() {
 
         {/* ── Bottom bar ─────────────────────────────────────── */}
         <div className="flex flex-col items-center justify-between gap-2 text-xs text-stone-600 sm:flex-row">
-          <p>&copy; {new Date().getFullYear()} TAO Boutique Floral. Todos los derechos reservados.</p>
+          <p>&copy; {new Date().getFullYear()} {sitioNombre}. Todos los derechos reservados.</p>
           <p>
             Hecho con{" "}
             <span className="text-pink-400" aria-label="amor">
