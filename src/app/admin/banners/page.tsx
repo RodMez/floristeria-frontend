@@ -77,6 +77,16 @@ const emptyForm: FormData = {
   activo: true,
 };
 
+function CharCounter({ current, max }: { current: number; max: number }) {
+  const pct = (current / max) * 100;
+  const color = pct > 90 ? "text-red-500" : pct > 70 ? "text-amber-500" : "text-stone-400";
+  return (
+    <p className={`text-xs text-right ${color}`}>
+      {current}/{max}
+    </p>
+  );
+}
+
 export default function BannersPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -367,7 +377,9 @@ export default function BannersPage() {
                 onChange={(e) => setForm((prev) => ({ ...prev, titulo: e.target.value }))}
                 placeholder="Ej: Colección Primavera"
                 disabled={isLoading}
+                maxLength={200}
               />
+              <CharCounter current={form.titulo.length} max={200} />
             </div>
 
             {/* Texto */}
@@ -380,7 +392,9 @@ export default function BannersPage() {
                 placeholder="Ej: Arreglos frescos para tu hogar"
                 disabled={isLoading}
                 rows={2}
+                maxLength={500}
               />
+              <CharCounter current={form.texto.length} max={500} />
             </div>
 
             {/* Imagen */}
@@ -420,6 +434,7 @@ export default function BannersPage() {
                 onChange={(e) => setForm((prev) => ({ ...prev, enlaceUrl: e.target.value }))}
                 placeholder="/tienda/sede/1/producto/5"
                 disabled={isLoading}
+                maxLength={500}
               />
               <p className="text-xs text-stone-500">
                 Ruta interna o URL externa a donde llevará el banner al hacer click

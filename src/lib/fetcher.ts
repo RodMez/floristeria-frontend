@@ -217,11 +217,12 @@ export async function authFetch<T = unknown>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = Cookies.get('token');
+  const isFormData = options.body instanceof FormData;
 
   const res = await fetch(url, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      ...(!isFormData && { 'Content-Type': 'application/json' }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
