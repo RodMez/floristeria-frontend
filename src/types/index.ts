@@ -310,6 +310,11 @@ export interface ConfiguracionTiendaDTO {
   tiktokUrl?: string | null;
   imagenHeroUrl?: string | null;
   imagenBannerUrl?: string | null;
+  nombreSitio?: string | null;
+  tagline?: string | null;
+  descripcion?: string | null;
+  logoUrl?: string | null;
+  iconUrl?: string | null;
 }
 
 export type UbicacionBanner = "SELECTOR_SEDE" | "HOME_SEDE" | "PRODUCTO_INDIVIDUAL";
