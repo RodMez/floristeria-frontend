@@ -102,7 +102,7 @@ export default function BannerCarousel({
     >
       <Image
         src={aspectRatio
-          ? imageKitUrl(banner.imagenUrl, aspectRatio === "1/1" ? 600 : 1200, aspectRatio === "1/1" ? 600 : aspectRatio === "16/9" ? 338 : 400)
+          ? imageKitUrl(banner.imagenUrl, aspectRatio === "1/1" ? 600 : 1200, aspectRatio === "1/1" ? 600 : aspectRatio === "16/9" ? 675 : 400)
           : imageKitUrl(banner.imagenUrl, 1920, 640)
         }
         alt={banner.titulo ?? "Banner promocional"}
