@@ -28,6 +28,9 @@ export default function Header() {
 
   const sitioNombre = config?.nombreSitio || "TAO Boutique Floral";
   const logoUrl = config?.logoUrl || "/tao-logo-header.png";
+  const sitiNombreParts = sitioNombre.split(" ");
+  const nombreBase = sitiNombreParts[0];
+  const nombreAcento = sitiNombreParts.slice(1).join(" ");
 
   const [isMounted, setIsMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -83,7 +86,7 @@ export default function Header() {
             className="h-11 w-11 rounded-full"
           />
           <span className="text-xl font-semibold tracking-tight text-foreground transition-opacity hover:opacity-80 sm:text-2xl">
-            {sitioNombre}
+            {nombreBase}{nombreAcento && <span className="text-brand-mustard"> {nombreAcento}</span>}
           </span>
         </Link>
 
@@ -94,6 +97,12 @@ export default function Header() {
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-brand-mustard"
           >
             Inicio
+          </Link>
+          <Link
+            href="/tienda/nosotros"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-brand-mustard"
+          >
+            Nosotros
           </Link>
           <Link
             href="/tienda"
@@ -181,7 +190,7 @@ export default function Header() {
               <div className="flex h-full flex-col">
                 <div className="flex items-center justify-between border-b border-border pb-4">
                   <span className="text-base font-semibold text-foreground">
-                    {sitioNombre}
+                    {nombreBase}{nombreAcento && <span className="text-brand-mustard"> {nombreAcento}</span>}
                   </span>
                 </div>
 
@@ -192,6 +201,13 @@ export default function Header() {
                     className="flex items-center rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
                     Inicio
+                  </Link>
+                  <Link
+                    href="/tienda/nosotros"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    Nosotros
                   </Link>
                   <Link
                     href="/tienda"

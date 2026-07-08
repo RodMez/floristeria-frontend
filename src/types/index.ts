@@ -315,6 +315,9 @@ export interface ConfiguracionTiendaDTO {
   descripcion?: string | null;
   logoUrl?: string | null;
   iconUrl?: string | null;
+  historia?: string | null;
+  mision?: string | null;
+  vision?: string | null;
 }
 
 export type UbicacionBanner = "SELECTOR_SEDE" | "HOME_SEDE" | "PRODUCTO_INDIVIDUAL";

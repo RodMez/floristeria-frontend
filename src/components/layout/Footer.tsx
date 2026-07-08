@@ -22,6 +22,9 @@ export default function Footer() {
   const sitioNombre = config?.nombreSitio || "TAO Boutique Floral";
   const tagline = config?.tagline || "Flores que cuentan historias";
   const descripcion = config?.descripcion || "";
+  const sitiNombreParts = sitioNombre.split(" ");
+  const nombreBase = sitiNombreParts[0];
+  const nombreAcento = sitiNombreParts.slice(1).join(" ");
 
   return (
     <footer className="bg-stone-950 text-stone-400">
@@ -30,7 +33,7 @@ export default function Footer() {
           {/* ── Col 1: Brand ───────────────────────────────── */}
           <div className="space-y-4">
             <h3 className="text-xl font-semibold tracking-tight text-stone-100">
-              {sitioNombre}
+              {nombreBase}{nombreAcento && <span className="text-brand-mustard"> {nombreAcento}</span>}
             </h3>
             {tagline && (
               <p className="text-sm leading-relaxed italic text-stone-500">
@@ -129,6 +132,11 @@ export default function Footer() {
               <li>
                 <Link href="/tienda" className="hover:text-brand-mustard transition-colors">
                   Inicio
+                </Link>
+              </li>
+              <li>
+                <Link href="/tienda/nosotros" className="hover:text-brand-mustard transition-colors">
+                  Nosotros
                 </Link>
               </li>
               <li>
