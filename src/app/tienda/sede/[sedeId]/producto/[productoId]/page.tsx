@@ -17,13 +17,14 @@ import {
   Minus,
   Plus,
   PackageX,
-  Star,
   Barcode,
   Package,
+  MessageSquare,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import BannerCarousel from "@/components/banner/BannerCarousel";
+import { StarDisplay, ReseñasModal } from "@/components/reseñas";
 
 function formatPrecio(value: number): string {
   return new Intl.NumberFormat("es-CO", {
@@ -31,24 +32,6 @@ function formatPrecio(value: number): string {
     currency: "COP",
     minimumFractionDigits: 0,
   }).format(value);
-}
-
-function Stars({ rating = 0 }: { rating?: number }) {
-  return (
-    <div className="flex items-center gap-0.5" aria-label={`${rating} de 5 estrellas`}>
-      {[1, 2, 3, 4, 5].map((i) => (
-        <Star
-          key={i}
-          className={`h-4 w-4 ${
-            i <= rating
-              ? "fill-[var(--color-brand-mustard)] text-[var(--color-brand-mustard)]"
-              : "fill-stone-200 text-stone-200"
-          }`}
-        />
-      ))}
-      <span className="ml-1.5 text-xs text-stone-400">(0 reseñas)</span>
-    </div>
-  );
 }
 
 function ProductSkeleton() {
@@ -96,6 +79,7 @@ export default function ProductoPage() {
   const setDrawerOpen = useCartStore((s) => s.setDrawerOpen);
 
   const [cantidad, setCantidad] = useState(1);
+  const [reseñasModalOpen, setReseñasModalOpen] = useState(false);
 
   const { data: producto, isLoading, error } = useSWR<ProductoDetalleDTO>(
     `${process.env.NEXT_PUBLIC_API_URL}/api/v1/catalogo/sede/${sedeId}/producto/${productoId}`,
@@ -226,8 +210,22 @@ export default function ProductoPage() {
             </p>
           </div>
 
-          {/* Estrellas */}
-          <Stars />
+          {/* Estrellas y reseñas */}
+          <button
+            onClick={() => setReseñasModalOpen(true)}
+            className="flex items-center gap-1.5 group cursor-pointer text-left"
+          >
+            <StarDisplay
+              calificacion={Math.round(producto.ratingAverage ?? 0)}
+              size="sm"
+            />
+            <span className="text-sm text-stone-500 group-hover:text-stone-700 transition-colors">
+              {producto.ratingAverage
+                ? `${producto.ratingAverage.toFixed(1)} estrellas (${producto.ratingCount} reseñas)`
+                : "0 estrellas (0 reseñas)"}
+            </span>
+            <MessageSquare className="h-3.5 w-3.5 text-stone-400 group-hover:text-stone-600 transition-colors ml-0.5" />
+          </button>
 
           {/* SKU */}
           <div className="flex items-center gap-1.5 text-sm text-stone-400">
@@ -326,6 +324,13 @@ export default function ProductoPage() {
           />
         </div>
       </div>
+
+      <ReseñasModal
+        open={reseñasModalOpen}
+        onOpenChange={setReseñasModalOpen}
+        productoId={producto.productoId}
+        productoNombre={producto.nombre}
+      />
     </div>
   );
 }

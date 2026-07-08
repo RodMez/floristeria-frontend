@@ -39,6 +39,8 @@ export interface ProductoDetalleDTO {
   stock: number;
   disponible: boolean;
   categoriasNombres?: string[];
+  ratingAverage?: number;
+  ratingCount?: number;
 }
 
 export interface DetallePedidoRequest {
@@ -324,6 +326,34 @@ export interface BannerDTO {
   activo: boolean;
   creadoEn: string;
   actualizadoEn: string;
+}
+
+export interface ReseñaResponse {
+  id: number;
+  productoId: number;
+  clienteId: number;
+  clienteNombre: string;
+  calificacion: number;
+  comentario: string | null;
+  aprobada: boolean;
+  creadoEn: string;
+}
+
+export interface ReseñasProductoResponse {
+  promedio: number;
+  total: number;
+  reseñas: ReseñaResponse[];
+}
+
+export interface ReseñaEstado {
+  puedeCrear: boolean;
+  miReseña: ReseñaResponse | null;
+}
+
+export interface ReseñaRequest {
+  productoId: number;
+  calificacion: number;
+  comentario?: string;
 }
 
 export interface BannerRequest {
