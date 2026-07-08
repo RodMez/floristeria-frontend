@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
-import { Sede } from "@/types";
+import { Sede, ConfiguracionTiendaDTO } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,16 @@ export default function Home() {
     { revalidateOnFocus: false, shouldRetryOnError: false }
   );
 
+  const { data: config } = useSWR<ConfiguracionTiendaDTO>(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/configuracion`,
+    fetcher
+  );
+
+  const sitioNombre = config?.nombreSitio || "TAO Boutique Floral";
+  const logoUrl = config?.logoUrl || "/tao-logo-header.png";
+  const tagline = config?.tagline || "Flores que cuentan historias";
+  const descripcion = config?.descripcion || "Transformamos flores en experiencias inolvidables. Diseños exclusivos, flores frescas y atención personalizada para cada ocasión especial.";
+
   useEffect(() => {
     if (sedes && sedes.length === 1) {
       router.replace(`/tienda/sede/${sedes[0].id}`);
@@ -86,20 +96,18 @@ export default function Home() {
         <section className="bg-gradient-to-b from-stone-100 to-stone-50 py-16">
           <div className="container mx-auto px-4 text-center">
             <img
-              src="/tao-logo-header.png"
-              alt="TAO Boutique Floral"
+              src={logoUrl}
+              alt={sitioNombre}
               className="mx-auto mb-6 h-16 w-16 rounded-full"
             />
             <h1 className="text-4xl md:text-5xl font-bold text-stone-800 mb-2">
-              TAO{" "}
-              <span className="text-brand-mustard">Boutique Floral</span>
+              {sitioNombre}
             </h1>
             <p className="text-lg italic text-stone-500 mb-4">
-              &ldquo;Flores que cuentan historias&rdquo;
+              &ldquo;{tagline}&rdquo;
             </p>
             <p className="text-base text-stone-600 max-w-2xl mx-auto">
-              Transformamos flores en experiencias inolvidables. Diseños exclusivos,
-              flores frescas y atención personalizada para cada ocasión especial.
+              {descripcion}
             </p>
           </div>
         </section>
@@ -118,20 +126,18 @@ export default function Home() {
       <section className="bg-gradient-to-b from-stone-100 to-stone-50 py-16">
         <div className="container mx-auto px-4 text-center">
           <img
-            src="/tao-logo-header.png"
-            alt="TAO Boutique Floral"
+            src={logoUrl}
+            alt={sitioNombre}
             className="mx-auto mb-6 h-16 w-16 rounded-full"
           />
           <h1 className="text-4xl md:text-5xl font-bold text-stone-800 mb-2">
-            TAO{" "}
-            <span className="text-brand-mustard">Boutique Floral</span>
+            {sitioNombre}
           </h1>
           <p className="text-lg italic text-stone-500 mb-4">
-            &ldquo;Flores que cuentan historias&rdquo;
+            &ldquo;{tagline}&rdquo;
           </p>
           <p className="text-base text-stone-600 max-w-2xl mx-auto">
-            Transformamos flores en experiencias inolvidables. Selecciona tu sede
-            más cercana para descubrir nuestra colección.
+            {descripcion}
           </p>
         </div>
       </section>
@@ -168,7 +174,7 @@ export default function Home() {
           <div className="mb-10 text-center">
             <h2 className="text-2xl font-semibold text-stone-800">
               Sobre{" "}
-              <span className="text-brand-mustard">TAO Boutique Floral</span>
+              <span className="text-brand-mustard">{sitioNombre}</span>
             </h2>
             <p className="mx-auto mt-2 max-w-xl text-stone-500">
               Creemos que cada flor tiene una historia por contar.
@@ -201,7 +207,7 @@ export default function Home() {
                 Nuestra Visión
               </h3>
               <p className="text-sm leading-relaxed text-stone-600">
-                Consolidar a TAO Boutique Floral como una marca líder y referente
+                Consolidar a {sitioNombre} como una marca líder y referente
                 en el diseño floral de alta calidad, reconocida por la excelencia
                 de sus creaciones, la innovación y el servicio personalizado.
                 Aspiramos a expandir nuestra presencia a nivel nacional e
