@@ -65,6 +65,7 @@ import {
   CreditCard,
   Truck,
   StickyNote,
+  MessageSquare,
 } from "lucide-react";
 import {
   Table,
@@ -75,6 +76,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import jsPDF from "jspdf";
+import ReseñasModal from "@/components/reseñas/ReseñasModal";
 
 const API_PEDIDOS_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/pedidos`;
 const API_DIRECCIONES_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/direcciones`;
@@ -328,6 +330,7 @@ function PedidosTab() {
     { revalidateOnFocus: false }
   );
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState<PedidoHistorial | null>(null);
+  const [reviewModal, setReviewModal] = useState<{ productoId: number; productoNombre: string } | null>(null);
 
   if (isLoading) {
     return (
@@ -403,6 +406,17 @@ function PedidosTab() {
                       <p className="text-xs flex items-baseline gap-1">
                         <span className="font-medium shrink-0">{d.cantidad}x</span>
                         <span className="truncate">{d.productoNombre}</span>
+                        {pedido.estado === "ENTREGADO" && d.productoId && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 px-1.5 text-[10px] text-brand-mustard hover:text-brand-mustard/80 shrink-0"
+                            onClick={() => setReviewModal({ productoId: d.productoId, productoNombre: d.productoNombre })}
+                          >
+                            <MessageSquare className="h-2.5 w-2.5 mr-0.5" />
+                            Reseña
+                          </Button>
+                        )}
                       </p>
                       {d.notaPersonalizacion && (
                         <div className="flex items-baseline gap-1 ml-4 mt-0.5">
@@ -451,6 +465,15 @@ function PedidosTab() {
         onOpenChange={(open) => {
           if (!open) setPedidoSeleccionado(null);
         }}
+      />
+
+      <ReseñasModal
+        open={reviewModal !== null}
+        onOpenChange={(open) => {
+          if (!open) setReviewModal(null);
+        }}
+        productoId={reviewModal?.productoId ?? 0}
+        productoNombre={reviewModal?.productoNombre ?? ""}
       />
     </div>
   );

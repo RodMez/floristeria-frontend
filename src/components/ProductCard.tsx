@@ -3,6 +3,7 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StarDisplay } from "@/components/reseñas";
 import { ProductoCatalogo, Sede } from "@/types";
 import { useCartStore } from "@/store/useCartStore";
 import { useState, useMemo } from "react";
@@ -105,6 +106,12 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
           <h3 className="font-semibold text-stone-800 line-clamp-1 group-hover:text-brand-mustard transition-colors duration-200">
             {producto.nombre}
           </h3>
+          {producto.ratingAverage != null && producto.ratingAverage > 0 && (
+            <div className="flex items-center gap-1 mt-1">
+              <StarDisplay calificacion={producto.ratingAverage} size="sm" />
+              <span className="text-xs text-stone-400">({producto.ratingCount})</span>
+            </div>
+          )}
           <p className="text-sm text-stone-500 line-clamp-2 mt-1 min-h-[2.5rem] flex-1">
             {producto.descripcion}
           </p>
