@@ -138,23 +138,77 @@ export default function NosotrosPage() {
               <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wider mb-4">Nuestras Sedes</h3>
               <div className="grid gap-4 sm:grid-cols-2 max-w-xl mx-auto">
                 {sedes.map((sede) => (
-                  <div key={sede.id} className="rounded-lg border border-stone-200 bg-white px-5 py-4 text-left">
-                    <div className="flex items-center gap-2 mb-1">
-                      <MapPin className="size-4 text-brand-mustard" />
-                      <p className="font-medium text-stone-800 text-sm">{sede.nombre}</p>
+                  <div key={sede.id} className="overflow-hidden rounded-lg border border-stone-200 bg-white text-left transition-shadow duration-300 hover:shadow-md">
+                    <div className="h-1 bg-brand-mustard" />
+                    <div className="p-5 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="size-4 shrink-0 text-brand-mustard" />
+                        <p className="font-heading text-base font-semibold text-stone-800">{sede.nombre}</p>
+                      </div>
+
+                      {sede.ciudad && (
+                        <p className="text-sm text-stone-500 ml-6">{sede.ciudad}</p>
+                      )}
+
+                      <div className="space-y-1.5 ml-6">
+                        {sede.telefonoWhatsapp && (
+                          <a
+                            href={`https://wa.me/${sede.telefonoWhatsapp.replace(/[^0-9]/g, "")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 text-sm text-stone-600 hover:text-emerald-600 transition-colors"
+                          >
+                            <FaWhatsapp className="size-3.5 shrink-0 text-emerald-500" />
+                            {sede.telefonoWhatsapp}
+                          </a>
+                        )}
+                        {sede.email && (
+                          <a
+                            href={`mailto:${sede.email}`}
+                            className="flex items-center gap-1.5 text-sm text-stone-600 hover:text-amber-600 transition-colors"
+                          >
+                            <MdEmail className="size-3.5 shrink-0 text-amber-500" />
+                            {sede.email}
+                          </a>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 ml-6 pt-1">
+                        {sede.instagramUrl && (
+                          <a
+                            href={sede.instagramUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center rounded-full p-1.5 text-stone-400 transition-colors hover:bg-pink-50 hover:text-pink-500"
+                            title="Instagram"
+                          >
+                            <FaInstagram className="size-4" />
+                          </a>
+                        )}
+                        {sede.facebookUrl && (
+                          <a
+                            href={sede.facebookUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center rounded-full p-1.5 text-stone-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                            title="Facebook"
+                          >
+                            <FaFacebook className="size-4" />
+                          </a>
+                        )}
+                        {sede.tiktokUrl && (
+                          <a
+                            href={sede.tiktokUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center rounded-full p-1.5 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700"
+                            title="TikTok"
+                          >
+                            <FaTiktok className="size-4" />
+                          </a>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-xs text-stone-500 ml-6">{sede.ciudad}</p>
-                    {sede.telefonoWhatsapp && (
-                      <a
-                        href={`https://wa.me/${sede.telefonoWhatsapp.replace(/[^0-9]/g, "")}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 ml-6 inline-flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 font-medium"
-                      >
-                        <FaWhatsapp className="size-3" />
-                        {sede.telefonoWhatsapp}
-                      </a>
-                    )}
                   </div>
                 ))}
               </div>
