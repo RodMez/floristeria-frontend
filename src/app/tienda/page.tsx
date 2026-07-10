@@ -17,14 +17,14 @@ import BannerCarousel from "@/components/banner/BannerCarousel";
 function SedesSkeleton() {
   return (
     <div className="min-h-screen">
-      <section className="container mx-auto px-4 py-12">
-        <Skeleton className="h-8 w-48 mb-8" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <section className="container mx-auto px-4 py-10">
+        <Skeleton className="h-6 w-48 mb-6" />
+        <div className="flex flex-wrap justify-center gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="rounded-lg border p-6 space-y-3">
-              <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-4 w-1/3" />
+            <div key={i} className="w-full max-w-xs rounded-lg border border-stone-200 p-4 space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+              <Skeleton className="h-3 w-2/5" />
             </div>
           ))}
         </div>
@@ -93,34 +93,35 @@ export default function Home() {
       <BannerCarousel ubicacion="SELECTOR_SEDE" maxHeight={640} />
 
       {/* Grid de Sedes */}
-      <section className="container mx-auto px-4 py-12">
-        <h2 className="text-2xl font-semibold text-stone-800 mb-8">
+      <section className="container mx-auto px-4 py-10">
+        <h2 className="text-xl font-heading font-semibold text-stone-800 mb-6 text-center">
           Nuestras Sedes
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="flex flex-wrap justify-center gap-4">
           {sedes.map((sede) => (
             <Link key={sede.id} href={`/tienda/sede/${sede.id}`}>
-              <Card className="group h-full overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg cursor-pointer">
-                <div className="h-1 bg-brand-mustard" />
-                <CardContent className="p-5 space-y-3">
-                  <h3 className="font-heading text-base font-semibold text-stone-800">
-                    {sede.nombre}
-                  </h3>
-
-                  <div className="flex items-center gap-1.5 text-sm text-stone-500">
-                    <MapPin className="size-4 shrink-0 text-brand-mustard" />
-                    {sede.ciudad}
+              <Card className="group w-full max-w-xs overflow-hidden transition-shadow duration-300 hover:shadow-md cursor-pointer border-stone-200">
+                <CardContent className="p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-heading text-sm font-semibold text-stone-800">
+                      {sede.nombre}
+                    </h3>
+                    <span className="text-stone-300">|</span>
+                    <div className="flex items-center gap-1 text-xs text-stone-400">
+                      <MapPin className="size-3 shrink-0 text-brand-sage" />
+                      {sede.ciudad}
+                    </div>
                   </div>
 
-                  <div className="space-y-1.5">
+                  <div className="flex items-center gap-3 flex-wrap">
                     {sede.telefonoWhatsapp && (
                       <a
                         href={`https://wa.me/${sede.telefonoWhatsapp.replace(/[^0-9]/g, "")}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="flex items-center gap-1.5 text-sm text-stone-600 hover:text-emerald-600 transition-colors"
+                        className="flex items-center gap-1 text-xs text-stone-500 hover:text-emerald-600 transition-colors"
                       >
                         <FaWhatsapp className="size-3.5 shrink-0 text-emerald-500" />
                         {sede.telefonoWhatsapp}
@@ -130,25 +131,25 @@ export default function Home() {
                       <a
                         href={`mailto:${sede.email}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="flex items-center gap-1.5 text-sm text-stone-600 hover:text-amber-600 transition-colors"
+                        className="flex items-center gap-1 text-xs text-stone-500 hover:text-amber-600 transition-colors"
                       >
                         <MdEmail className="size-3.5 shrink-0 text-amber-500" />
-                        {sede.email}
+                        <span className="truncate max-w-[160px]">{sede.email}</span>
                       </a>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 pt-1">
+                  <div className="flex items-center gap-1.5">
                     {sede.instagramUrl && (
                       <a
                         href={sede.instagramUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="flex items-center justify-center rounded-full p-1.5 text-stone-400 transition-colors hover:bg-pink-50 hover:text-pink-500"
+                        className="flex items-center justify-center rounded-full p-1 text-stone-400 transition-colors hover:bg-brand-rose/30 hover:text-pink-500"
                         title="Instagram"
                       >
-                        <FaInstagram className="size-4" />
+                        <FaInstagram className="size-3.5" />
                       </a>
                     )}
                     {sede.facebookUrl && (
@@ -157,10 +158,10 @@ export default function Home() {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="flex items-center justify-center rounded-full p-1.5 text-stone-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                        className="flex items-center justify-center rounded-full p-1 text-stone-400 transition-colors hover:bg-brand-sage/20 hover:text-blue-600"
                         title="Facebook"
                       >
-                        <FaFacebook className="size-4" />
+                        <FaFacebook className="size-3.5" />
                       </a>
                     )}
                     {sede.tiktokUrl && (
@@ -169,10 +170,10 @@ export default function Home() {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="flex items-center justify-center rounded-full p-1.5 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700"
+                        className="flex items-center justify-center rounded-full p-1 text-stone-400 transition-colors hover:bg-stone-200/50 hover:text-stone-700"
                         title="TikTok"
                       >
-                        <FaTiktok className="size-4" />
+                        <FaTiktok className="size-3.5" />
                       </a>
                     )}
                   </div>
