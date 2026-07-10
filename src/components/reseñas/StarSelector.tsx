@@ -31,7 +31,7 @@ export default function StarSelector({ value, onChange }: StarSelectorProps) {
             onClick={() => onChange(i)}
             onMouseEnter={() => setHover(i)}
             onMouseLeave={() => setHover(0)}
-            className="transition-transform duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-mustard)] rounded-sm"
+            className="transition-transform duration-200 hover:scale-115 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-mustard)]/40 rounded-sm cursor-pointer"
             aria-label={labels[i]}
           >
             <Star
@@ -45,7 +45,10 @@ export default function StarSelector({ value, onChange }: StarSelectorProps) {
           </button>
         ))}
       </div>
-      <span className="text-sm text-stone-500 min-h-5">
+      <span className={cn(
+        "text-sm min-h-5 transition-colors duration-200",
+        value > 0 ? "text-[var(--color-brand-mustard-dark)] font-medium" : "text-stone-500"
+      )}>
         {value > 0 ? labels[value] : "Selecciona tu calificación"}
       </span>
     </div>

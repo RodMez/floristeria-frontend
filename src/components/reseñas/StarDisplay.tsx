@@ -16,6 +16,7 @@ export default function StarDisplay({ calificacion, size = "md" }: StarDisplayPr
           key={i}
           className={cn(
             sizeMap[size],
+            "transition-colors duration-200",
             i <= calificacion
               ? "fill-[var(--color-brand-mustard)] text-[var(--color-brand-mustard)]"
               : "fill-stone-200 text-stone-200"
