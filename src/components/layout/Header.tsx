@@ -85,7 +85,7 @@ export default function Header() {
             alt={sitioNombre}
             className="h-11 w-11 rounded-full"
           />
-          <span className="text-xl font-semibold tracking-tight text-foreground transition-opacity hover:opacity-80 sm:text-2xl">
+          <span className="font-heading text-xl font-semibold tracking-tight text-foreground transition-opacity hover:opacity-80 sm:text-2xl">
             {nombreBase}{nombreAcento && <span className="text-brand-mustard"> {nombreAcento}</span>}
           </span>
         </Link>
@@ -126,7 +126,7 @@ export default function Header() {
                   className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   <User className="size-4" />
-                  <span className="max-w-[120px] truncate">{nombre || "Mi cuenta"}</span>
+                  <span className="font-heading max-w-[120px] truncate">{nombre || "Mi cuenta"}</span>
                 </button>
 
                 {userMenuOpen && (
@@ -189,7 +189,7 @@ export default function Header() {
             <SheetContent className="w-72 sm:w-80">
               <div className="flex h-full flex-col">
                 <div className="flex items-center justify-between border-b border-border pb-4">
-                  <span className="text-base font-semibold text-foreground">
+                  <span className="font-heading text-base font-semibold text-foreground">
                     {nombreBase}{nombreAcento && <span className="text-brand-mustard"> {nombreAcento}</span>}
                   </span>
                 </div>
@@ -221,7 +221,7 @@ export default function Header() {
                 <Separator className="mb-4" />
                 {isCliente ? (
                   <div className="space-y-1">
-                    <p className="px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <p className="px-3 font-heading text-xs font-medium uppercase tracking-wider text-muted-foreground">
                       {nombre || "Mi cuenta"}
                     </p>
                     <Link
