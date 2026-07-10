@@ -35,6 +35,7 @@ import { Eye, Package, Search, Download, ShoppingBag, CreditCard, Truck, Message
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
+import { loadCinzelFonts } from "@/lib/pdfFonts";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -167,6 +168,9 @@ export default function PedidosPage() {
     const stone100 = { r: 245, g: 245, b: 244 } as const;
     const white = { r: 255, g: 255, b: 255 } as const;
 
+    // Load Cinzel fonts
+    const FONT = (await loadCinzelFonts(doc)) ? "Cinzel" : "Times-Roman";
+
     // Load logo
     let logoDataUrl: string | null = null;
     try {
@@ -214,13 +218,13 @@ export default function PedidosPage() {
       }
     }
 
-    doc.setFont("helvetica", "bold");
+    doc.setFont(FONT, "bold");
     doc.setFontSize(16);
     doc.setTextColor(mustardDark.r, mustardDark.g, mustardDark.b);
     doc.text("Comprobante de Pedido", pageWidth / 2, y, { align: "center" });
     y += 8;
 
-    doc.setFont("helvetica", "normal");
+    doc.setFont(FONT, "normal");
     doc.setFontSize(9);
     doc.setTextColor(stone400.r, stone400.g, stone400.b);
     doc.text("TAO Boutique Floral", pageWidth / 2, y, { align: "center" });
@@ -232,13 +236,13 @@ export default function PedidosPage() {
     y += 8;
 
     // Order info
-    doc.setFont("helvetica", "bold");
+    doc.setFont(FONT, "bold");
     doc.setFontSize(13);
     doc.setTextColor(stone700.r, stone700.g, stone700.b);
     doc.text(`Pedido #${pedido.id}`, margin, y);
     y += 7;
 
-    doc.setFont("helvetica", "normal");
+    doc.setFont(FONT, "normal");
     doc.setFontSize(10);
     doc.setTextColor(stone500.r, stone500.g, stone500.b);
     doc.text(`Fecha: ${formatDate(pedido.creadoEn)}`, margin, y);
@@ -255,7 +259,7 @@ export default function PedidosPage() {
     // ── Section: Pago ──
     doc.setFillColor(stone100.r, stone100.g, stone100.b);
     doc.roundedRect(margin, y - 4, pageWidth - margin * 2, 33, 2, 2, "F");
-    doc.setFont("helvetica", "bold");
+    doc.setFont(FONT, "bold");
     doc.setFontSize(10);
     doc.setTextColor(mustardDark.r, mustardDark.g, mustardDark.b);
     doc.text("Información del Pago", margin + 4, y + 2);
@@ -263,7 +267,7 @@ export default function PedidosPage() {
     doc.setLineWidth(0.3);
     doc.line(margin + 4, y + 5, pageWidth - margin - 4, y + 5);
     y += 10;
-    doc.setFont("helvetica", "normal");
+    doc.setFont(FONT, "normal");
     doc.setFontSize(9);
     doc.setTextColor(stone500.r, stone500.g, stone500.b);
     doc.text(`Referencia:`, margin + 4, y);
@@ -282,7 +286,7 @@ export default function PedidosPage() {
     y += 5;
     doc.setTextColor(stone500.r, stone500.g, stone500.b);
     doc.text(`Total:`, margin + 4, y);
-    doc.setFont("helvetica", "bold");
+    doc.setFont(FONT, "bold");
     doc.setTextColor(mustardDark.r, mustardDark.g, mustardDark.b);
     doc.text(`${formatCurrency(pedido.total)}`, margin + 55, y);
     y += 14;
@@ -290,14 +294,14 @@ export default function PedidosPage() {
     // ── Section: Entrega ──
     doc.setFillColor(stone100.r, stone100.g, stone100.b);
     doc.roundedRect(margin, y - 4, pageWidth - margin * 2, 38, 2, 2, "F");
-    doc.setFont("helvetica", "bold");
+    doc.setFont(FONT, "bold");
     doc.setFontSize(10);
     doc.setTextColor(mustardDark.r, mustardDark.g, mustardDark.b);
     doc.text("Información de Entrega", margin + 4, y + 2);
     doc.setDrawColor(mustard.r, mustard.g, mustard.b);
     doc.line(margin + 4, y + 5, pageWidth - margin - 4, y + 5);
     y += 10;
-    doc.setFont("helvetica", "normal");
+    doc.setFont(FONT, "normal");
     doc.setFontSize(9);
     doc.setTextColor(stone500.r, stone500.g, stone500.b);
     if (pedido.direccionEntrega) {
@@ -329,7 +333,7 @@ export default function PedidosPage() {
     y += 12;
 
     // ── Section: Productos ──
-    doc.setFont("helvetica", "bold");
+    doc.setFont(FONT, "bold");
     doc.setFontSize(10);
     doc.setTextColor(mustardDark.r, mustardDark.g, mustardDark.b);
     doc.text("Productos", margin, y);
@@ -343,7 +347,7 @@ export default function PedidosPage() {
     doc.setFillColor(mustard.r, mustard.g, mustard.b);
     doc.rect(margin, y - 4, pageWidth - margin * 2, 7, "F");
     doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
+    doc.setFont(FONT, "bold");
     doc.setTextColor(white.r, white.g, white.b);
     doc.text("Producto", colProducto + 2, y);
     doc.text("Cant", colCant, y);
@@ -351,7 +355,7 @@ export default function PedidosPage() {
     doc.text("Subtotal", colSubtotal, y);
     y += 6;
 
-    doc.setFont("helvetica", "normal");
+    doc.setFont(FONT, "normal");
     doc.setFontSize(9);
     pedido.detalles?.forEach((d, idx) => {
       const subtotal = d.cantidad * d.precioUnitario;
@@ -368,19 +372,19 @@ export default function PedidosPage() {
       doc.text(String(d.cantidad), colCant, y);
       doc.text(formatCurrency(d.precioUnitario), colPrecio, y);
       doc.setTextColor(mustardDark.r, mustardDark.g, mustardDark.b);
-      doc.setFont("helvetica", "bold");
+      doc.setFont(FONT, "bold");
       doc.text(formatCurrency(subtotal), colSubtotal, y);
-      doc.setFont("helvetica", "normal");
+      doc.setFont(FONT, "normal");
       y += nombreLinea.length * 4;
 
       if (d.notaPersonalizacion) {
         doc.setFontSize(7);
-        doc.setFont("helvetica", "italic");
+        doc.setFont(FONT, "italic");
         doc.setTextColor(stone400.r, stone400.g, stone400.b);
         const notaLinea = doc.splitTextToSize(`Nota: ${d.notaPersonalizacion}`, 80);
         doc.text(notaLinea, colProducto + 2, y);
         doc.setFontSize(9);
-        doc.setFont("helvetica", "normal");
+        doc.setFont(FONT, "normal");
         y += notaLinea.length * 3.5;
       }
       y += 2;
@@ -395,7 +399,7 @@ export default function PedidosPage() {
     // Total
     doc.setFillColor(mustard.r, mustard.g, mustard.b);
     doc.roundedRect(margin, y - 5, pageWidth - margin * 2, 12, 2, 2, "F");
-    doc.setFont("helvetica", "bold");
+    doc.setFont(FONT, "bold");
     doc.setFontSize(11);
     doc.setTextColor(mustardDark.r, mustardDark.g, mustardDark.b);
     doc.text("Total:", margin + 4, y + 2);
@@ -407,12 +411,12 @@ export default function PedidosPage() {
     doc.setLineWidth(0.3);
     doc.line(margin, y, pageWidth - margin, y);
     y += 6;
-    doc.setFont("helvetica", "italic");
+    doc.setFont(FONT, "italic");
     doc.setFontSize(9);
     doc.setTextColor(stone400.r, stone400.g, stone400.b);
     doc.text("Gracias por tu compra", pageWidth / 2, y, { align: "center" });
     y += 5;
-    doc.setFont("helvetica", "bold");
+    doc.setFont(FONT, "bold");
     doc.setFontSize(8);
     doc.setTextColor(mustardDark.r, mustardDark.g, mustardDark.b);
     doc.text("TAO Boutique Floral", pageWidth / 2, y, { align: "center" });
