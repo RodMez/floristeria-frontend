@@ -9,7 +9,9 @@ import { Sede } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, MapPin, RefreshCw } from "lucide-react";
+import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
+import { MdEmail } from "react-icons/md";
 import BannerCarousel from "@/components/banner/BannerCarousel";
 
 function SedesSkeleton() {
@@ -99,13 +101,81 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sedes.map((sede) => (
             <Link key={sede.id} href={`/tienda/sede/${sede.id}`}>
-              <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold text-stone-800 mb-2">
+              <Card className="group h-full overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg cursor-pointer">
+                <div className="h-1 bg-brand-mustard" />
+                <CardContent className="p-5 space-y-3">
+                  <h3 className="font-heading text-base font-semibold text-stone-800">
                     {sede.nombre}
                   </h3>
-                  <p className="text-stone-600 mb-1">{sede.ciudad}</p>
-                  <p className="text-sm text-stone-500">{sede.telefonoWhatsapp}</p>
+
+                  <div className="flex items-center gap-1.5 text-sm text-stone-500">
+                    <MapPin className="size-4 shrink-0 text-brand-mustard" />
+                    {sede.ciudad}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    {sede.telefonoWhatsapp && (
+                      <a
+                        href={`https://wa.me/${sede.telefonoWhatsapp.replace(/[^0-9]/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-1.5 text-sm text-stone-600 hover:text-emerald-600 transition-colors"
+                      >
+                        <FaWhatsapp className="size-3.5 shrink-0 text-emerald-500" />
+                        {sede.telefonoWhatsapp}
+                      </a>
+                    )}
+                    {sede.email && (
+                      <a
+                        href={`mailto:${sede.email}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-1.5 text-sm text-stone-600 hover:text-amber-600 transition-colors"
+                      >
+                        <MdEmail className="size-3.5 shrink-0 text-amber-500" />
+                        {sede.email}
+                      </a>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    {sede.instagramUrl && (
+                      <a
+                        href={sede.instagramUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center justify-center rounded-full p-1.5 text-stone-400 transition-colors hover:bg-pink-50 hover:text-pink-500"
+                        title="Instagram"
+                      >
+                        <FaInstagram className="size-4" />
+                      </a>
+                    )}
+                    {sede.facebookUrl && (
+                      <a
+                        href={sede.facebookUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center justify-center rounded-full p-1.5 text-stone-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                        title="Facebook"
+                      >
+                        <FaFacebook className="size-4" />
+                      </a>
+                    )}
+                    {sede.tiktokUrl && (
+                      <a
+                        href={sede.tiktokUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center justify-center rounded-full p-1.5 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700"
+                        title="TikTok"
+                      >
+                        <FaTiktok className="size-4" />
+                      </a>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </Link>
