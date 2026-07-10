@@ -22,6 +22,8 @@ export interface ProductoCatalogo {
   descuentoPorcentaje: number;
   stock: number;
   disponible: boolean;
+  ratingAverage?: number;
+  ratingCount?: number;
 }
 
 export interface ProductoDetalleDTO {
@@ -252,6 +254,7 @@ export interface CrearPedidoResponse {
 
 // Detalle de producto en el historial del cliente
 export interface DetallePedidoHistorialDTO {
+  productoId: number;
   productoNombre: string;
   productoSku: string;
   cantidad: number;
@@ -339,6 +342,7 @@ export interface BannerDTO {
 export interface ReseñaResponse {
   id: number;
   productoId: number;
+  productoNombre?: string;
   clienteId: number;
   clienteNombre: string;
   calificacion: number;
