@@ -31,7 +31,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Eye, Package, Search, Download } from "lucide-react";
+import { Eye, Package, Search, Download, ShoppingBag, CreditCard, Truck, MessageSquare } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
 
@@ -151,140 +152,270 @@ export default function PedidosPage() {
     });
   };
 
-  const generarPDF = (pedido: PedidoAdminResponse) => {
+  const generarPDF = async (pedido: PedidoAdminResponse) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
-    let y = 20;
+    const margin = 20;
+    let y = 15;
+
+    // Brand colors
+    const mustard = { r: 229, g: 190, b: 111 } as const;
+    const mustardDark = { r: 139, g: 114, b: 48 } as const;
+    const stone700 = { r: 68, g: 64, b: 60 } as const;
+    const stone500 = { r: 120, g: 113, b: 108 } as const;
+    const stone400 = { r: 168, g: 162, b: 158 } as const;
+    const stone100 = { r: 245, g: 245, b: 244 } as const;
+    const white = { r: 255, g: 255, b: 255 } as const;
+
+    // Load logo
+    let logoDataUrl: string | null = null;
+    try {
+      const configRes = await fetch(`${API_URL}/api/v1/configuracion`);
+      if (configRes.ok) {
+        const config = await configRes.json();
+        const logoUrl = config?.logoUrl || "/tao-logo.png";
+        const logoRes = await fetch(logoUrl);
+        if (logoRes.ok) {
+          const blob = await logoRes.blob();
+          logoDataUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+        }
+      }
+    } catch {
+      // Continue without logo
+    }
+
+    if (!logoDataUrl) {
+      try {
+        const logoRes = await fetch("/tao-logo.png");
+        if (logoRes.ok) {
+          const blob = await logoRes.blob();
+          logoDataUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+        }
+      } catch {
+        // Continue without logo
+      }
+    }
+
+    // Header with logo
+    if (logoDataUrl) {
+      try {
+        doc.addImage(logoDataUrl, "PNG", pageWidth / 2 - 15, y, 30, 30);
+        y += 34;
+      } catch {
+        y += 5;
+      }
+    }
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.text("Floristeria", pageWidth / 2, y, { align: "center" });
+    doc.setFontSize(16);
+    doc.setTextColor(mustardDark.r, mustardDark.g, mustardDark.b);
+    doc.text("Comprobante de Pedido", pageWidth / 2, y, { align: "center" });
     y += 8;
 
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text("Comprobante de Pedido", pageWidth / 2, y, { align: "center" });
-    y += 12;
-
-    doc.setDrawColor(200);
-    doc.line(20, y, pageWidth - 20, y);
+    doc.setFontSize(9);
+    doc.setTextColor(stone400.r, stone400.g, stone400.b);
+    doc.text("TAO Boutique Floral", pageWidth / 2, y, { align: "center" });
     y += 8;
 
+    doc.setDrawColor(mustard.r, mustard.g, mustard.b);
+    doc.setLineWidth(0.8);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 8;
+
+    // Order info
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text(`Pedido #${pedido.id}`, 20, y);
+    doc.setFontSize(13);
+    doc.setTextColor(stone700.r, stone700.g, stone700.b);
+    doc.text(`Pedido #${pedido.id}`, margin, y);
     y += 7;
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text(`Fecha: ${formatDate(pedido.creadoEn)}`, 20, y);
-    y += 6;
-    doc.text(`Estado: ${ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado}`, 20, y);
-    y += 6;
-    doc.text(`Cliente: ${pedido.clienteNombre}`, 20, y);
-    y += 6;
-    doc.text(`Telefono: ${pedido.clienteTelefono}`, 20, y);
-    y += 6;
-    doc.text(`Email: ${pedido.clienteEmail}`, 20, y);
+    doc.setTextColor(stone500.r, stone500.g, stone500.b);
+    doc.text(`Fecha: ${formatDate(pedido.creadoEn)}`, margin, y);
+    y += 5;
+    doc.text(`Estado: ${ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado}`, margin, y);
+    y += 5;
+    doc.text(`Cliente: ${pedido.clienteNombre}`, margin, y);
+    y += 5;
+    doc.text(`Teléfono: ${pedido.clienteTelefono}`, margin, y);
+    y += 5;
+    doc.text(`Email: ${pedido.clienteEmail}`, margin, y);
     y += 10;
 
+    // ── Section: Pago ──
+    doc.setFillColor(stone100.r, stone100.g, stone100.b);
+    doc.roundedRect(margin, y - 4, pageWidth - margin * 2, 33, 2, 2, "F");
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("Informacion del Pago", 20, y);
-    y += 6;
-    doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text(`Referencia Wompi: ${pedido.referenciaPago || "—"}`, 20, y);
-    y += 6;
-    doc.text(`Metodo de Pago: ${pedido.metodoPago || "—"}`, 20, y);
-    y += 6;
-    doc.text(`Transaccion: ${pedido.transaccionId || "—"}`, 20, y);
+    doc.setTextColor(mustardDark.r, mustardDark.g, mustardDark.b);
+    doc.text("Información del Pago", margin + 4, y + 2);
+    doc.setDrawColor(mustard.r, mustard.g, mustard.b);
+    doc.setLineWidth(0.3);
+    doc.line(margin + 4, y + 5, pageWidth - margin - 4, y + 5);
     y += 10;
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("Informacion de Entrega", 20, y);
-    y += 6;
     doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(stone500.r, stone500.g, stone500.b);
+    doc.text(`Referencia:`, margin + 4, y);
+    doc.setTextColor(stone700.r, stone700.g, stone700.b);
+    doc.text(`${pedido.referenciaPago || "—"}`, margin + 55, y);
+    y += 5;
+    doc.setTextColor(stone500.r, stone500.g, stone500.b);
+    doc.text(`Método:`, margin + 4, y);
+    doc.setTextColor(stone700.r, stone700.g, stone700.b);
+    doc.text(`${pedido.metodoPago || "—"}`, margin + 55, y);
+    y += 5;
+    doc.setTextColor(stone500.r, stone500.g, stone500.b);
+    doc.text(`Transacción:`, margin + 4, y);
+    doc.setTextColor(stone700.r, stone700.g, stone700.b);
+    doc.text(`${pedido.transaccionId || "—"}`, margin + 55, y);
+    y += 5;
+    doc.setTextColor(stone500.r, stone500.g, stone500.b);
+    doc.text(`Total:`, margin + 4, y);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(mustardDark.r, mustardDark.g, mustardDark.b);
+    doc.text(`${formatCurrency(pedido.total)}`, margin + 55, y);
+    y += 14;
+
+    // ── Section: Entrega ──
+    doc.setFillColor(stone100.r, stone100.g, stone100.b);
+    doc.roundedRect(margin, y - 4, pageWidth - margin * 2, 38, 2, 2, "F");
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
-    doc.text(`Sede: ${pedido.sedeNombre || "—"}`, 20, y);
-    y += 6;
+    doc.setTextColor(mustardDark.r, mustardDark.g, mustardDark.b);
+    doc.text("Información de Entrega", margin + 4, y + 2);
+    doc.setDrawColor(mustard.r, mustard.g, mustard.b);
+    doc.line(margin + 4, y + 5, pageWidth - margin - 4, y + 5);
+    y += 10;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(stone500.r, stone500.g, stone500.b);
     if (pedido.direccionEntrega) {
       const dir = pedido.direccionEntrega;
-      doc.text(`Direccion: ${dir.direccion}, ${dir.ciudad}`, 20, y);
-      y += 6;
+      doc.text(`Dirección:`, margin + 4, y);
+      doc.setTextColor(stone700.r, stone700.g, stone700.b);
+      doc.text(`${dir.direccion}, ${dir.ciudad}`, margin + 55, y);
+      y += 5;
       if (dir.detalles) {
-        doc.text(`Detalles: ${dir.detalles}`, 20, y);
-        y += 6;
+        doc.setTextColor(stone500.r, stone500.g, stone500.b);
+        doc.text(`Detalles:`, margin + 4, y);
+        doc.setTextColor(stone700.r, stone700.g, stone700.b);
+        const detalleLine = doc.splitTextToSize(dir.detalles, pageWidth - margin * 2 - 55);
+        doc.text(detalleLine, margin + 55, y);
+        y += detalleLine.length * 4;
       }
     }
     if (pedido.zonaDomicilioNombre) {
-      doc.text(`Zona de Envio: ${pedido.zonaDomicilioNombre}`, 20, y);
-      y += 6;
+      doc.setTextColor(stone500.r, stone500.g, stone500.b);
+      doc.text(`Zona de Envío:`, margin + 4, y);
+      doc.setTextColor(stone700.r, stone700.g, stone700.b);
+      doc.text(`${pedido.zonaDomicilioNombre}`, margin + 55, y);
+      y += 5;
     }
-    y += 4;
+    doc.setTextColor(stone500.r, stone500.g, stone500.b);
+    doc.text(`Costo de Envío:`, margin + 4, y);
+    doc.setTextColor(stone700.r, stone700.g, stone700.b);
+    doc.text(`${formatCurrency(pedido.costoEnvio ?? 0)}`, margin + 55, y);
+    y += 12;
 
+    // ── Section: Productos ──
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("Productos", 20, y);
-    y += 7;
+    doc.setFontSize(10);
+    doc.setTextColor(mustardDark.r, mustardDark.g, mustardDark.b);
+    doc.text("Productos", margin, y);
+    y += 6;
 
-    const colProducto = 20;
-    const colCant = 110;
-    const colPrecio = 135;
+    const colProducto = margin;
+    const colCant = 115;
+    const colPrecio = 140;
     const colSubtotal = 165;
 
-    doc.setFontSize(9);
+    doc.setFillColor(mustard.r, mustard.g, mustard.b);
+    doc.rect(margin, y - 4, pageWidth - margin * 2, 7, "F");
+    doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
-    doc.text("Producto", colProducto, y);
+    doc.setTextColor(white.r, white.g, white.b);
+    doc.text("Producto", colProducto + 2, y);
     doc.text("Cant", colCant, y);
     doc.text("Precio", colPrecio, y);
     doc.text("Subtotal", colSubtotal, y);
-    y += 5;
-    doc.line(20, y, pageWidth - 20, y);
-    y += 5;
+    y += 6;
 
     doc.setFont("helvetica", "normal");
-    pedido.detalles?.forEach((d) => {
+    doc.setFontSize(9);
+    pedido.detalles?.forEach((d, idx) => {
       const subtotal = d.cantidad * d.precioUnitario;
-      const nombreLinea = doc.splitTextToSize(d.productoNombre, 85);
-      doc.text(nombreLinea, colProducto, y);
+
+      if (idx % 2 === 0) {
+        doc.setFillColor(250, 250, 249);
+        doc.rect(margin, y - 4, pageWidth - margin * 2, 6, "F");
+      }
+
+      doc.setTextColor(stone700.r, stone700.g, stone700.b);
+      const nombreLinea = doc.splitTextToSize(d.productoNombre, 80);
+      doc.text(nombreLinea, colProducto + 2, y);
+      doc.setTextColor(stone500.r, stone500.g, stone500.b);
       doc.text(String(d.cantidad), colCant, y);
       doc.text(formatCurrency(d.precioUnitario), colPrecio, y);
+      doc.setTextColor(mustardDark.r, mustardDark.g, mustardDark.b);
+      doc.setFont("helvetica", "bold");
       doc.text(formatCurrency(subtotal), colSubtotal, y);
-      y += nombreLinea.length * 5;
+      doc.setFont("helvetica", "normal");
+      y += nombreLinea.length * 4;
+
       if (d.notaPersonalizacion) {
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setFont("helvetica", "italic");
-        const notaLinea = doc.splitTextToSize(`Nota: ${d.notaPersonalizacion}`, 85);
-        doc.text(notaLinea, colProducto, y);
-        doc.setFontSize(10);
+        doc.setTextColor(stone400.r, stone400.g, stone400.b);
+        const notaLinea = doc.splitTextToSize(`Nota: ${d.notaPersonalizacion}`, 80);
+        doc.text(notaLinea, colProducto + 2, y);
+        doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
-        y += notaLinea.length * 4;
+        y += notaLinea.length * 3.5;
       }
       y += 2;
     });
 
     y += 2;
-    doc.line(20, y, pageWidth - 20, y);
-    y += 7;
+    doc.setDrawColor(mustard.r, mustard.g, mustard.b);
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 8;
 
-    if (pedido.costoEnvio && pedido.costoEnvio > 0) {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.text(`Costo de Envio (Zona: ${pedido.zonaDomicilioNombre || ""})`, 20, y);
-      doc.text(formatCurrency(pedido.costoEnvio), pageWidth - 20, y, { align: "right" });
-      y += 7;
-    }
-
+    // Total
+    doc.setFillColor(mustard.r, mustard.g, mustard.b);
+    doc.roundedRect(margin, y - 5, pageWidth - margin * 2, 12, 2, 2, "F");
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text(`Total: ${formatCurrency(pedido.total)}`, pageWidth - 20, y, { align: "right" });
+    doc.setFontSize(11);
+    doc.setTextColor(mustardDark.r, mustardDark.g, mustardDark.b);
+    doc.text("Total:", margin + 4, y + 2);
+    doc.text(formatCurrency(pedido.total), pageWidth - margin - 2, y + 2, { align: "right" });
+    y += 18;
 
-    y += 15;
-    doc.setFont("helvetica", "normal");
+    // Footer
+    doc.setDrawColor(mustard.r, mustard.g, mustard.b);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 6;
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
+    doc.setTextColor(stone400.r, stone400.g, stone400.b);
+    doc.text("Gracias por tu compra", pageWidth / 2, y, { align: "center" });
+    y += 5;
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
-    doc.text("Gracias por su compra", pageWidth / 2, y, { align: "center" });
+    doc.setTextColor(mustardDark.r, mustardDark.g, mustardDark.b);
+    doc.text("TAO Boutique Floral", pageWidth / 2, y, { align: "center" });
 
     doc.save(`pedido-${pedido.id}.pdf`);
   };
@@ -441,93 +572,115 @@ export default function PedidosPage() {
           if (!open) setPedidoSeleccionado(null);
         }}
       >
-        <DialogContent className="sm:max-w-lg ring-0 border border-border">
-          <DialogHeader>
-            <DialogTitle>Pedido #{pedidoSeleccionado?.id}</DialogTitle>
-            <DialogDescription>
-              {pedidoSeleccionado?.clienteNombre} —{" "}
-              {formatDate(pedidoSeleccionado?.creadoEn ?? "")}
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-lg border-stone-200 p-0 overflow-hidden">
+          {/* Header branded */}
+          <div className="bg-gradient-to-r from-[var(--color-brand-mustard)]/10 via-[var(--color-brand-rose)]/5 to-transparent px-6 pt-6 pb-4">
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 rounded-full bg-[var(--color-brand-mustard)]/15 flex items-center justify-center shrink-0">
+                <ShoppingBag className="h-5 w-5 text-[var(--color-brand-mustard-dark)]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <DialogTitle className="text-stone-800 text-lg">
+                  Pedido #{pedidoSeleccionado?.id}
+                </DialogTitle>
+                <DialogDescription className="text-stone-500 mt-0.5">
+                  {pedidoSeleccionado?.clienteNombre} &middot; {formatDate(pedidoSeleccionado?.creadoEn ?? "")}
+                </DialogDescription>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge
+                    className={`text-xs ${ORDER_STATUS_COLORS[pedidoSeleccionado?.estado as keyof typeof ORDER_STATUS_COLORS] ?? "bg-stone-100 text-stone-700"}`}
+                  >
+                    {ORDER_STATUS_LABELS[pedidoSeleccionado?.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedidoSeleccionado?.estado}
+                  </Badge>
+                  <span className="text-xs text-stone-400">{pedidoSeleccionado?.clienteTelefono}</span>
+                  <span className="text-xs text-stone-400">{pedidoSeleccionado?.clienteEmail}</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-          <div className="space-y-4">
-            <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">
+          <div className="px-6 pb-6 space-y-4">
+            {/* Sección 1: Información del Pago */}
+            <div className="rounded-lg border border-stone-100 bg-stone-50/50 p-3.5">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2.5 flex items-center gap-1.5">
+                <CreditCard className="size-3.5 text-[var(--color-brand-mustard-dark)]" />
                 Información del Pago
               </h4>
-              <div className="bg-stone-50 rounded-lg p-3 space-y-1.5 text-sm">
+              <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-stone-500">Referencia</span>
-                  <span className="font-mono text-xs break-all">
+                  <span className="text-stone-400">Referencia</span>
+                  <span className="font-mono text-xs text-stone-600 break-all">
                     {pedidoSeleccionado?.referenciaPago || "—"}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-stone-500">Método</span>
-                  <span className="font-medium capitalize">
+                  <span className="text-stone-400">Método</span>
+                  <span className="font-medium capitalize text-stone-700">
                     {pedidoSeleccionado?.metodoPago || "—"}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-stone-500">Transacción</span>
-                  <span className="font-mono text-xs break-all">
+                  <span className="text-stone-400">Transacción</span>
+                  <span className="font-mono text-xs text-stone-600 break-all">
                     {pedidoSeleccionado?.transaccionId || "—"}
                   </span>
                 </div>
-                <div className="flex justify-between border-t pt-1.5 mt-1.5">
-                  <span className="text-stone-500">Total</span>
-                  <span className="font-bold">
+                <div className="flex justify-between border-t border-stone-200 pt-2">
+                  <span className="text-stone-500 font-medium">Total</span>
+                  <span className="font-bold text-[var(--color-brand-mustard-dark)]">
                     {formatCurrency(pedidoSeleccionado?.total ?? 0)}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">
+            {/* Sección 2: Información de Entrega */}
+            <div className="rounded-lg border border-stone-100 bg-stone-50/50 p-3.5">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2.5 flex items-center gap-1.5">
+                <Truck className="size-3.5 text-[var(--color-brand-mustard-dark)]" />
                 Información de Entrega
               </h4>
-              <div className="bg-stone-50 rounded-lg p-3 space-y-1.5 text-sm">
+              <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-stone-500">Alias</span>
-                  <span className="font-medium">
+                  <span className="text-stone-400">Alias</span>
+                  <span className="font-medium text-stone-700">
                     {pedidoSeleccionado?.direccionEntrega?.alias || "—"}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-stone-500">Dirección</span>
-                  <span className="text-right max-w-[60%] break-words">
+                  <span className="text-stone-400">Dirección</span>
+                  <span className="text-right max-w-[60%] break-words text-stone-600">
                     {pedidoSeleccionado?.direccionEntrega?.direccion || "—"}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-stone-500">Ciudad</span>
-                  <span>{pedidoSeleccionado?.direccionEntrega?.ciudad || "—"}</span>
+                  <span className="text-stone-400">Ciudad</span>
+                  <span className="text-stone-600">{pedidoSeleccionado?.direccionEntrega?.ciudad || "—"}</span>
                 </div>
                 {pedidoSeleccionado?.direccionEntrega?.detalles && (
                   <div className="flex justify-between">
-                    <span className="text-stone-500">Detalles</span>
-                    <span className="text-right max-w-[60%] break-words">
+                    <span className="text-stone-400">Detalles</span>
+                    <span className="text-right max-w-[60%] break-words text-stone-600">
                       {pedidoSeleccionado.direccionEntrega.detalles}
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between border-t pt-1.5 mt-1.5">
-                  <span className="text-stone-500">Zona de Envío</span>
-                  <span className="font-medium">
+                <div className="flex justify-between border-t border-stone-200 pt-2">
+                  <span className="text-stone-400">Zona de Envío</span>
+                  <span className="font-medium text-stone-700">
                     {pedidoSeleccionado?.zonaDomicilioNombre || "—"}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-stone-500">Costo de Envío</span>
-                  <span className="font-medium">
+                  <span className="text-stone-400">Costo de Envío</span>
+                  <span className="font-medium text-stone-700">
                     {formatCurrency(pedidoSeleccionado?.costoEnvio ?? 0)}
                   </span>
                 </div>
                 {pedidoSeleccionado?.notasEntrega && (
-                  <div className="flex justify-between border-t pt-1.5 mt-1.5">
-                    <span className="text-stone-500">Notas de Entrega</span>
-                    <span className="text-right max-w-[60%] break-words">
+                  <div className="flex justify-between border-t border-stone-200 pt-2">
+                    <span className="text-stone-400">Notas de Entrega</span>
+                    <span className="text-right max-w-[60%] break-words text-stone-600">
                       {pedidoSeleccionado.notasEntrega}
                     </span>
                   </div>
@@ -535,37 +688,40 @@ export default function PedidosPage() {
               </div>
             </div>
 
-            <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">
+            {/* Sección 3: Productos */}
+            <div className="rounded-lg border border-stone-100 bg-stone-50/50 p-3.5">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2.5 flex items-center gap-1.5">
+                <Package className="size-3.5 text-[var(--color-brand-mustard-dark)]" />
                 Productos
               </h4>
-              <div className="bg-stone-50 rounded-lg max-h-[300px] overflow-y-auto">
+              <div className="max-h-[220px] overflow-y-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">Producto</TableHead>
-                      <TableHead className="text-xs text-right">Cant</TableHead>
-                      <TableHead className="text-xs text-right">Precio</TableHead>
+                    <TableRow className="border-stone-200 hover:bg-transparent">
+                      <TableHead className="text-xs text-stone-400">Producto</TableHead>
+                      <TableHead className="text-xs text-right text-stone-400">Cant</TableHead>
+                      <TableHead className="text-xs text-right text-stone-400">Precio</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {pedidoSeleccionado?.detalles?.map((d, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="text-sm font-medium w-[calc(100%-120px)] whitespace-normal">
+                      <TableRow key={i} className={`border-stone-100 ${i % 2 === 0 ? "bg-white/50" : "bg-stone-50/30"}`}>
+                        <TableCell className="text-sm font-medium text-stone-700 py-2 whitespace-normal">
                           {d.productoNombre}
                           <span className="block text-xs text-stone-400 font-normal">
                             {d.productoSku}
                           </span>
                           {d.notaPersonalizacion && (
-                            <span className="block text-xs text-stone-400 italic font-normal break-words">
-                              Nota: {d.notaPersonalizacion}
+                            <span className="flex items-center gap-1 text-xs text-[var(--color-brand-rose)] italic font-normal mt-0.5 break-words">
+                              <MessageSquare className="size-3 shrink-0" />
+                              {d.notaPersonalizacion}
                             </span>
                           )}
                         </TableCell>
-                        <TableCell className="text-sm text-right">
+                        <TableCell className="text-sm text-right text-stone-600 py-2">
                           {d.cantidad}
                         </TableCell>
-                        <TableCell className="text-sm text-right">
+                        <TableCell className="text-sm text-right font-medium text-stone-700 py-2">
                           {formatCurrency(d.precioUnitario)}
                         </TableCell>
                       </TableRow>
@@ -582,13 +738,17 @@ export default function PedidosPage() {
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPedidoSeleccionado(null)}>
+          <DialogFooter className="px-6 pb-5 border-t border-stone-100 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setPedidoSeleccionado(null)}
+              className="border-stone-200 text-stone-600 hover:border-[var(--color-brand-mustard)] hover:text-[var(--color-brand-mustard-dark)]"
+            >
               Cerrar
             </Button>
             <Button
               onClick={() => pedidoSeleccionado && generarPDF(pedidoSeleccionado)}
-              className="gap-1.5"
+              className="gap-1.5 bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]"
             >
               <Download className="size-4" />
               Descargar Comprobante
