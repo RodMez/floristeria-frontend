@@ -135,28 +135,33 @@ export default function NosotrosPage() {
           {/* Sedes */}
           {sedes && sedes.length > 0 && (
             <div className="mb-8">
-              <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wider mb-4">Nuestras Sedes</h3>
-              <div className="grid gap-4 sm:grid-cols-2 max-w-xl mx-auto">
+              <h3 className="text-xs font-heading font-semibold text-stone-400 uppercase tracking-wider mb-3">Nuestras Sedes</h3>
+              <div className="flex flex-wrap justify-center gap-4">
                 {sedes.map((sede) => (
-                  <div key={sede.id} className="overflow-hidden rounded-lg border border-stone-200 bg-white text-left transition-shadow duration-300 hover:shadow-md">
-                    <div className="h-1 bg-brand-mustard" />
-                    <div className="p-5 space-y-3">
+                  <div key={sede.id} className="w-full max-w-xs overflow-hidden rounded-lg border border-stone-200 bg-white text-left transition-shadow duration-300 hover:shadow-md">
+                    <div className="p-4 space-y-2">
                       <div className="flex items-center gap-2">
-                        <MapPin className="size-4 shrink-0 text-brand-mustard" />
-                        <p className="font-heading text-base font-semibold text-stone-800">{sede.nombre}</p>
+                        <h4 className="font-heading text-sm font-semibold text-stone-800">
+                          {sede.nombre}
+                        </h4>
+                        {sede.ciudad && (
+                          <>
+                            <span className="text-stone-300">|</span>
+                            <div className="flex items-center gap-1 text-xs text-stone-400">
+                              <MapPin className="size-3 shrink-0 text-brand-sage" />
+                              {sede.ciudad}
+                            </div>
+                          </>
+                        )}
                       </div>
 
-                      {sede.ciudad && (
-                        <p className="text-sm text-stone-500 ml-6">{sede.ciudad}</p>
-                      )}
-
-                      <div className="space-y-1.5 ml-6">
+                      <div className="flex items-center gap-3 flex-wrap">
                         {sede.telefonoWhatsapp && (
                           <a
                             href={`https://wa.me/${sede.telefonoWhatsapp.replace(/[^0-9]/g, "")}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 text-sm text-stone-600 hover:text-emerald-600 transition-colors"
+                            className="flex items-center gap-1 text-xs text-stone-500 hover:text-emerald-600 transition-colors"
                           >
                             <FaWhatsapp className="size-3.5 shrink-0 text-emerald-500" />
                             {sede.telefonoWhatsapp}
@@ -165,24 +170,24 @@ export default function NosotrosPage() {
                         {sede.email && (
                           <a
                             href={`mailto:${sede.email}`}
-                            className="flex items-center gap-1.5 text-sm text-stone-600 hover:text-amber-600 transition-colors"
+                            className="flex items-center gap-1 text-xs text-stone-500 hover:text-amber-600 transition-colors"
                           >
                             <MdEmail className="size-3.5 shrink-0 text-amber-500" />
-                            {sede.email}
+                            <span className="truncate max-w-[160px]">{sede.email}</span>
                           </a>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2 ml-6 pt-1">
+                      <div className="flex items-center gap-1.5">
                         {sede.instagramUrl && (
                           <a
                             href={sede.instagramUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center justify-center rounded-full p-1.5 text-stone-400 transition-colors hover:bg-pink-50 hover:text-pink-500"
+                            className="flex items-center justify-center rounded-full p-1 text-stone-400 transition-colors hover:bg-brand-rose/30 hover:text-pink-500"
                             title="Instagram"
                           >
-                            <FaInstagram className="size-4" />
+                            <FaInstagram className="size-3.5" />
                           </a>
                         )}
                         {sede.facebookUrl && (
@@ -190,10 +195,10 @@ export default function NosotrosPage() {
                             href={sede.facebookUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center justify-center rounded-full p-1.5 text-stone-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                            className="flex items-center justify-center rounded-full p-1 text-stone-400 transition-colors hover:bg-brand-sage/20 hover:text-blue-600"
                             title="Facebook"
                           >
-                            <FaFacebook className="size-4" />
+                            <FaFacebook className="size-3.5" />
                           </a>
                         )}
                         {sede.tiktokUrl && (
@@ -201,10 +206,10 @@ export default function NosotrosPage() {
                             href={sede.tiktokUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center justify-center rounded-full p-1.5 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700"
+                            className="flex items-center justify-center rounded-full p-1 text-stone-400 transition-colors hover:bg-stone-200/50 hover:text-stone-700"
                             title="TikTok"
                           >
-                            <FaTiktok className="size-4" />
+                            <FaTiktok className="size-3.5" />
                           </a>
                         )}
                       </div>
