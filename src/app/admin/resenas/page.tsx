@@ -4,6 +4,14 @@ import useSWR from "swr";
 import { fetcher, authFetch } from "@/lib/fetcher";
 import { ReseñaResponse } from "@/types";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { StarDisplay } from "@/components/reseñas";
 import {
   Loader2,
@@ -31,6 +39,7 @@ function truncate(text: string, max: number) {
 export default function AdminReseñasPage() {
   const [tab, setTab] = useState<"pendientes" | "todas">("pendientes");
   const [actionLoading, setActionLoading] = useState<Record<number, string | null>>({});
+  const [reviewToDelete, setReviewToDelete] = useState<ReseñaResponse | null>(null);
 
   const apiUrl = tab === "pendientes"
     ? `${API}/api/admin/resenas/pendientes`
@@ -60,14 +69,20 @@ export default function AdminReseñasPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("¿Eliminar esta reseña definitivamente?")) return;
+  const handleDelete = (reseña: ReseñaResponse) => {
+    setReviewToDelete(reseña);
+  };
+
+  const confirmDelete = async () => {
+    if (!reviewToDelete) return;
+    const id = reviewToDelete.id;
     setAction(id, "delete");
     try {
       await authFetch(`${API}/api/admin/resenas/${id}`, {
         method: "DELETE",
       });
       toast.success("Reseña eliminada");
+      setReviewToDelete(null);
       mutate();
     } catch {
       toast.error("Error al eliminar la reseña");
@@ -197,7 +212,7 @@ export default function AdminReseñasPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDelete(r.id)}
+                          onClick={() => handleDelete(r)}
                           disabled={!!loading}
                           className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
                         >
@@ -217,6 +232,32 @@ export default function AdminReseñasPage() {
           </table>
         </div>
       )}
+
+      <Dialog open={reviewToDelete !== null} onOpenChange={(open) => { if (!open) setReviewToDelete(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar reseña</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de eliminar la reseña de &ldquo;{reviewToDelete?.clienteNombre}&rdquo; para el producto &ldquo;{reviewToDelete?.productoNombre ?? `#${reviewToDelete?.productoId}`}&rdquo;? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReviewToDelete(null)}>
+              No, volver
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={!!actionLoading[reviewToDelete?.id ?? 0]}>
+              {actionLoading[reviewToDelete?.id ?? 0] === "delete" ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                "Sí, eliminar"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
