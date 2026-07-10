@@ -234,18 +234,30 @@ export default function AdminReseñasPage() {
       )}
 
       <Dialog open={reviewToDelete !== null} onOpenChange={(open) => { if (!open) setReviewToDelete(null); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Eliminar reseña</DialogTitle>
-            <DialogDescription>
-              ¿Estás seguro de eliminar la reseña de &ldquo;{reviewToDelete?.clienteNombre}&rdquo; para el producto &ldquo;{reviewToDelete?.productoNombre ?? `#${reviewToDelete?.productoId}`}&rdquo;? Esta acción no se puede deshacer.
+        <DialogContent className="sm:max-w-md border-red-100">
+          <DialogHeader className="items-center text-center">
+            <div className="mx-auto h-12 w-12 rounded-full bg-red-50 flex items-center justify-center mb-2">
+              <Trash2 className="h-5 w-5 text-red-400" />
+            </div>
+            <DialogTitle className="text-stone-800">Eliminar reseña</DialogTitle>
+            <DialogDescription className="text-stone-500 text-center">
+              ¿Estás seguro de eliminar la reseña de <span className="font-medium text-stone-700">&ldquo;{reviewToDelete?.clienteNombre}&rdquo;</span> para el producto <span className="font-medium text-stone-700">&ldquo;{reviewToDelete?.productoNombre ?? `#${reviewToDelete?.productoId}`}&rdquo;</span>? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setReviewToDelete(null)}>
+          <DialogFooter className="flex-row gap-3 sm:justify-center pt-2 border-t border-stone-100">
+            <Button
+              variant="outline"
+              onClick={() => setReviewToDelete(null)}
+              className="border-stone-200 text-stone-600 hover:border-[var(--color-brand-mustard)] hover:text-[var(--color-brand-mustard-dark)]"
+            >
               No, volver
             </Button>
-            <Button variant="destructive" onClick={confirmDelete} disabled={!!actionLoading[reviewToDelete?.id ?? 0]}>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={!!actionLoading[reviewToDelete?.id ?? 0]}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
               {actionLoading[reviewToDelete?.id ?? 0] === "delete" ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
