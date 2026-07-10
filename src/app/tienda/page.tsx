@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
-import { Sede, ConfiguracionTiendaDTO } from "@/types";
+import { Sede } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -15,12 +15,6 @@ import BannerCarousel from "@/components/banner/BannerCarousel";
 function SedesSkeleton() {
   return (
     <div className="min-h-screen">
-      <section className="bg-gradient-to-b from-stone-100 to-stone-50 py-16">
-        <div className="container mx-auto px-4 text-center">
-          <Skeleton className="h-12 w-96 mx-auto mb-4" />
-          <Skeleton className="h-6 w-[500px] mx-auto" />
-        </div>
-      </section>
       <section className="container mx-auto px-4 py-12">
         <Skeleton className="h-8 w-48 mb-8" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -49,19 +43,6 @@ export default function Home() {
     fetcher,
     { revalidateOnFocus: false, shouldRetryOnError: false }
   );
-
-  const { data: config } = useSWR<ConfiguracionTiendaDTO>(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/configuracion`,
-    fetcher
-  );
-
-  const sitioNombre = config?.nombreSitio || "TAO Boutique Floral";
-  const logoUrl = config?.logoUrl || "/tao-logo-header.png";
-  const tagline = config?.tagline || "Flores que cuentan historias";
-  const descripcion = config?.descripcion || "Transformamos flores en experiencias inolvidables. Diseños exclusivos, flores frescas y atención personalizada para cada ocasión especial.";
-  const sitiNombreParts = sitioNombre.split(" ");
-  const nombreBase = sitiNombreParts[0];
-  const nombreAcento = sitiNombreParts.slice(1).join(" ");
 
   useEffect(() => {
     if (sedes && sedes.length === 1) {
@@ -96,24 +77,6 @@ export default function Home() {
   if (!sedes || sedes.length === 0) {
     return (
       <div className="min-h-screen">
-        <section className="bg-gradient-to-b from-stone-100 to-stone-50 py-16">
-          <div className="container mx-auto px-4 text-center">
-            <img
-              src={logoUrl}
-              alt={sitioNombre}
-              className="mx-auto mb-6 h-16 w-16 rounded-full"
-            />
-            <h1 className="text-4xl md:text-5xl font-bold text-stone-800 mb-2">
-              {nombreBase}{nombreAcento && <span className="text-brand-mustard"> {nombreAcento}</span>}
-            </h1>
-            <p className="text-lg italic text-stone-500 mb-4">
-              &ldquo;{tagline}&rdquo;
-            </p>
-            <p className="text-base text-stone-600 max-w-2xl mx-auto">
-              {descripcion}
-            </p>
-          </div>
-        </section>
         <section className="container mx-auto px-4 py-12">
           <p className="text-stone-500 text-center py-8">
             No hay sedes disponibles en este momento.
@@ -125,28 +88,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      {/* Banners SELECTOR_SEDE — al inicio, antes del hero */}
       <BannerCarousel ubicacion="SELECTOR_SEDE" maxHeight={640} />
-
-      {/* Hero Section */}
-      <section className="bg-gradient-to-b from-stone-100 to-stone-50 py-16">
-        <div className="container mx-auto px-4 text-center">
-          <img
-            src={logoUrl}
-            alt={sitioNombre}
-            className="mx-auto mb-6 h-16 w-16 rounded-full"
-          />
-          <h1 className="text-4xl md:text-5xl font-bold text-stone-800 mb-2">
-            {sitioNombre}
-          </h1>
-          <p className="text-lg italic text-stone-500 mb-4">
-            &ldquo;{tagline}&rdquo;
-          </p>
-          <p className="text-base text-stone-600 max-w-2xl mx-auto">
-            {descripcion}
-          </p>
-        </div>
-      </section>
 
       {/* Grid de Sedes */}
       <section className="container mx-auto px-4 py-12">
