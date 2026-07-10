@@ -78,58 +78,70 @@ export default function AdminReseñasPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-stone-800">Reseñas</h1>
+      <div className="flex items-center gap-3">
+        <h1 className="text-2xl font-bold text-stone-800">Reseñas</h1>
+        {reseñas && reseñas.length > 0 && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-brand-mustard)]/10 px-2.5 py-0.5 text-xs font-semibold text-[var(--color-brand-mustard-dark)]">
+            {reseñas.length}
+          </span>
+        )}
+      </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-stone-200 rounded-lg p-1 w-fit">
+      <div className="flex gap-1 bg-stone-100 rounded-lg p-1 w-fit">
         <button
           onClick={() => setTab("pendientes")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
             tab === "pendientes"
-              ? "bg-white text-stone-900 shadow-sm"
-              : "text-stone-600 hover:text-stone-800"
+              ? "bg-[var(--color-brand-mustard)] text-stone-900 shadow-sm"
+              : "text-stone-500 hover:text-stone-700"
           }`}
         >
           Pendientes
         </button>
         <button
           onClick={() => setTab("todas")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
             tab === "todas"
-              ? "bg-white text-stone-900 shadow-sm"
-              : "text-stone-600 hover:text-stone-800"
+              ? "bg-[var(--color-brand-mustard)] text-stone-900 shadow-sm"
+              : "text-stone-500 hover:text-stone-700"
           }`}
         >
           Todas
         </button>
       </div>
 
-      {/* Loading */}
       {isLoading && (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-stone-400" />
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-16 rounded-xl bg-stone-100 animate-pulse" />
+          ))}
         </div>
       )}
 
-      {/* Empty state */}
       {!isLoading && reseñas && reseñas.length === 0 && (
         <div className="flex flex-col items-center gap-3 py-16 text-center">
-          <MessageSquare className="h-12 w-12 text-stone-300" />
-          <p className="text-stone-500 text-base">
-            {tab === "pendientes"
-              ? "No hay reseñas pendientes de aprobación"
-              : "No hay reseñas registradas"}
-          </p>
+          <div className="h-14 w-14 rounded-full bg-[var(--color-brand-mustard)]/10 flex items-center justify-center">
+            <MessageSquare className="h-7 w-7 text-[var(--color-brand-mustard)]/40" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-stone-600">
+              {tab === "pendientes"
+                ? "No hay reseñas pendientes de aprobación"
+                : "No hay reseñas registradas"}
+            </p>
+            <p className="text-xs text-stone-400 mt-1">
+              Las reseñas de los clientes aparecerán aquí
+            </p>
+          </div>
         </div>
       )}
 
-      {/* Table */}
       {!isLoading && reseñas && reseñas.length > 0 && (
-        <div className="overflow-x-auto rounded-xl border bg-white">
+        <div className="overflow-x-auto rounded-xl border border-stone-100 bg-white">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-stone-50 text-left text-stone-600">
-                <th className="p-4 font-medium">Producto ID</th>
+              <tr className="border-b border-stone-100 bg-stone-50/80 text-left text-stone-500">
+                <th className="p-4 font-medium">Producto</th>
                 <th className="p-4 font-medium">Cliente</th>
                 <th className="p-4 font-medium">Calificación</th>
                 <th className="p-4 font-medium">Comentario</th>
@@ -142,8 +154,8 @@ export default function AdminReseñasPage() {
               {reseñas.map((r) => {
                 const loading = actionLoading[r.id];
                 return (
-                  <tr key={r.id} className="border-b last:border-0 hover:bg-stone-50/50 transition-colors">
-                    <td className="p-4 text-stone-700">#{r.productoId}</td>
+                  <tr key={r.id} className="border-b border-stone-50 last:border-0 transition-colors duration-150 hover:bg-[var(--color-brand-mustard)]/5">
+                    <td className="p-4 text-stone-700 font-medium">{r.productoNombre ?? `#${r.productoId}`}</td>
                     <td className="p-4 text-stone-700">{r.clienteNombre}</td>
                     <td className="p-4">
                       <StarDisplay calificacion={r.calificacion} size="sm" />
@@ -154,12 +166,12 @@ export default function AdminReseñasPage() {
                     <td className="p-4 text-stone-500 whitespace-nowrap">{formatDate(r.creadoEn)}</td>
                     <td className="p-4">
                       {r.aprobada ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-brand-sage)]/15 px-2.5 py-0.5 text-xs font-medium text-[var(--color-brand-sage)]">
                           <CheckCircle2 className="h-3 w-3" />
                           Aprobada
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-brand-mustard)]/15 px-2.5 py-0.5 text-xs font-medium text-[var(--color-brand-mustard-dark)]">
                           Pendiente
                         </span>
                       )}
@@ -172,7 +184,7 @@ export default function AdminReseñasPage() {
                             size="sm"
                             onClick={() => handleApprove(r.id)}
                             disabled={!!loading}
-                            className="text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+                            className="text-[var(--color-brand-sage)] border-[var(--color-brand-sage)]/20 hover:bg-[var(--color-brand-sage)]/10 hover:text-[var(--color-brand-sage)]"
                           >
                             {loading === "approve" ? (
                               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -187,7 +199,7 @@ export default function AdminReseñasPage() {
                           size="sm"
                           onClick={() => handleDelete(r.id)}
                           disabled={!!loading}
-                          className="text-red-600 border-red-200 hover:bg-red-50"
+                          className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
                         >
                           {loading === "delete" ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
