@@ -101,21 +101,21 @@ export default function SedePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-stone-800 mb-2">{sede.nombre}</h1>
-      <p className="text-stone-600 mb-8">
-        Explora nuestros productos disponibles en {sede.ciudad}
-      </p>
+    <>
+      <BannerCarousel ubicacion="HOME_SEDE" sedeId={sede.id} maxHeight={640} />
 
-      <div className="mb-12">
-        <BannerCarousel ubicacion="HOME_SEDE" sedeId={sede.id} maxHeight={640} />
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold text-brand-mustard mb-2">{sede.nombre}</h1>
+        <p className="text-stone-600 mb-8">
+          Explora nuestros productos disponibles en {sede.ciudad}
+        </p>
+
+        <ProductGrid
+          productos={productos ?? []}
+          categorias={categorias ?? []}
+          sede={sede}
+        />
       </div>
-
-      <ProductGrid
-        productos={productos ?? []}
-        categorias={categorias ?? []}
-        sede={sede}
-      />
-    </div>
+    </>
   );
 }
