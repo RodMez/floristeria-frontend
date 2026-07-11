@@ -76,26 +76,26 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
   const productDetailHref = `/tienda/sede/${sede.id}/producto/${producto.productoId}`;
 
   return (
-    <Card className="overflow-hidden h-full transition-shadow duration-200 hover:shadow-lg">
-      <Link href={productDetailHref} className="group block cursor-pointer">
+    <Card className="overflow-hidden h-full transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl py-0 group">
+      <Link href={productDetailHref} className="block cursor-pointer">
         <div className="aspect-square w-full overflow-hidden relative">
           <Image
             src={producto.imagenUrl}
             alt={producto.nombre}
             fill
             priority={priority}
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover transition-transform duration-800 group-hover:scale-110"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
           />
           {tieneDescuento && (
-            <div className="discount-ribbon">
+            <div className="discount-ribbon bg-brand-mustard transform rotate-45 transition-all duration-500 group-hover:scale-115 group-hover:shadow-xl group-hover:!bg-brand-rose">
               <span>-{producto.descuentoPorcentaje}% OFF</span>
             </div>
           )}
         </div>
         <CardContent className="p-4 flex flex-col flex-1">
           {/* Categorías - Badges */}
-          <div className="flex flex-wrap gap-1 mb-2 min-h-[2rem] items-start">
+          <div className="flex flex-wrap gap-1 mb-2 h-[2.5rem] items-start overflow-hidden">
             {categorias.map((cat) => (
               <Badge key={cat.id} variant="secondary" className="text-xs">
                 {cat.nombre}
@@ -121,7 +121,7 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
                 <span className="text-sm font-normal text-stone-400 line-through mr-2">
                   {precioOriginal}
                 </span>
-                <span className="text-green-600">{precioConDescuento}</span>
+                <span className="text-brand-mustard font-extrabold">{precioConDescuento}</span>
               </>
             ) : (
               precioOriginal
@@ -129,15 +129,15 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
           </p>
         </CardContent>
       </Link>
-      <CardFooter className="p-4 pt-0 flex items-center justify-between">
+      <CardFooter className="p-4 flex items-center justify-center">
         {isAgotado ? (
           <Badge variant="destructive">Agotado</Badge>
         ) : isAdding ? (
-          <Button className="w-full bg-green-600 hover:bg-green-700">
+          <Button className="bg-green-600 hover:bg-green-700 px-6">
             ¡Agregado!
           </Button>
         ) : (
-          <Button className="w-full" onClick={handleAddToCart}>
+          <Button className="bg-brand-rose-dark hover:bg-brand-rose text-white font-extrabold px-6" onClick={handleAddToCart}>
             Agregar al Carrito
           </Button>
         )}
