@@ -34,14 +34,28 @@ export default function Header() {
 
   const [isMounted, setIsMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
 
   useEffect(() => { setIsMounted(true); }, []);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 10);
+    const SCROLL_THRESHOLD = 50;
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      setScrolled(currentY > 10);
+
+      if (currentY > SCROLL_THRESHOLD && currentY > lastScrollY.current) {
+        setHidden(true);
+      } else if (currentY < lastScrollY.current) {
+        setHidden(false);
+      }
+
+      lastScrollY.current = currentY;
+    };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -68,7 +82,9 @@ export default function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full transition-shadow duration-300 ${
+      className={`sticky top-0 z-50 w-full transition-all duration-500 ${
+        hidden ? "-translate-y-full" : "translate-y-0"
+      } ${
         scrolled
           ? "bg-background/90 backdrop-blur-md shadow-sm border-b border-border"
           : "bg-background border-b border-border"
@@ -126,7 +142,7 @@ export default function Header() {
                   className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   <User className="size-4" />
-                  <span className="font-heading max-w-[120px] truncate">{nombre || "Mi cuenta"}</span>
+                  <span className="font-heading max-w-[240px] truncate">{nombre || "Mi cuenta"}</span>
                 </button>
 
                 {userMenuOpen && (
@@ -161,7 +177,7 @@ export default function Header() {
             ) : (
               <Link
                 href="/tienda/auth"
-                className="inline-flex h-7 items-center justify-center gap-1 rounded-[min(var(--radius-md),12px)] border-border bg-background px-2.5 text-[0.8rem] font-medium text-muted-foreground whitespace-nowrap transition-all hover:border-brand-mustard hover:text-brand-mustard"
+                className="inline-flex h-7 items-center justify-center gap-1 rounded-[min(var(--radius-md),12px)] border-border bg-background px-2.5 text-[0.8rem] font-heading font-medium text-muted-foreground whitespace-nowrap transition-all hover:border-brand-mustard hover:text-brand-mustard"
               >
                 Ingresar
               </Link>
