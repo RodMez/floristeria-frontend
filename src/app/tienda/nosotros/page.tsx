@@ -5,7 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { fetcher } from "@/lib/fetcher";
 import { ConfiguracionTiendaDTO, Sede } from "@/types";
-import { Heart, Sparkles, Target, ChevronRight, MapPin } from "lucide-react";
+import { Heart, Sparkles, Target, ChevronRight } from "lucide-react";
+import SedeCard from "@/components/SedeCard";
 import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 
@@ -138,83 +139,7 @@ export default function NosotrosPage() {
               <h3 className="text-xs font-heading font-semibold text-stone-400 uppercase tracking-wider mb-3">Nuestras Sedes</h3>
               <div className="flex flex-wrap justify-center gap-4">
                 {sedes.map((sede) => (
-                  <div key={sede.id} className="w-full max-w-xs overflow-hidden rounded-lg border border-stone-200 bg-white text-left transition-shadow duration-300 hover:shadow-md">
-                    <div className="p-4 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-heading text-sm font-semibold text-stone-800">
-                          {sede.nombre}
-                        </h4>
-                        {sede.ciudad && (
-                          <>
-                            <span className="text-stone-300">|</span>
-                            <div className="flex items-center gap-1 text-xs text-stone-400">
-                              <MapPin className="size-3 shrink-0 text-brand-sage" />
-                              {sede.ciudad}
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-3 flex-wrap">
-                        {sede.telefonoWhatsapp && (
-                          <a
-                            href={`https://wa.me/${sede.telefonoWhatsapp.replace(/[^0-9]/g, "")}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-xs text-stone-500 hover:text-emerald-600 transition-colors"
-                          >
-                            <FaWhatsapp className="size-3.5 shrink-0 text-emerald-500" />
-                            {sede.telefonoWhatsapp}
-                          </a>
-                        )}
-                        {sede.email && (
-                          <a
-                            href={`mailto:${sede.email}`}
-                            className="flex items-center gap-1 text-xs text-stone-500 hover:text-amber-600 transition-colors"
-                          >
-                            <MdEmail className="size-3.5 shrink-0 text-amber-500" />
-                            <span className="truncate max-w-[160px]">{sede.email}</span>
-                          </a>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-1.5">
-                        {sede.instagramUrl && (
-                          <a
-                            href={sede.instagramUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center rounded-full p-1 text-stone-400 transition-colors hover:bg-brand-rose/30 hover:text-pink-500"
-                            title="Instagram"
-                          >
-                            <FaInstagram className="size-3.5" />
-                          </a>
-                        )}
-                        {sede.facebookUrl && (
-                          <a
-                            href={sede.facebookUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center rounded-full p-1 text-stone-400 transition-colors hover:bg-brand-sage/20 hover:text-blue-600"
-                            title="Facebook"
-                          >
-                            <FaFacebook className="size-3.5" />
-                          </a>
-                        )}
-                        {sede.tiktokUrl && (
-                          <a
-                            href={sede.tiktokUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center rounded-full p-1 text-stone-400 transition-colors hover:bg-stone-200/50 hover:text-stone-700"
-                            title="TikTok"
-                          >
-                            <FaTiktok className="size-3.5" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  <SedeCard key={sede.id} sede={sede} variant="static" />
                 ))}
               </div>
             </div>
