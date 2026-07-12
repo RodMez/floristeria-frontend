@@ -99,7 +99,7 @@ export default function Header() {
           <img
             src={logoUrl}
             alt={sitioNombre}
-            className="h-11 w-11 rounded-full"
+            className="h-14 w-14 rounded-full"
           />
           <span className="font-heading text-xl font-semibold tracking-tight text-foreground transition-opacity hover:opacity-80 sm:text-2xl">
             {nombreBase}{nombreAcento && <span className="text-brand-mustard"> {nombreAcento}</span>}
@@ -139,10 +139,10 @@ export default function Header() {
               <div ref={userMenuRef} className="relative">
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-brand-mustard transition-colors hover:text-brand-rose"
                 >
                   <User className="size-4" />
-                  <span className="font-heading max-w-[240px] truncate">{nombre || "Mi cuenta"}</span>
+                  <span className="font-heading font-bold max-w-[240px] truncate">{nombre || "Mi cuenta"}</span>
                 </button>
 
                 {userMenuOpen && (
@@ -150,7 +150,7 @@ export default function Header() {
                     <Link
                       href="/tienda/mi-cuenta"
                       onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-brand-mustard"
                     >
                       <User className="size-4" />
                       Mi cuenta
@@ -158,7 +158,7 @@ export default function Header() {
                     <Link
                       href="/tienda/mi-cuenta"
                       onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-brand-mustard"
                     >
                       <Package className="size-4" />
                       Mis pedidos
@@ -166,7 +166,7 @@ export default function Header() {
                     <Separator className="my-1" />
                     <button
                       onClick={handleLogout}
-                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-brand-mustard"
                     >
                       <LogOut className="size-4" />
                       Cerrar sesión
