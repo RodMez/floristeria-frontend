@@ -37,7 +37,7 @@ export default function CartDrawer() {
 
   return (
     <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-      <SheetTrigger className="relative inline-flex items-center justify-center rounded-md text-sm font-medium hover:bg-stone-100 hover:text-stone-900 h-10 w-10">
+      <SheetTrigger className="relative inline-flex items-center justify-center rounded-md text-sm font-medium hover:text-brand-mustard transition-colors h-10 w-10">
         <ShoppingCart className="h-5 w-5" />
       </SheetTrigger>
       <SheetContent className="flex flex-col">

@@ -95,7 +95,7 @@ export default function Home() {
           Nuestras Sedes
         </h2>
 
-        <div className="flex flex-wrap justify-center gap-4">
+        <div className="grid gap-4 justify-center" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 320px))" }}>
           {sedes.map((sede) => (
             <SedeCard key={sede.id} sede={sede} variant="navigable" />
           ))}

@@ -76,7 +76,7 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
   const productDetailHref = `/tienda/sede/${sede.id}/producto/${producto.productoId}`;
 
   return (
-    <Card className="overflow-hidden h-full transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl py-0 group">
+    <Card className="overflow-hidden h-full transition-all duration-250 hover:-translate-y-1.5 hover:shadow-2xl py-0 group">
       <Link href={productDetailHref} className="block cursor-pointer">
         <div className="aspect-square w-full overflow-hidden relative">
           <Image
@@ -84,11 +84,11 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
             alt={producto.nombre}
             fill
             priority={priority}
-            className="object-cover transition-transform duration-800 group-hover:scale-110"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
           />
           {tieneDescuento && (
-            <div className="discount-ribbon bg-brand-mustard transform rotate-45 transition-all duration-500 group-hover:scale-115 group-hover:shadow-xl group-hover:!bg-brand-rose">
+            <div className="discount-ribbon bg-brand-mustard transform rotate-45 transition-all duration-650 group-hover:scale-115 group-hover:shadow-xl group-hover:!bg-brand-rose">
               <span>-{producto.descuentoPorcentaje}% OFF</span>
             </div>
           )}
@@ -103,7 +103,7 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
             ))}
           </div>
 
-          <h3 className="font-semibold text-stone-800 line-clamp-1 group-hover:text-brand-mustard transition-colors duration-200">
+          <h3 className="font-semibold text-stone-800 line-clamp-1 group-hover:text-brand-mustard transition-colors duration-250">
             {producto.nombre}
           </h3>
           {producto.ratingAverage != null && producto.ratingAverage > 0 && (
@@ -133,7 +133,7 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
         {isAgotado ? (
           <Badge variant="destructive">Agotado</Badge>
         ) : isAdding ? (
-          <Button className="bg-green-600 hover:bg-green-700 px-6">
+          <Button className="bg-brand-mustard hover:bg-brand-mustard-dark text-stone-900 px-6">
             ¡Agregado!
           </Button>
         ) : (

@@ -34,9 +34,9 @@ export default function SedeCard({ sede, variant = "navigable" }: SedeCardProps)
       role={isNavigable ? "link" : undefined}
       tabIndex={isNavigable ? 0 : undefined}
       onKeyDown={isNavigable ? handleKeyDown : undefined}
-      className={isNavigable ? "cursor-pointer" : undefined}
+      className={isNavigable ? "cursor-pointer h-full w-full" : "h-full w-full"}
     >
-      <Card className="group border-t-4 border-b-4 border-t-brand-rose border-b-brand-rose hover:border-t-brand-mustard hover:border-b-brand-mustard transition-all duration-300 hover:-translate-y-1 hover:shadow-xl shadow-md">
+      <Card className="group border-t-4 border-b-4 border-t-brand-rose border-b-brand-rose hover:border-t-brand-mustard hover:border-b-brand-mustard transition-all duration-300 hover:-translate-y-1 hover:shadow-xl shadow-md h-full w-full">
         <CardContent className="p-5 space-y-3">
           <div className="flex items-center justify-center gap-2">
             <h3 className="font-heading text-lg font-semibold text-stone-800 group-hover:text-brand-mustard transition-colors duration-200">
@@ -80,7 +80,7 @@ export default function SedeCard({ sede, variant = "navigable" }: SedeCardProps)
             </div>
           )}
 
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-3 min-h-[40px]">
             {sede.instagramUrl && (
               <a
                 href={sede.instagramUrl}
