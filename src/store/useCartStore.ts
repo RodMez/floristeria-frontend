@@ -5,6 +5,7 @@ import { Sede } from "@/types";
 export interface CartItem {
   id: string;
   nombre: string;
+  sku?: string;
   precio: number;
   descuentoPorcentaje: number;
   cantidad: number;
