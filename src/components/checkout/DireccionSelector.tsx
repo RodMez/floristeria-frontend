@@ -1,9 +1,10 @@
 "use client";
 
 import useSWR from "swr";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { fetcher } from "@/lib/fetcher";
-import { DireccionResponse } from "@/types";
+import { DireccionResponse, ZonaDomicilioResponse } from "@/types";
+import { useCartStore } from "@/store/useCartStore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,12 +25,29 @@ export default function DireccionSelector({
   selectedDireccionId,
   onSelect,
 }: DireccionSelectorProps) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const sedeActual = useCartStore((state) => state.sedeActual);
+
   // SWR condicional: solo fetch cuando enabled=true
   const { data: direcciones, error, mutate } = useSWR<DireccionResponse[]>(
     enabled ? API_URL : null,
     fetcher
   );
-  const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Fetch zonas de la sede actual para filtrar direcciones
+  const { data: zonas } = useSWR<ZonaDomicilioResponse[]>(
+    sedeActual
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1/zonas-domicilio/sede/${sedeActual.id}`
+      : null,
+    fetcher
+  );
+
+  // Filtrar direcciones que pertenezcan a zonas de la sede actual
+  const direccionesFiltradas = useMemo(() => {
+    if (!direcciones || !zonas) return direcciones ?? [];
+    const zonaIds = new Set(zonas.map((z) => z.id));
+    return direcciones.filter((d) => zonaIds.has(d.zonaDomicilioId));
+  }, [direcciones, zonas]);
 
   // ── Esperando habilitación ────────────────────────────────────
   if (!enabled) {
@@ -65,7 +83,7 @@ export default function DireccionSelector({
   }
 
   // ── Sin direcciones ──────────────────────────────────────────
-  if (direcciones.length === 0) {
+  if (direccionesFiltradas.length === 0) {
     return (
       <>
         <Card>
@@ -98,7 +116,7 @@ export default function DireccionSelector({
   return (
     <>
       <div className="space-y-3">
-        {direcciones.map((dir) => {
+        {direccionesFiltradas.map((dir) => {
           const isSelected = selectedDireccionId === dir.id;
 
           return (
