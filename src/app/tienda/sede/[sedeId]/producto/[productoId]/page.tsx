@@ -105,6 +105,7 @@ export default function ProductoPage() {
       {
         id: String(producto.productoId),
         nombre: producto.nombre,
+        sku: producto.sku,
         precio: producto.precioBase,
         descuentoPorcentaje: producto.descuentoPorcentaje ?? 0,
         cantidad,

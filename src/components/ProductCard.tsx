@@ -62,6 +62,7 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
       {
         id: String(producto.productoId),
         nombre: producto.nombre,
+        sku: producto.sku,
         precio: producto.precio,
         descuentoPorcentaje: producto.descuentoPorcentaje,
         cantidad: 1,
