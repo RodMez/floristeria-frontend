@@ -31,7 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Eye, Package, Search, Download, ShoppingBag, CreditCard, Truck, MessageSquare } from "lucide-react";
+import { Eye, Package, Search, Download, ShoppingBag, CreditCard, Truck, MessageSquare, FileSpreadsheet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
@@ -63,6 +63,7 @@ export default function PedidosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [pedidoACancelar, setPedidoACancelar] = useState<string | null>(null);
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState<PedidoAdminResponse | null>(null);
+  const [exportandoExcel, setExportandoExcel] = useState(false);
 
   const { data, error, mutate } = useSWR<PedidoAdminResponse[]>(
     `${API_URL}/api/admin/pedidos`,
@@ -103,6 +104,50 @@ export default function PedidosPage() {
         `Error: ${error instanceof Error ? error.message : "Error desconocido"}`,
         { id: toastId }
       );
+    }
+  };
+
+  const handleExportExcel = async () => {
+    setExportandoExcel(true);
+    try {
+      const token = Cookies.get("token");
+      const params = new URLSearchParams();
+      if (filtroEstado) params.append("estado", filtroEstado);
+      if (filtroSede) {
+        const sedePedido = data?.find(p => p.sedeNombre === filtroSede);
+        if (sedePedido) {
+          params.append("sedeId", String(sedePedido.sedeId));
+        }
+      }
+
+      const res = await fetch(
+        `${API_URL}/api/admin/pedidos/export-excel?${params}`,
+        {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error("Error al exportar");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `pedidos_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Excel exportado correctamente");
+    } catch (error) {
+      console.error("Error exporting Excel:", error);
+      toast.error(
+        `Error: ${error instanceof Error ? error.message : "Error al exportar Excel"}`
+      );
+    } finally {
+      setExportandoExcel(false);
     }
   };
 
@@ -472,6 +517,15 @@ export default function PedidosPage() {
               ))}
             </SelectContent>
           </Select>
+          <Button
+            variant="outline"
+            onClick={handleExportExcel}
+            disabled={exportandoExcel}
+            className="border-stone-300 hover:border-[var(--color-brand-mustard)] hover:text-[var(--color-brand-mustard-dark)]"
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-1.5" />
+            {exportandoExcel ? "Exportando..." : "Exportar Excel"}
+          </Button>
         </div>
       </div>
 
