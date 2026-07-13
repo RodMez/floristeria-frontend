@@ -21,14 +21,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Package, Search, ImageIcon } from "lucide-react";
+import { Package, Search, ImageIcon, FileSpreadsheet } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import Image from "next/image";
+import Cookies from "js-cookie";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function InventarioPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filtroEstado, setFiltroEstado] = useState<string>("");
+  const [exportando, setExportando] = useState(false);
 
   const { data, error, mutate } = useSWR<InventarioResponse[]>(
     `${API_URL}/api/admin/inventario`,
@@ -37,6 +41,41 @@ export default function InventarioPage() {
       revalidateOnFocus: false,
     }
   );
+
+  const handleExport = async () => {
+    setExportando(true);
+    try {
+      const token = Cookies.get("token");
+      const res = await fetch(
+        `${API_URL}/api/admin/productos-inventario/export-excel`,
+        {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error("Error al exportar");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `productos_inventario_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Excel exportado correctamente");
+    } catch (error) {
+      console.error("Error exporting Excel:", error);
+      toast.error(
+        `Error: ${error instanceof Error ? error.message : "Error al exportar Excel"}`
+      );
+    } finally {
+      setExportando(false);
+    }
+  };
 
   if (error) {
     return (
@@ -77,11 +116,17 @@ export default function InventarioPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-stone-900">Inventario</h1>
-        <p className="text-stone-500 text-sm mt-1">
-          Gestiona el stock y precios de tus productos
-        </p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-stone-900">Inventario</h1>
+          <p className="text-stone-500 text-sm mt-1">
+            Gestiona el stock y precios de tus productos
+          </p>
+        </div>
+        <Button variant="outline" onClick={handleExport} disabled={exportando}>
+          <FileSpreadsheet className="mr-2 h-4 w-4" />
+          {exportando ? "Exportando..." : "Exportar Excel"}
+        </Button>
       </div>
 
       <div className="mb-4 flex items-center justify-between gap-4 flex-wrap">

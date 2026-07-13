@@ -24,7 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Flower2, Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Flower2, Plus, Pencil, Trash2, Search, FileSpreadsheet } from "lucide-react";
 import Cookies from "js-cookie";
 import Image from "next/image";
 
@@ -32,6 +32,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function ProductosPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [exportando, setExportando] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [productoToEdit, setProductoToEdit] = useState<ProductoResponse | null>(null);
   const [productoToDelete, setProductoToDelete] = useState<ProductoResponse | null>(null);
@@ -47,6 +48,41 @@ export default function ProductosPage() {
     fetcher,
     { revalidateOnFocus: false }
   );
+
+  const handleExport = async () => {
+    setExportando(true);
+    try {
+      const token = Cookies.get("token");
+      const res = await fetch(
+        `${API_URL}/api/admin/productos-inventario/export-excel`,
+        {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error("Error al exportar");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `productos_inventario_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Excel exportado correctamente");
+    } catch (error) {
+      console.error("Error exporting Excel:", error);
+      toast.error(
+        `Error: ${error instanceof Error ? error.message : "Error al exportar Excel"}`
+      );
+    } finally {
+      setExportando(false);
+    }
+  };
 
   const handleNew = () => {
     setProductoToEdit(null);
@@ -128,10 +164,16 @@ export default function ProductosPage() {
             Gestiona los productos base del sistema
           </p>
         </div>
-        <Button onClick={handleNew}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nuevo Producto
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExport} disabled={exportando}>
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            {exportando ? "Exportando..." : "Exportar Excel"}
+          </Button>
+          <Button onClick={handleNew}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo Producto
+          </Button>
+        </div>
       </div>
 
       {/* Search Bar */}
