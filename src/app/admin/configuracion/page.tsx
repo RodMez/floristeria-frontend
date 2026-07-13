@@ -19,12 +19,15 @@ import {
   Globe,
   Tag,
   ImageIcon,
+  Download,
+  FileSpreadsheet,
 } from "lucide-react";
 import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
 import { Card, CardContent } from "@/components/ui/card";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import Cookies from "js-cookie";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -83,6 +86,8 @@ export default function ConfiguracionPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingIcon, setUploadingIcon] = useState(false);
+  const [exportandoExcel, setExportandoExcel] = useState(false);
+  const [exportandoProductos, setExportandoProductos] = useState(false);
 
   const {
     data: configuracion,
@@ -149,6 +154,76 @@ export default function ConfiguracionPage() {
   const handleCopyMetaFeed = () => {
     navigator.clipboard.writeText(metaFeedUrl);
     toast.success("Enlace copiado al portapapeles");
+  };
+
+  const handleExportExcel = async () => {
+    setExportandoExcel(true);
+    try {
+      const token = Cookies.get("token");
+      const res = await fetch(
+        `${API_URL}/api/admin/pedidos/export-excel`,
+        {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error("Error al exportar");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `pedidos_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Excel exportado correctamente");
+    } catch (error) {
+      console.error("Error exporting Excel:", error);
+      toast.error(
+        `Error: ${error instanceof Error ? error.message : "Error al exportar Excel"}`
+      );
+    } finally {
+      setExportandoExcel(false);
+    }
+  };
+
+  const handleExportProductosInventario = async () => {
+    setExportandoProductos(true);
+    try {
+      const token = Cookies.get("token");
+      const res = await fetch(
+        `${API_URL}/api/admin/productos-inventario/export-excel`,
+        {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error("Error al exportar");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `productos_inventario_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Excel exportado correctamente");
+    } catch (error) {
+      console.error("Error exporting Excel:", error);
+      toast.error(
+        `Error: ${error instanceof Error ? error.message : "Error al exportar Excel"}`
+      );
+    } finally {
+      setExportandoProductos(false);
+    }
   };
 
   useEffect(() => {
@@ -260,45 +335,83 @@ export default function ConfiguracionPage() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Correo y Notificaciones */}
-        <CardSection title="Correo y Notificaciones" icon={Mail}>
-          <div className="space-y-5">
-            <div className="flex items-center gap-3 pb-4 border-b border-stone-100">
-              <Switch
-                id="enviarCopiaMaestro"
-                checked={watchedEnviarCopia}
-                onCheckedChange={(checked: boolean) =>
-                  setValue("enviarCopiaMaestro", checked, { shouldValidate: true })
-                }
-              />
-              <Label htmlFor="enviarCopiaMaestro" className="text-sm font-medium cursor-pointer">
-                Enviar copia de todas las ventas al Correo Maestro
-              </Label>
-            </div>
+        {/* Correo y Notificaciones + Exportar Datos */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <CardSection title="Correo y Notificaciones" icon={Mail}>
+              <div className="space-y-5">
+                <div className="flex items-center gap-3 pb-4 border-b border-stone-100">
+                  <Switch
+                    id="enviarCopiaMaestro"
+                    checked={watchedEnviarCopia}
+                    onCheckedChange={(checked: boolean) =>
+                      setValue("enviarCopiaMaestro", checked, { shouldValidate: true })
+                    }
+                  />
+                  <Label htmlFor="enviarCopiaMaestro" className="text-sm font-medium cursor-pointer">
+                    Enviar copia de todas las ventas al Correo Maestro
+                  </Label>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="correoMaestro">Correo Maestro</Label>
-              <Input
-                id="correoMaestro"
-                type="email"
-                {...register("correoMaestro")}
-                placeholder="correo@ejemplo.com"
-                disabled={isLoading}
-                className={errors.correoMaestro ? "border-red-400" : ""}
-              />
-              {errors.correoMaestro && (
-                <p className="text-xs text-red-500" role="alert">
-                  {errors.correoMaestro.message}
-                </p>
-              )}
-              <p className="text-xs text-stone-500">
-                {watchedEnviarCopia
-                  ? "Se enviarán copias de todas las ventas a este correo."
-                  : "Activa la opción anterior para recibir copias de ventas."}
-              </p>
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="correoMaestro">Correo Maestro</Label>
+                  <Input
+                    id="correoMaestro"
+                    type="email"
+                    {...register("correoMaestro")}
+                    placeholder="correo@ejemplo.com"
+                    disabled={isLoading}
+                    className={errors.correoMaestro ? "border-red-400" : ""}
+                  />
+                  {errors.correoMaestro && (
+                    <p className="text-xs text-red-500" role="alert">
+                      {errors.correoMaestro.message}
+                    </p>
+                  )}
+                  <p className="text-xs text-stone-500">
+                    {watchedEnviarCopia
+                      ? "Se enviarán copias de todas las ventas a este correo."
+                      : "Activa la opción anterior para recibir copias de ventas."}
+                  </p>
+                </div>
+              </div>
+            </CardSection>
           </div>
-        </CardSection>
+
+          <div className="lg:col-span-1">
+            <Card className="border-t-4 border-t-[var(--color-brand-sage)] h-full">
+              <div className="flex items-center gap-2 px-6 pt-5 pb-0">
+                <Download className="h-5 w-5 text-[var(--color-brand-sage)]" />
+                <h2 className="text-lg font-semibold text-stone-800">Exportar Datos</h2>
+              </div>
+              <CardContent className="pt-4">
+                <p className="text-sm text-stone-500 mb-4">
+                  Descarga reportes de tu negocio en formato Excel.
+                </p>
+                <div className="space-y-3">
+                  <Button
+                    type="button"
+                    onClick={handleExportExcel}
+                    disabled={exportandoExcel}
+                    className="w-full justify-start bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]"
+                  >
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    {exportandoExcel ? "Exportando..." : "Pedidos"}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleExportProductosInventario}
+                    disabled={exportandoProductos}
+                    className="w-full justify-start bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]"
+                  >
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    {exportandoProductos ? "Exportando..." : "Productos + Inventario"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
         {/* Redes Sociales */}
         <CardSection title="Redes Sociales" icon={Globe}>
