@@ -37,6 +37,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Cookies from "js-cookie";
 import { useAuthStore } from "@/store/useAuthStore";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -48,6 +50,7 @@ const zonaSchema = z.object({
   localidad: z.string().min(1, "La localidad es requerida"),
   barrio: z.string().optional(),
   precio: z.number().min(0, "El precio debe ser mayor o igual a 0"),
+  excluido: z.boolean(),
 });
 
 type ZonaFormData = z.infer<typeof zonaSchema>;
@@ -55,6 +58,7 @@ type ZonaFormData = z.infer<typeof zonaSchema>;
 export default function ZonasDomicilioPage() {
   const { rol, sedeId: adminSedeId } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState("");
+  const [estadoFilter, setEstadoFilter] = useState<"todas" | "activas" | "excluidas">("todas");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingZona, setEditingZona] = useState<ZonaDomicilioResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -79,6 +83,7 @@ export default function ZonasDomicilioPage() {
       localidad: "",
       barrio: "",
       precio: 0,
+      excluido: false,
     },
   });
 
@@ -171,6 +176,7 @@ export default function ZonasDomicilioPage() {
           localidad: editingZona.localidad,
           barrio: editingZona.barrio || "",
           precio: editingZona.precio,
+          excluido: editingZona.excluido ?? false,
         });
       } else {
         reset({
@@ -178,6 +184,7 @@ export default function ZonasDomicilioPage() {
           localidad: "",
           barrio: "",
           precio: 0,
+          excluido: false,
         });
       }
     }
@@ -208,6 +215,7 @@ export default function ZonasDomicilioPage() {
       localidad: normalizeText(data.localidad),
       barrio: data.barrio ? normalizeText(data.barrio) : undefined,
       precio: data.precio,
+      excluido: data.excluido ?? false,
     };
 
     try {
@@ -311,29 +319,38 @@ export default function ZonasDomicilioPage() {
 
   const sortedZonas = zonas ? [...zonas].sort((a, b) => b.id - a.id) : [];
 
-  const zonasFiltradas = sortedZonas.filter((z) =>
-    z.localidad.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    z.barrio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    z.id.toString().includes(searchTerm)
-  );
+  const countActivas = sortedZonas.filter((z) => !z.excluido).length;
+  const countExcluidas = sortedZonas.filter((z) => z.excluido).length;
+
+  const zonasFiltradas = sortedZonas
+    .filter((z) => {
+      if (estadoFilter === "activas") return !z.excluido;
+      if (estadoFilter === "excluidas") return z.excluido;
+      return true;
+    })
+    .filter((z) =>
+      z.localidad.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      z.barrio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      z.id.toString().includes(searchTerm)
+    );
 
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-stone-900">Domicilios</h1>
-          <p className="text-stone-500 text-sm mt-1">
+          <p className="text-brand-sage text-sm mt-1">
             Gestiona las zonas y precios de domicilio
           </p>
         </div>
-        <Button onClick={handleNew}>
+        <Button onClick={handleNew} className="bg-brand-mustard hover:bg-brand-mustard-dark text-white">
           <Plus className="mr-2 h-4 w-4" />
           Agregar Zona
         </Button>
       </div>
 
-      <div className="mb-4">
-        <div className="relative max-w-md">
+      <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="relative max-w-md flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
           <Input
             type="text"
@@ -342,6 +359,38 @@ export default function ZonasDomicilioPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
           />
+        </div>
+        <div className="flex gap-1 bg-stone-100 rounded-lg p-1 w-fit">
+          <button
+            onClick={() => setEstadoFilter("todas")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+              estadoFilter === "todas"
+                ? "bg-[var(--color-brand-mustard)] text-stone-900 shadow-sm"
+                : "text-stone-500 hover:text-stone-700"
+            }`}
+          >
+            Todas <span className="ml-1 text-xs opacity-70">({sortedZonas.length})</span>
+          </button>
+          <button
+            onClick={() => setEstadoFilter("activas")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+              estadoFilter === "activas"
+                ? "bg-[var(--color-brand-mustard)] text-stone-900 shadow-sm"
+                : "text-stone-500 hover:text-stone-700"
+            }`}
+          >
+            Activas <span className="ml-1 text-xs opacity-70">({countActivas})</span>
+          </button>
+          <button
+            onClick={() => setEstadoFilter("excluidas")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+              estadoFilter === "excluidas"
+                ? "bg-[var(--color-brand-mustard)] text-stone-900 shadow-sm"
+                : "text-stone-500 hover:text-stone-700"
+            }`}
+          >
+            Excluidas <span className="ml-1 text-xs opacity-70">({countExcluidas})</span>
+          </button>
         </div>
       </div>
 
@@ -353,14 +402,19 @@ export default function ZonasDomicilioPage() {
               <TableHead>Localidad / Municipio</TableHead>
               <TableHead>Barrio</TableHead>
               <TableHead>Precio</TableHead>
+              <TableHead>Estado</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {zonasFiltradas.length === 0 && (
               <TableRow>
-                <TableCell colSpan={rol === "SUPERADMIN" ? 5 : 4} className="text-center text-stone-500 py-8">
-                  No hay zonas de domicilio registradas
+                <TableCell colSpan={rol === "SUPERADMIN" ? 6 : 5} className="text-center text-stone-500 py-8">
+                  {estadoFilter === "activas"
+                    ? "No hay zonas activas"
+                    : estadoFilter === "excluidas"
+                      ? "No hay zonas excluidas"
+                      : "No hay zonas de domicilio registradas"}
                 </TableCell>
               </TableRow>
             )}
@@ -372,6 +426,17 @@ export default function ZonasDomicilioPage() {
                 <TableCell className="font-medium">{zona.localidad}</TableCell>
                 <TableCell>{zona.barrio || "-"}</TableCell>
                 <TableCell>{formatCurrency(zona.precio)}</TableCell>
+                <TableCell>
+                  {zona.excluido ? (
+                    <Badge variant="outline" className="bg-brand-rose/20 text-brand-rose-dark border-brand-rose-dark/30 font-medium">
+                      Excluida
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-brand-sage/20 text-brand-sage border-brand-sage/30 font-medium">
+                      Activa
+                    </Badge>
+                  )}
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
                     <Button
@@ -517,6 +582,28 @@ export default function ZonasDomicilioPage() {
                 {...register("precio", { valueAsNumber: true })}
                 placeholder="0"
                 disabled={isLoading}
+              />
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3 bg-brand-rose/5 border-brand-rose/20">
+              <div className="space-y-0.5">
+                <Label htmlFor="excluido" className="text-sm font-medium cursor-pointer">
+                  Zona excluida de domicilio
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Si está activa, los clientes no podrán pagar con domicilio para esta zona
+                </p>
+              </div>
+              <Controller
+                name="excluido"
+                control={control}
+                render={({ field }) => (
+                  <Switch
+                    id="excluido"
+                    checked={field.value ?? false}
+                    onCheckedChange={field.onChange}
+                    disabled={isLoading}
+                  />
+                )}
               />
             </div>
             <div className="flex justify-end gap-2 pt-4">
