@@ -12,6 +12,7 @@ import { CrearPedidoResponse, DireccionResponse, ZonaDomicilioResponse } from "@
 import { fetcher } from "@/lib/fetcher";
 import DireccionSelector from "@/components/checkout/DireccionSelector";
 import ResumenPedido from "@/components/checkout/ResumenPedido";
+import ZonaExcluidaModal from "@/components/checkout/ZonaExcluidaModal";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -30,6 +31,7 @@ export default function CheckoutPage() {
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notasEntrega, setNotasEntrega] = useState("");
+  const [showZonaExcluida, setShowZonaExcluida] = useState(false);
 
   // ── Fetch de zonas (para calcular costoEnvio) ─────────────
   const { data: zonas } = useSWR<ZonaDomicilioResponse[]>(
@@ -189,12 +191,21 @@ export default function CheckoutPage() {
       if (!res.ok) {
         const errorText = await res.text();
         let errorMessage = `Error ${res.status}`;
+        let errorCodigo = "";
         try {
           const errorJson = JSON.parse(errorText);
           errorMessage = errorJson.mensaje || errorJson.message || errorText;
+          errorCodigo = errorJson.codigo || "";
         } catch {
           errorMessage = errorText;
         }
+
+        if (errorCodigo === "ZONA_EXCLUIDA") {
+          setShowZonaExcluida(true);
+          setIsSubmitting(false);
+          return;
+        }
+
         throw new Error(errorMessage);
       }
 
@@ -297,6 +308,13 @@ export default function CheckoutPage() {
         </aside>
       </div>
       </div>
+
+      <ZonaExcluidaModal
+        open={showZonaExcluida}
+        onOpenChange={setShowZonaExcluida}
+        direccion={direccionSeleccionada ?? null}
+        whatsappNumber={sedeActual?.telefonoWhatsapp || ""}
+      />
     </>
   );
 }
