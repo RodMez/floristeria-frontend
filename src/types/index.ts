@@ -14,6 +14,7 @@ export interface ProductoCatalogo {
   nombre: string;
   descripcion: string;
   imagenUrl: string;
+  sku: string;
   categorias: { id: number; nombre: string }[];
   // Compatibilidad con backend legacy
   categoriasNombres?: string[];
@@ -179,6 +180,7 @@ export interface PedidoAdminResponse {
   clienteNombre: string;
   clienteEmail: string;
   clienteTelefono: string;
+  sedeId: number;
   sedeNombre: string;
   metodoPago: string;
   referenciaPago: string;
@@ -295,6 +297,7 @@ export interface ZonaDomicilioResponse {
   localidad: string;
   barrio: string;
   precio: number;
+  excluido: boolean;
 }
 
 export interface ZonaDomicilioRequest {
@@ -302,6 +305,7 @@ export interface ZonaDomicilioRequest {
   localidad: string;
   barrio?: string;
   precio: number;
+  excluido?: boolean;
 }
 
 export interface ConfiguracionTiendaDTO {
