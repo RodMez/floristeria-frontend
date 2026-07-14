@@ -44,6 +44,7 @@ export interface ProductoDetalleDTO {
   categoriasNombres?: string[];
   ratingAverage?: number;
   ratingCount?: number;
+  productosComplementarios?: ProductoCatalogo[];
 }
 
 export interface DetallePedidoRequest {
@@ -117,6 +118,22 @@ export interface ProductoResponse {
   categorias: { id: number; nombre: string }[];
 }
 
+export interface ProductoComplementarioResponse {
+  id: number;
+  complementarioId: number;
+  complementarioNombre: string;
+  complementarioImagenUrl: string;
+  sedeId: number | null;
+  sedeNombre: string | null;
+  orden: number;
+}
+
+export interface ProductoComplementarioRequest {
+  complementarioId: number;
+  sedeId: number | null;
+  orden: number;
+}
+
 export interface ProductoRequest {
   sku: string;
   nombre: string;
@@ -128,10 +145,16 @@ export interface ProductoRequest {
 export interface CategoriaResponse {
   id: number;
   nombre: string;
+  tipo: string;
+  mostrarEnCatalogo: boolean;
+  orden: number;
 }
 
 export interface CategoriaRequest {
   nombre: string;
+  tipo?: string;
+  mostrarEnCatalogo?: boolean;
+  orden?: number;
 }
 
 export interface UsuarioAdminResponse {

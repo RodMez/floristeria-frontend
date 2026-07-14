@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ProductDialog } from "@/components/admin/ProductDialog";
+import { ComplementosDialog } from "@/components/admin/ComplementosDialog";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -24,7 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Flower2, Plus, Pencil, Trash2, Search, FileSpreadsheet } from "lucide-react";
+import { Flower2, Plus, Pencil, Trash2, Search, FileSpreadsheet, PackagePlus } from "lucide-react";
 import Cookies from "js-cookie";
 import Image from "next/image";
 
@@ -36,6 +37,7 @@ export default function ProductosPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [productoToEdit, setProductoToEdit] = useState<ProductoResponse | null>(null);
   const [productoToDelete, setProductoToDelete] = useState<ProductoResponse | null>(null);
+  const [complementosProducto, setComplementosProducto] = useState<ProductoResponse | null>(null);
 
   const { data: productos, error, mutate } = useSWR<ProductoResponse[]>(
     `${API_URL}/api/superadmin/productos`,
@@ -199,13 +201,14 @@ export default function ProductosPage() {
               <TableHead>Nombre</TableHead>
               <TableHead>Categoría</TableHead>
               <TableHead>Descripción</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
+                <TableHead>Complementos</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {productosFiltrados.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-stone-500 py-8">
+                <TableCell colSpan={7} className="text-center text-stone-500 py-8">
                   No hay productos registrados
                 </TableCell>
               </TableRow>
@@ -239,6 +242,16 @@ export default function ProductosPage() {
                 <TableCell className="max-w-[200px] truncate">
                   {producto.descripcion}
                 </TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setComplementosProducto(producto)}
+                  >
+                    <PackagePlus className="h-4 w-4 mr-1" />
+                    Complementos
+                  </Button>
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
                     <Button
@@ -269,6 +282,13 @@ export default function ProductosPage() {
         producto={productoToEdit}
         categorias={categorias}
         mutate={mutate}
+      />
+
+      <ComplementosDialog
+        isOpen={complementosProducto !== null}
+        onClose={() => setComplementosProducto(null)}
+        productoId={complementosProducto?.id ?? 0}
+        productoNombre={complementosProducto?.nombre ?? ""}
       />
 
       <Dialog open={productoToDelete !== null} onOpenChange={(open) => { if (!open) setProductoToDelete(null); }}>

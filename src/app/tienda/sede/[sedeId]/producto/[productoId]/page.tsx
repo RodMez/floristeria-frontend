@@ -20,11 +20,13 @@ import {
   Barcode,
   Package,
   MessageSquare,
+  Sparkles,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import BannerCarousel from "@/components/banner/BannerCarousel";
 import { StarDisplay, ReseñasModal } from "@/components/reseñas";
+import ComplementCard from "@/components/ComplementCard";
 
 function formatPrecio(value: number): string {
   return new Intl.NumberFormat("es-CO", {
@@ -77,6 +79,7 @@ export default function ProductoPage() {
 
   const addItem = useCartStore((s) => s.addItem);
   const setDrawerOpen = useCartStore((s) => s.setDrawerOpen);
+  const cartItems = useCartStore((s) => s.items);
 
   const [cantidad, setCantidad] = useState(1);
   const [reseñasModalOpen, setReseñasModalOpen] = useState(false);
@@ -97,6 +100,10 @@ export default function ProductoPage() {
 
   const tieneDescuento = (producto?.descuentoPorcentaje ?? 0) > 0;
   const isAgotado = producto ? !producto.disponible || producto.stock === 0 : false;
+  const cartItemIds = useMemo(
+    () => new Set(cartItems.map((i) => i.id)),
+    [cartItems]
+  );
 
   const handleAddToCart = () => {
     if (!producto || !sede) return;
@@ -325,6 +332,55 @@ export default function ProductoPage() {
           />
         </div>
       </div>
+
+      {/* Complementos */}
+      {producto.productosComplementarios && producto.productosComplementarios.length > 0 && (
+        <section className="mt-12">
+          <div className="flex items-center gap-2 mb-5">
+            <Sparkles className="h-5 w-5 text-[var(--color-brand-mustard)]" />
+            <h2 className="text-xl font-semibold text-stone-800">
+              Complementa tu pedido
+            </h2>
+            <span className="text-sm text-stone-400 font-normal">
+              ({producto.productosComplementarios.length} adicionales)
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {producto.productosComplementarios.map((comp) => {
+              const compId = String(comp.productoId);
+              const isInCart = cartItemIds.has(compId);
+              return (
+                <ComplementCard
+                  key={comp.productoId}
+                  producto={comp}
+                  isInCart={isInCart}
+                  onAdd={() => {
+                    if (!sede) return;
+                    addItem(
+                      {
+                        id: compId,
+                        nombre: comp.nombre,
+                        sku: comp.sku,
+                        precio: comp.precio,
+                        descuentoPorcentaje: comp.descuentoPorcentaje ?? 0,
+                        cantidad: 1,
+                        imagen_url: comp.imagenUrl,
+                        sede_id: String(sede.id),
+                      },
+                      sede
+                    );
+                    toast.success("¡Agregado al carrito!", {
+                      description: comp.nombre,
+                      duration: 2000,
+                    });
+                    setDrawerOpen(true);
+                  }}
+                />
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <ReseñasModal
         open={reseñasModalOpen}

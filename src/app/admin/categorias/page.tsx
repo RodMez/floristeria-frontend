@@ -17,6 +17,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -24,7 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Tags, Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Tags, Plus, Pencil, Trash2, Search, Eye, EyeOff } from "lucide-react";
 import Cookies from "js-cookie";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -34,6 +42,9 @@ export default function CategoriasPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCategoria, setEditingCategoria] = useState<CategoriaResponse | null>(null);
   const [nombre, setNombre] = useState("");
+  const [tipo, setTipo] = useState("CATALOGO");
+  const [mostrarEnCatalogo, setMostrarEnCatalogo] = useState(true);
+  const [orden, setOrden] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [categoriaToDelete, setCategoriaToDelete] = useState<CategoriaResponse | null>(null);
 
@@ -46,12 +57,18 @@ export default function CategoriasPage() {
   const handleNew = () => {
     setEditingCategoria(null);
     setNombre("");
+    setTipo("CATALOGO");
+    setMostrarEnCatalogo(true);
+    setOrden(0);
     setDialogOpen(true);
   };
 
   const handleEdit = (categoria: CategoriaResponse) => {
     setEditingCategoria(categoria);
     setNombre(categoria.nombre);
+    setTipo(categoria.tipo || "CATALOGO");
+    setMostrarEnCatalogo(categoria.mostrarEnCatalogo ?? true);
+    setOrden(categoria.orden ?? 0);
     setDialogOpen(true);
   };
 
@@ -60,7 +77,12 @@ export default function CategoriasPage() {
     setIsLoading(true);
 
     const token = Cookies.get("token");
-    const payload: CategoriaRequest = { nombre };
+    const payload: CategoriaRequest = {
+      nombre,
+      tipo,
+      mostrarEnCatalogo,
+      orden,
+    };
     const isEditing = editingCategoria !== null;
     const endpoint = isEditing
       ? `${API_URL}/api/superadmin/categorias/${editingCategoria.id}`
@@ -142,10 +164,8 @@ export default function CategoriasPage() {
     );
   }
 
-  // Ordenamiento estable por ID descendente
   const sortedCategorias = categorias ? [...categorias].sort((a, b) => b.id - a.id) : [];
 
-  // Filtro de búsqueda local
   const categoriasFiltradas = sortedCategorias.filter((c) =>
     c.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.id.toString().includes(searchTerm)
@@ -166,7 +186,6 @@ export default function CategoriasPage() {
         </Button>
       </div>
 
-      {/* Search Bar */}
       <div className="mb-4">
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
@@ -186,13 +205,16 @@ export default function CategoriasPage() {
             <TableRow>
               <TableHead>ID</TableHead>
               <TableHead>Nombre</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Catálogo</TableHead>
+              <TableHead>Orden</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {categoriasFiltradas.length === 0 && (
               <TableRow>
-                <TableCell colSpan={3} className="text-center text-stone-500 py-8">
+                <TableCell colSpan={6} className="text-center text-stone-500 py-8">
                   No hay categorías registradas
                 </TableCell>
               </TableRow>
@@ -201,6 +223,27 @@ export default function CategoriasPage() {
               <TableRow key={categoria.id}>
                 <TableCell>{categoria.id}</TableCell>
                 <TableCell className="font-medium">{categoria.nombre}</TableCell>
+                <TableCell>
+                  <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    categoria.tipo === "ADICIONAL"
+                      ? "bg-violet-100 text-violet-800"
+                      : "bg-stone-100 text-stone-700"
+                  }`}>
+                    {categoria.tipo === "ADICIONAL" ? "ADICIONAL" : "CATÁLOGO"}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  {(categoria.mostrarEnCatalogo ?? true) ? (
+                    <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
+                      <Eye className="h-3.5 w-3.5" /> Visible
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs text-stone-400">
+                      <EyeOff className="h-3.5 w-3.5" /> Oculto
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell className="text-stone-500">{categoria.orden ?? 0}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
                     <Button
@@ -244,6 +287,50 @@ export default function CategoriasPage() {
                 required
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tipo">Tipo</Label>
+              <Select value={tipo} onValueChange={(v) => v && setTipo(v)} disabled={isLoading}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CATALOGO">Catálogo</SelectItem>
+                  <SelectItem value="ADICIONAL">Adicional</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-stone-400">
+                ADICIONAL: productos que se muestran como complementos en la página de detalle.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="mostrar-en-catalogo">Mostrar en catálogo</Label>
+                <p className="text-xs text-stone-400">
+                  Si está desactivado, los productos de esta categoría no aparecen en el listado principal.
+                </p>
+              </div>
+              <Switch
+                id="mostrar-en-catalogo"
+                checked={mostrarEnCatalogo}
+                onCheckedChange={setMostrarEnCatalogo}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="orden">Orden</Label>
+              <Input
+                id="orden"
+                type="number"
+                min={0}
+                value={orden}
+                onChange={(e) => setOrden(Number(e.target.value))}
+                disabled={isLoading}
+              />
+            </div>
+
             <div className="flex justify-end gap-2 pt-4">
               <Button
                 type="button"
