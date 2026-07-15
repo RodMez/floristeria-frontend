@@ -32,7 +32,7 @@ export default function ImageLightbox({
   } | null>(null);
   const lastTapRef = useRef<number>(0);
 
-  const getTouchDistance = (touches: TouchList) => {
+  const getTouchDistance = (touches: React.TouchList) => {
     const dx = touches[0].clientX - touches[1].clientX;
     const dy = touches[0].clientY - touches[1].clientY;
     return Math.sqrt(dx * dx + dy * dy);
