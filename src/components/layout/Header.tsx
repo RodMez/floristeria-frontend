@@ -177,7 +177,7 @@ export default function Header() {
             ) : (
               <Link
                 href="/tienda/auth"
-                className="inline-flex h-7 items-center justify-center gap-1 rounded-[min(var(--radius-md),12px)] border-[var(--color-brand-rose)] bg-[var(--color-brand-rose-light)]/50 px-2.5 text-[0.8rem] font-heading font-medium text-muted-foreground whitespace-nowrap transition-all hover:border-brand-mustard hover:text-brand-mustard"
+                className="inline-flex h-7 items-center justify-center gap-1 rounded-[min(var(--radius-md),12px)] border-[var(--color-brand-rose)] bg-[var(--color-brand-rose-light)]/50 px-2.5 text-[0.8rem] font-heading font-medium text-brand-mustard whitespace-nowrap transition-all hover:border-brand-mustard hover:text-brand-mustard-dark"
               >
                 Ingresar
               </Link>
