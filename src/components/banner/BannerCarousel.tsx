@@ -28,7 +28,7 @@ interface BannerCarouselProps {
 function BannerSkeleton({ maxHeight }: { maxHeight: number }) {
   return (
     <div
-      className="w-full aspect-[3/1] overflow-hidden bg-stone-100 animate-pulse"
+      className="w-full aspect-[3/1] min-h-[200px] overflow-hidden bg-stone-100 animate-pulse"
       style={{ maxHeight }}
     >
       <div className="flex h-full items-end p-6 md:p-10">
@@ -89,12 +89,12 @@ export default function BannerCarousel({
         aspectRatio === "16/9" ? "aspect-[16/9]" :
         "aspect-[21/9] max-h-[400px]"
       }`
-    : "relative w-full overflow-hidden aspect-[3/1]";
+    : "relative w-full overflow-hidden aspect-[3/1] min-h-[200px]";
 
   const content = (
     <div
       className={containerClass}
-      style={aspectRatio ? undefined : { maxHeight }}
+      style={aspectRatio ? undefined : { maxHeight, minHeight: 200 }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onFocus={() => setIsPaused(true)}
@@ -115,7 +115,7 @@ export default function BannerCarousel({
         }
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
+      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-10">
         {banner.titulo && (
           <h2 className="text-white text-xl md:text-3xl font-bold drop-shadow-lg">
             {banner.titulo}
