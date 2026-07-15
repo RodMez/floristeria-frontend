@@ -58,7 +58,7 @@ export function ComplementosDialog({
   const [showAddForm, setShowAddForm] = useState(false);
   const [newComplementarioId, setNewComplementarioId] = useState<string>("");
   const [newSedeId, setNewSedeId] = useState<string>("");
-  const [newOrden, setNewOrden] = useState(0);
+  const [newOrden, setNewOrden] = useState<number | "">("");
 
   const token = Cookies.get("token");
 
@@ -117,7 +117,7 @@ export function ComplementosDialog({
       const payload: ProductoComplementarioRequest = {
         complementarioId: Number(newComplementarioId),
         sedeId: newSedeId ? Number(newSedeId) : null,
-        orden: newOrden,
+        orden: typeof newOrden === "string" ? 0 : newOrden,
       };
 
       const res = await fetch(
@@ -142,7 +142,7 @@ export function ComplementosDialog({
       setShowAddForm(false);
       setNewComplementarioId("");
       setNewSedeId("");
-      setNewOrden(0);
+      setNewOrden("");
     } catch (err) {
       toast.error(
         `Error: ${err instanceof Error ? err.message : "Error desconocido"}`
@@ -288,9 +288,11 @@ export function ComplementosDialog({
                 <Label>Orden</Label>
                 <Input
                   type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   min={0}
                   value={newOrden}
-                  onChange={(e) => setNewOrden(Number(e.target.value))}
+                  onChange={(e) => setNewOrden(e.target.value === "" ? "" : Number(e.target.value))}
                 />
               </div>
 

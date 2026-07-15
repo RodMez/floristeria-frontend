@@ -44,7 +44,7 @@ export default function CategoriasPage() {
   const [nombre, setNombre] = useState("");
   const [tipo, setTipo] = useState("CATALOGO");
   const [mostrarEnCatalogo, setMostrarEnCatalogo] = useState(true);
-  const [orden, setOrden] = useState(0);
+  const [orden, setOrden] = useState<number | "">("");
   const [isLoading, setIsLoading] = useState(false);
   const [categoriaToDelete, setCategoriaToDelete] = useState<CategoriaResponse | null>(null);
 
@@ -59,7 +59,7 @@ export default function CategoriasPage() {
     setNombre("");
     setTipo("CATALOGO");
     setMostrarEnCatalogo(true);
-    setOrden(0);
+    setOrden("");
     setDialogOpen(true);
   };
 
@@ -68,7 +68,7 @@ export default function CategoriasPage() {
     setNombre(categoria.nombre);
     setTipo(categoria.tipo || "CATALOGO");
     setMostrarEnCatalogo(categoria.mostrarEnCatalogo ?? true);
-    setOrden(categoria.orden ?? 0);
+    setOrden(categoria.orden ?? "");
     setDialogOpen(true);
   };
 
@@ -81,7 +81,7 @@ export default function CategoriasPage() {
       nombre,
       tipo,
       mostrarEnCatalogo,
-      orden,
+      orden: typeof orden === "string" ? 0 : orden,
     };
     const isEditing = editingCategoria !== null;
     const endpoint = isEditing
@@ -324,9 +324,11 @@ export default function CategoriasPage() {
               <Input
                 id="orden"
                 type="number"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 min={0}
                 value={orden}
-                onChange={(e) => setOrden(Number(e.target.value))}
+                onChange={(e) => setOrden(e.target.value === "" ? "" : Number(e.target.value))}
                 disabled={isLoading}
               />
             </div>
