@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
 import ImageLightbox from "@/components/ui/image-lightbox";
+import { sanitizeUrl } from "@/lib/validation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -168,7 +169,7 @@ export default function BannerCarousel({
   return (
     <div className="w-full" role="region" aria-roledescription="carousel" aria-label="Banners promocionales">
       {banner.enlaceUrl ? (
-        <Link href={banner.enlaceUrl} className="block">
+        <Link href={sanitizeUrl(banner.enlaceUrl ?? "")} className="block">
           {content}
         </Link>
       ) : content}
