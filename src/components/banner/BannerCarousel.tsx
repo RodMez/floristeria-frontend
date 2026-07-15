@@ -134,7 +134,7 @@ export default function BannerCarousel({
 
       <div className="absolute bottom-0 left-0 right-0 p-4 md:p-10">
         {banner.titulo && (
-          <h2 className="text-white text-xl md:text-3xl font-bold drop-shadow-lg">
+          <h2 className="text-white text-xl md:text-3xl font-bold drop-shadow-lg max-w-[50%] line-clamp-2">
             {banner.titulo}
           </h2>
         )}

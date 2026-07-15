@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import useSWR from "swr";
 import { fetcher, authFetch } from "@/lib/fetcher";
 import { BannerDTO, BannerRequest, UbicacionBanner, Sede } from "@/types";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -29,20 +30,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Image as ImageIcon,
   Plus,
   Pencil,
   Trash2,
-  GripVertical,
-  EyeOff,
+  Search,
+  SlidersHorizontal,
 } from "lucide-react";
 import Image from "next/image";
 import Cookies from "js-cookie";
@@ -52,10 +44,17 @@ import { Textarea } from "@/components/ui/textarea";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 const UBICACIONES: { value: UbicacionBanner; label: string }[] = [
-  { value: "SELECTOR_SEDE", label: "Selector de Sede" },
-  { value: "HOME_SEDE", label: "Home de Sede" },
-  { value: "PRODUCTO_INDIVIDUAL", label: "Producto Individual" },
+  { value: "SELECTOR_SEDE", label: "Página de inicio" },
+  { value: "HOME_SEDE", label: "Inicio de sede" },
+  { value: "PRODUCTO_INDIVIDUAL", label: "Página de producto" },
 ];
+
+const ORDINALES = ["Primero", "Segundo", "Tercero", "Cuarto", "Quinto", "Sexto", "Séptimo", "Octavo", "Noveno", "Décimo"];
+const ORDEN_OPTIONS = ORDINALES.map((label, i) => ({ value: String(i), label }));
+function ordenLabel(n: number) {
+  if (n === 0) return "0°";
+  return ORDINALES[n - 1] ?? `${n}°`;
+}
 
 interface FormData {
   sedeId: number | null;
@@ -100,6 +99,10 @@ export default function BannersPage() {
   const [imagenFile, setImagenFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filtroUbicacion, setFiltroUbicacion] = useState<string>("TODAS");
+  const [filtroEstado, setFiltroEstado] = useState<string>("TODOS");
+
   const { data: banners, error, mutate } = useSWR<BannerDTO[]>(
     `${API_URL}/api/admin/banners`,
     fetcher,
@@ -111,6 +114,23 @@ export default function BannersPage() {
     fetcher,
     { revalidateOnFocus: false }
   );
+
+  const filteredBanners = useMemo(() => {
+    if (!banners) return [];
+    return banners.filter((b) => {
+      const matchSearch =
+        !searchTerm ||
+        b.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        b.texto?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchUbicacion =
+        filtroUbicacion === "TODAS" || b.ubicacion === filtroUbicacion;
+      const matchEstado =
+        filtroEstado === "TODOS" ||
+        (filtroEstado === "ACTIVOS" && b.activo) ||
+        (filtroEstado === "INACTIVOS" && !b.activo);
+      return matchSearch && matchUbicacion && matchEstado;
+    });
+  }, [banners, searchTerm, filtroUbicacion, filtroEstado]);
 
   const resetForm = () => {
     setForm(emptyForm);
@@ -200,6 +220,16 @@ export default function BannersPage() {
       return;
     }
 
+    if (form.titulo.length > 100) {
+      toast.error("El título no puede exceder 100 caracteres");
+      return;
+    }
+
+    if (form.texto.length > 255) {
+      toast.error("El texto no puede exceder 255 caracteres");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const payload: BannerRequest = {
@@ -250,6 +280,7 @@ export default function BannersPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-stone-900">Banners Publicitarios</h1>
@@ -269,62 +300,128 @@ export default function BannersPage() {
         </div>
       )}
 
-      {/* Lista de banners */}
-      <div className="space-y-3">
+      {/* Filtros */}
+      {banners && banners.length > 0 && (
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+            <Input
+              placeholder="Buscar por título o texto..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Select value={filtroUbicacion} onValueChange={(v) => setFiltroUbicacion(v ?? "TODAS")}>
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <SlidersHorizontal className="mr-2 h-4 w-4 text-stone-400" />
+              <SelectValue placeholder="Ubicación" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="TODAS">Todas las ubicaciones</SelectItem>
+              {UBICACIONES.map((u) => (
+                <SelectItem key={u.value} value={u.value} label={u.label}>{u.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filtroEstado} onValueChange={(v) => setFiltroEstado(v ?? "TODOS")}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="TODOS">Todos</SelectItem>
+              <SelectItem value="ACTIVOS">Activos</SelectItem>
+              <SelectItem value="INACTIVOS">Inactivos</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {/* Contador de resultados */}
+      {banners && banners.length > 0 && (
+        <p className="text-sm text-stone-500">
+          Mostrando {filteredBanners.length} de {banners.length} banners
+        </p>
+      )}
+
+      {/* Grid de banners */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {!banners ? (
-          <p className="text-stone-500 text-center py-8">Cargando banners...</p>
-        ) : banners.length === 0 ? (
-          <p className="text-stone-500 text-center py-8">
-            No hay banners creados. Haz clic en "Nuevo Banner" para comenzar.
-          </p>
-        ) : (
-          banners.map((banner) => (
-            <Card key={banner.id} className="overflow-hidden">
-              <div className="flex items-stretch">
-                {/* Preview imagen */}
-                <div className="relative w-32 shrink-0 bg-stone-100">
-                  <Image
-                    src={banner.imagenUrl}
-                    alt={banner.titulo ?? ""}
-                    fill
-                    className="object-cover"
-                    sizes="128px"
-                  />
-                </div>
-
-                {/* Info */}
-                <CardContent className="flex flex-1 items-center justify-between p-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-stone-900 truncate">
-                        {banner.titulo || "Sin título"}
-                      </p>
-                      {!banner.activo && (
-                        <span className="inline-flex items-center gap-1 text-xs text-stone-400">
-                          <EyeOff className="h-3 w-3" />
-                          Inactivo
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-stone-500">
-                      {ubicacionLabel(banner.ubicacion)}
-                      {banner.sedeId
-                        ? ` · ${sedes?.find((s) => s.id === banner.sedeId)?.nombre ?? `Sede #${banner.sedeId}`}`
-                        : " · Global"}
-                    </p>
-                    <p className="text-xs text-stone-400">Orden: {banner.orden}</p>
-                  </div>
-
-                  <div className="flex items-center gap-1 shrink-0 ml-4">
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(banner)} title="Editar">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(banner)} title="Eliminar">
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
+          <>
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="overflow-hidden animate-pulse">
+                <div className="aspect-[3/1] bg-stone-200" />
+                <CardContent className="p-4 space-y-2">
+                  <div className="h-4 bg-stone-200 rounded w-3/4" />
+                  <div className="h-3 bg-stone-200 rounded w-1/2" />
                 </CardContent>
+              </Card>
+            ))}
+          </>
+        ) : filteredBanners.length === 0 ? (
+          <div className="col-span-full text-center py-12">
+            <p className="text-stone-500">
+              {banners.length === 0
+                ? 'No hay banners creados. Haz clic en "Nuevo Banner" para comenzar.'
+                : "No se encontraron banners con los filtros seleccionados."}
+            </p>
+          </div>
+        ) : (
+          filteredBanners.map((banner) => (
+            <Card key={banner.id} className="overflow-hidden group">
+              <div className="relative aspect-[3/1] bg-stone-100">
+                <Image
+                  src={banner.imagenUrl}
+                  alt={banner.titulo ?? ""}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200" />
+                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-8 w-8 bg-white/90 hover:bg-white shadow-sm"
+                    onClick={() => handleEdit(banner)}
+                    title="Editar"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-8 w-8 bg-white/90 hover:bg-white shadow-sm"
+                    onClick={() => handleDelete(banner)}
+                    title="Eliminar"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                  </Button>
+                </div>
+                <div className="absolute bottom-2 left-2">
+                  <Badge
+                    variant={banner.activo ? "default" : "secondary"}
+                    className={banner.activo
+                      ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
+                      : "bg-stone-100 text-stone-500 hover:bg-stone-100"
+                    }
+                  >
+                    {banner.activo ? "Activo" : "Inactivo"}
+                  </Badge>
+                </div>
               </div>
+              <CardContent className="p-4">
+                <h3 className="font-semibold text-stone-900 truncate">
+                  {banner.titulo || "Sin título"}
+                </h3>
+                <p className="text-sm text-stone-500 mt-1">
+                  {ubicacionLabel(banner.ubicacion)}
+                  {banner.sedeId
+                    ? ` · ${sedes?.find((s) => s.id === banner.sedeId)?.nombre ?? `Sede #${banner.sedeId}`}`
+                    : " · Global"}
+                </p>
+                <p className="text-xs text-stone-400 mt-1">{ordenLabel(banner.orden)}</p>
+              </CardContent>
             </Card>
           ))
         )}
@@ -359,7 +456,7 @@ export default function BannersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {UBICACIONES.map((u) => (
-                    <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
+                    <SelectItem key={u.value} value={u.value} label={u.label}>{u.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -381,7 +478,7 @@ export default function BannersPage() {
                   <SelectContent>
                     <SelectItem value="global">Global (todas las sedes)</SelectItem>
                     {sedes?.map((s) => (
-                      <SelectItem key={s.id} value={String(s.id)}>{s.nombre}</SelectItem>
+                      <SelectItem key={s.id} value={String(s.id)} label={s.nombre}>{s.nombre}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -397,9 +494,9 @@ export default function BannersPage() {
                 onChange={(e) => setForm((prev) => ({ ...prev, titulo: e.target.value }))}
                 placeholder="Ej: Colección Primavera"
                 disabled={isLoading}
-                maxLength={200}
+                maxLength={100}
               />
-              <CharCounter current={form.titulo.length} max={200} />
+              <CharCounter current={form.titulo.length} max={100} />
             </div>
 
             {/* Texto */}
@@ -412,9 +509,9 @@ export default function BannersPage() {
                 placeholder="Ej: Arreglos frescos para tu hogar"
                 disabled={isLoading}
                 rows={2}
-                maxLength={500}
+                maxLength={255}
               />
-              <CharCounter current={form.texto.length} max={500} />
+              <CharCounter current={form.texto.length} max={255} />
             </div>
 
             {/* Imagen */}
@@ -464,15 +561,20 @@ export default function BannersPage() {
             {/* Orden */}
             <div className="space-y-2">
               <Label htmlFor="orden">Orden</Label>
-              <Input
-                id="orden"
-                type="number"
-                min={0}
-                value={form.orden}
-                onChange={(e) => setForm((prev) => ({ ...prev, orden: parseInt(e.target.value) || 0 }))}
+              <Select
+                value={String(form.orden)}
+                onValueChange={(v) => setForm((prev) => ({ ...prev, orden: v != null ? Number(v) : 0 }))}
                 disabled={isLoading}
-                className="w-24"
-              />
+              >
+                <SelectTrigger id="orden" className="w-48">
+                  <SelectValue placeholder="Selecciona el orden" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ORDEN_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value} label={o.label}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Activo */}
@@ -503,7 +605,7 @@ export default function BannersPage() {
           <DialogHeader>
             <DialogTitle>Eliminar Banner</DialogTitle>
             <DialogDescription>
-              ¿Estás seguro de eliminar "{bannerToDelete?.titulo || "este banner"}"? Esta acción no se puede deshacer.
+              ¿Estás seguro de eliminar &quot;{bannerToDelete?.titulo || "este banner"}&quot;? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
