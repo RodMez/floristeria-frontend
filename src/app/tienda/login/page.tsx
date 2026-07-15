@@ -24,7 +24,6 @@ export default function LoginPage() {
     try {
       const loginData: LoginRequest = { email, password };
       const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`;
-      console.log("Intentando conectar a:", apiUrl);
 
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -34,8 +33,6 @@ export default function LoginPage() {
         body: JSON.stringify(loginData),
       });
 
-      console.log("Respuesta recibida:", response.status);
-
       if (response.status === 401 || response.status === 403) {
         toast.error("Credenciales inválidas");
         setIsLoading(false);
@@ -44,7 +41,6 @@ export default function LoginPage() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Error del servidor:", errorText);
         let serverMessage: string | null = null;
         try {
           const parsed = JSON.parse(errorText);
@@ -63,11 +59,9 @@ export default function LoginPage() {
       }
 
       const data = await response.json();
-      console.log("Datos recibidos:", data);
       setAuth(data);
       router.push("/admin");
-    } catch (err) {
-      console.error("Error de conexión:", err);
+    } catch {
       toast.error("No pudimos conectar con el servidor. Revisa tu conexión a internet.");
       setIsLoading(false);
     }
