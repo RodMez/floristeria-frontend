@@ -1,6 +1,7 @@
 import Cookies from 'js-cookie';
 import { toast } from 'sonner';
 import { ClienteAuthResponse, RegisterClienteRequest, PedidoHistorial, DireccionRequest, DireccionResponse, ActualizarPerfilRequest, ClientePerfilResponse } from '@/types';
+import { useAuthStore } from '@/store/useAuthStore';
 
 /**
  * Flag global para evitar múltiples redirecciones/toasts
@@ -191,12 +192,14 @@ function handleSessionExpired(): void {
     duration: 5000,
   });
 
-  // 4. Redirigir a /tienda/auth
-  // El state de Zustand ya fue limpiado (vía evento + persist a localStorage)
-  // y la cookie eliminada, por lo que window.location.href es seguro
-  // y evita corromper el historial del navegador.
-  if (window.location.pathname !== '/tienda/auth') {
-    window.location.href = '/tienda/auth';
+  // 4. Redirigir según el rol del usuario
+  // Admin → /tienda/login (login de admin)
+  // Cliente/otros → /tienda/auth (login/registro de cliente)
+  const rol = useAuthStore.getState().rol;
+  const isAdmin = rol === 'ADMIN' || rol === 'SUPERADMIN';
+  const redirectPath = isAdmin ? '/tienda/login' : '/tienda/auth';
+  if (window.location.pathname !== redirectPath) {
+    window.location.href = redirectPath;
   }
 
   // Reset del flag después de 2s para permitir re-intento si el usuario
