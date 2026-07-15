@@ -110,6 +110,7 @@ export default function BannerCarousel({
         alt={banner.titulo ?? "Banner promocional"}
         fill
         className="object-cover"
+        loading={current === 0 ? "eager" : "lazy"}
         priority={current === 0}
         sizes={aspectRatio
           ? aspectRatio === "1/1" ? "(max-width: 640px) 100vw, 300px" : "(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1200px"
