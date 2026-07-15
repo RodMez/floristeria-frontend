@@ -43,7 +43,9 @@ function AuthContent() {
   const { items } = useCartStore();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || (items.length > 0 ? "/tienda/checkout" : "/tienda");
+  const rawRedirect = searchParams.get("redirect");
+  const isSafeRedirect = rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") && !rawRedirect.includes("://");
+  const redirectTo = isSafeRedirect ? rawRedirect : (items.length > 0 ? "/tienda/checkout" : "/tienda");
 
   // Formulario de Login
   const loginForm = useForm<LoginFormData>({

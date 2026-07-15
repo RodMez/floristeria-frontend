@@ -1,18 +1,20 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
-  const isAuthPage = request.nextUrl.pathname.startsWith('/tienda/login');
-  const isAdminPage = request.nextUrl.pathname.startsWith('/admin');
+  const pathname = request.nextUrl.pathname;
 
-  // Si intenta entrar a /admin sin token, redirigir a /tienda/login
+  const isAdminPage = pathname.startsWith('/admin');
+  const isLoginPage = pathname === '/tienda/login';
+
+  // Sin token en /admin → redirigir a login
   if (isAdminPage && !token) {
     return NextResponse.redirect(new URL('/tienda/login', request.url));
   }
 
-  // Si intenta entrar a /tienda/login teniendo ya un token, redirigir a /admin
-  if (isAuthPage && token) {
+  // Con token en /login → redirigir a admin
+  if (isLoginPage && token) {
     return NextResponse.redirect(new URL('/admin', request.url));
   }
 

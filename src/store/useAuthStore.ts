@@ -36,7 +36,12 @@ export const useAuthStore = create<AuthState>()(
       isHydrated: false,
 
       setAuth: (data: AuthResponse) => {
-        Cookies.set('token', data.token, { expires: 1 });
+        Cookies.set('token', data.token, {
+          expires: 1,
+          path: '/',
+          sameSite: 'lax',
+          secure: window.location.protocol === 'https:',
+        });
         set({
           token: data.token,
           rol: data.rol,
@@ -49,7 +54,12 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setClienteAuth: (data: ClienteAuthResponse) => {
-        Cookies.set('token', data.token, { expires: 1 });
+        Cookies.set('token', data.token, {
+          expires: 1,
+          path: '/',
+          sameSite: 'lax',
+          secure: window.location.protocol === 'https:',
+        });
         set({
           token: data.token,
           rol: data.rol,
