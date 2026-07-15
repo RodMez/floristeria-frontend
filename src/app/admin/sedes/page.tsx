@@ -29,6 +29,8 @@ import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 import Cookies from "js-cookie";
 import { z } from "zod";
+import { useRequireSuperAdmin } from "@/lib/auth";
+import { sanitizeUrl } from "@/lib/validation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -75,13 +77,15 @@ const emptyForm: SedeForm = {
 };
 
 export default function SedesPage() {
+  const { isLoading } = useRequireSuperAdmin();
+
   const [searchInput, setSearchInput] = useState("");
   const searchTerm = useDeferredValue(searchInput);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSede, setEditingSede] = useState<Sede | null>(null);
   const [form, setForm] = useState<SedeForm>(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [sedeToDelete, setSedeToDelete] = useState<Sede | null>(null);
   const [sortField, setSortField] = useState<string | null>("id");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -159,7 +163,7 @@ export default function SedesPage() {
       return;
     }
 
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     const token = Cookies.get("token");
     const isEditing = editingSede !== null;
@@ -189,7 +193,7 @@ export default function SedesPage() {
       console.error("Error saving sede:", err);
       toast.error(`Error al guardar: ${err instanceof Error ? err.message : "Error desconocido"}`);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -237,6 +241,16 @@ export default function SedesPage() {
   const handleSort = (field: string) => {
     setSortDir(prev => (sortField === field ? (prev === "asc" ? "desc" : "asc") : "desc"))
     setSortField(field)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-stone-500">Verificando permisos...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
@@ -365,7 +379,7 @@ export default function SedesPage() {
                     )}
                     {sede.instagramUrl && (
                       <a
-                        href={sede.instagramUrl}
+                        href={sanitizeUrl(sede.instagramUrl ?? "")}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-pink-100 text-pink-700 hover:bg-pink-200 transition-colors"
@@ -376,7 +390,7 @@ export default function SedesPage() {
                     )}
                     {sede.facebookUrl && (
                       <a
-                        href={sede.facebookUrl}
+                        href={sanitizeUrl(sede.facebookUrl ?? "")}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
@@ -387,7 +401,7 @@ export default function SedesPage() {
                     )}
                     {sede.tiktokUrl && (
                       <a
-                        href={sede.tiktokUrl}
+                        href={sanitizeUrl(sede.tiktokUrl ?? "")}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-stone-900 text-white hover:bg-stone-700 transition-colors"
@@ -452,7 +466,7 @@ export default function SedesPage() {
                   validateField("nombre", e.target.value)
                 }}
                 placeholder="Nombre de la sede"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 required
                 aria-invalid={!!errors.nombre}
                 aria-describedby={errors.nombre ? "error-nombre" : undefined}
@@ -471,7 +485,7 @@ export default function SedesPage() {
                   validateField("ciudad", e.target.value)
                 }}
                 placeholder="Ciudad"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 required
                 aria-invalid={!!errors.ciudad}
                 aria-describedby={errors.ciudad ? "error-ciudad" : undefined}
@@ -491,7 +505,7 @@ export default function SedesPage() {
                   validateField("telefonoWhatsapp", formatted)
                 }}
                 placeholder="+57 300 123 4567"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 required
                 aria-invalid={!!errors.telefonoWhatsapp}
                 aria-describedby={errors.telefonoWhatsapp ? "error-telefonoWhatsapp" : undefined}
@@ -510,7 +524,7 @@ export default function SedesPage() {
                   validateField("instagramUrl", e.target.value)
                 }}
                 placeholder="https://instagram.com/tu-sede"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 aria-invalid={!!errors.instagramUrl}
                 aria-describedby={errors.instagramUrl ? "error-instagramUrl" : undefined}
               />
@@ -528,7 +542,7 @@ export default function SedesPage() {
                   validateField("facebookUrl", e.target.value)
                 }}
                 placeholder="https://facebook.com/tu-sede"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 aria-invalid={!!errors.facebookUrl}
                 aria-describedby={errors.facebookUrl ? "error-facebookUrl" : undefined}
               />
@@ -546,7 +560,7 @@ export default function SedesPage() {
                   validateField("tiktokUrl", e.target.value)
                 }}
                 placeholder="https://tiktok.com/@tu-sede"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 aria-invalid={!!errors.tiktokUrl}
                 aria-describedby={errors.tiktokUrl ? "error-tiktokUrl" : undefined}
               />
@@ -565,7 +579,7 @@ export default function SedesPage() {
                   validateField("email", e.target.value)
                 }}
                 placeholder="sede@floristeria.com"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 aria-invalid={!!errors.email}
                 aria-describedby={errors.email ? "error-email" : undefined}
               />
@@ -578,12 +592,12 @@ export default function SedesPage() {
                 type="button"
                 variant="outline"
                 onClick={() => setDialogOpen(false)}
-                disabled={isLoading}
+                disabled={isSubmitting}
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Guardando..." : "Guardar"}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Guardando..." : "Guardar"}
               </Button>
             </div>
           </form>

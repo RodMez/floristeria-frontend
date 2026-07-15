@@ -28,6 +28,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Cookies from "js-cookie";
+import { validateImageFile } from "@/lib/validation";
+import { useRequireSuperAdmin } from "@/lib/auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -83,6 +85,7 @@ function CardSection({
 }
 
 export default function ConfiguracionPage() {
+  const { isLoading: isAuthLoading } = useRequireSuperAdmin();
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingIcon, setUploadingIcon] = useState(false);
@@ -131,6 +134,13 @@ export default function ConfiguracionPage() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: "logoUrl" | "iconUrl") => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const fileError = validateImageFile(file);
+    if (fileError) {
+      toast.error(fileError);
+      return;
+    }
+
     const setter = field === "logoUrl" ? setUploadingLogo : setUploadingIcon;
     setter(true);
     try {
@@ -298,6 +308,16 @@ export default function ConfiguracionPage() {
       setIsLoading(false);
     }
   };
+
+  if (isAuthLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-stone-500">Verificando permisos...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (

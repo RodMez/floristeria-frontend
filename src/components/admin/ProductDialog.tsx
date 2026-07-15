@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ProductoResponse, CategoriaResponse, ProductoRequest } from "@/types";
+import { validateImageFile } from "@/lib/validation";
 import Image from "next/image";
 
 /** ─────────── Zod Schema ─────────── */
@@ -121,6 +122,12 @@ export function ProductDialog({
 
       // Paso 1: Subir imagen si se seleccionó una nueva
       if (imagenFile) {
+        const fileError = validateImageFile(imagenFile);
+        if (fileError) {
+          toast.error(fileError);
+          setIsLoading(false);
+          return;
+        }
         const formData = new FormData();
         formData.append("archivo", imagenFile);
 

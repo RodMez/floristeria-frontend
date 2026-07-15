@@ -28,10 +28,12 @@ import {
 import { Flower2, Plus, Pencil, Trash2, Search, FileSpreadsheet, PackagePlus } from "lucide-react";
 import Cookies from "js-cookie";
 import Image from "next/image";
+import { useRequireSuperAdmin } from "@/lib/auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function ProductosPage() {
+  const { isLoading } = useRequireSuperAdmin();
   const [searchTerm, setSearchTerm] = useState("");
   const [exportando, setExportando] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -141,6 +143,17 @@ export default function ProductosPage() {
         <div className="text-center">
           <Flower2 className="h-12 w-12 mx-auto mb-4 text-stone-400 animate-pulse" />
           <p className="text-stone-500">Cargando productos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Flower2 className="h-12 w-12 mx-auto mb-4 text-stone-400 animate-pulse" />
+          <p className="text-stone-500">Verificando permisos...</p>
         </div>
       </div>
     );

@@ -7,6 +7,7 @@ import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
+import { sanitizeUrl } from "@/lib/validation";
 
 export default function Footer() {
   const { data: sedes } = useSWR<Sede[]>(
@@ -74,7 +75,7 @@ export default function Footer() {
                       )}
                       {sede.instagramUrl && (
                         <a
-                          href={sede.instagramUrl}
+                          href={sanitizeUrl(sede.instagramUrl ?? "")}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-stone-500 hover:text-pink-400 transition-colors"
@@ -85,7 +86,7 @@ export default function Footer() {
                       )}
                       {sede.facebookUrl && (
                         <a
-                          href={sede.facebookUrl}
+                          href={sanitizeUrl(sede.facebookUrl ?? "")}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-stone-500 hover:text-blue-400 transition-colors"
@@ -96,7 +97,7 @@ export default function Footer() {
                       )}
                       {sede.tiktokUrl && (
                         <a
-                          href={sede.tiktokUrl}
+                          href={sanitizeUrl(sede.tiktokUrl ?? "")}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-stone-500 hover:text-stone-300 transition-colors"
@@ -188,7 +189,7 @@ export default function Footer() {
               <li className="flex items-center gap-3 pt-2">
                 {config?.instagramUrl && (
                   <a
-                    href={config.instagramUrl}
+                    href={sanitizeUrl(config.instagramUrl ?? "")}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-stone-500 hover:text-pink-400 transition-colors"
@@ -199,7 +200,7 @@ export default function Footer() {
                 )}
                 {config?.facebookUrl && (
                   <a
-                    href={config.facebookUrl}
+                    href={sanitizeUrl(config.facebookUrl ?? "")}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-stone-500 hover:text-blue-400 transition-colors"
@@ -210,7 +211,7 @@ export default function Footer() {
                 )}
                 {config?.tiktokUrl && (
                   <a
-                    href={config.tiktokUrl}
+                    href={sanitizeUrl(config.tiktokUrl ?? "")}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-stone-500 hover:text-stone-300 transition-colors"

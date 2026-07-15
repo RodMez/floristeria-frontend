@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useRequireSuperAdmin } from "@/lib/auth";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
@@ -37,6 +38,7 @@ function truncate(text: string, max: number) {
 }
 
 export default function AdminReseñasPage() {
+  const { isLoading } = useRequireSuperAdmin();
   const [tab, setTab] = useState<"pendientes" | "todas">("pendientes");
   const [actionLoading, setActionLoading] = useState<Record<number, string | null>>({});
   const [reviewToDelete, setReviewToDelete] = useState<ReseñaResponse | null>(null);
@@ -45,7 +47,7 @@ export default function AdminReseñasPage() {
     ? `${API}/api/admin/resenas/pendientes`
     : `${API}/api/admin/resenas`;
 
-  const { data: reseñas, isLoading, mutate } = useSWR<ReseñaResponse[]>(
+  const { data: reseñas, isLoading: isLoadingResenas, mutate } = useSWR<ReseñaResponse[]>(
     apiUrl,
     fetcher
   );
@@ -93,6 +95,16 @@ export default function AdminReseñasPage() {
 
   return (
     <div className="space-y-6">
+      {isLoading && (
+        <div className="p-6 flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <p className="text-stone-500">Verificando permisos...</p>
+          </div>
+        </div>
+      )}
+
+      {!isLoading && (
+      <>
       <div className="flex items-center gap-3">
         <h1 className="text-2xl font-bold text-stone-800">Reseñas</h1>
         {reseñas && reseñas.length > 0 && (
@@ -125,7 +137,7 @@ export default function AdminReseñasPage() {
         </button>
       </div>
 
-      {isLoading && (
+      {isLoadingResenas && (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-16 rounded-xl bg-stone-100 animate-pulse" />
@@ -133,7 +145,7 @@ export default function AdminReseñasPage() {
         </div>
       )}
 
-      {!isLoading && reseñas && reseñas.length === 0 && (
+      {!isLoadingResenas && reseñas && reseñas.length === 0 && (
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <div className="h-14 w-14 rounded-full bg-[var(--color-brand-mustard)]/10 flex items-center justify-center">
             <MessageSquare className="h-7 w-7 text-[var(--color-brand-mustard)]/40" />
@@ -151,7 +163,7 @@ export default function AdminReseñasPage() {
         </div>
       )}
 
-      {!isLoading && reseñas && reseñas.length > 0 && (
+      {!isLoadingResenas && reseñas && reseñas.length > 0 && (
         <div className="overflow-x-auto rounded-xl border border-stone-100 bg-white">
           <table className="w-full text-sm">
             <thead>
@@ -270,6 +282,8 @@ export default function AdminReseñasPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </>
+      )}
     </div>
   );
 }

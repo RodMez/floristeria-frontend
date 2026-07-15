@@ -46,6 +46,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Cookies from "js-cookie";
+import { validateImageFile } from "@/lib/validation";
+import { useRequireSuperAdmin } from "@/lib/auth";
 import { Textarea } from "@/components/ui/textarea";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -88,6 +90,7 @@ function CharCounter({ current, max }: { current: number; max: number }) {
 }
 
 export default function BannersPage() {
+  const { isLoading: isAuthLoading } = useRequireSuperAdmin();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<BannerDTO | null>(null);
@@ -161,6 +164,13 @@ export default function BannersPage() {
   const handleImagenUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const fileError = validateImageFile(file);
+    if (fileError) {
+      toast.error(fileError);
+      return;
+    }
+
     setImagenFile(file);
 
     setUploading(true);
@@ -227,6 +237,16 @@ export default function BannersPage() {
   };
 
   const ubicacionLabel = (u: string) => UBICACIONES.find((ub) => ub.value === u)?.label ?? u;
+
+  if (isAuthLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-stone-500">Verificando permisos...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

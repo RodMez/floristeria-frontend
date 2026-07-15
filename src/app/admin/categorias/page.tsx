@@ -34,10 +34,12 @@ import {
 } from "@/components/ui/dialog";
 import { Tags, Plus, Pencil, Trash2, Search, Eye, EyeOff } from "lucide-react";
 import Cookies from "js-cookie";
+import { useRequireSuperAdmin } from "@/lib/auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function CategoriasPage() {
+  const { isLoading: isCheckingPermissions } = useRequireSuperAdmin();
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCategoria, setEditingCategoria] = useState<CategoriaResponse | null>(null);
@@ -142,6 +144,16 @@ export default function CategoriasPage() {
       toast.error(`Error al eliminar: ${err instanceof Error ? err.message : "Error desconocido"}`);
     }
   };
+
+  if (isCheckingPermissions) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-stone-500">Verificando permisos...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (

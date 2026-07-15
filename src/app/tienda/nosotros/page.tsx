@@ -9,6 +9,7 @@ import { Heart, Sparkles, Target, ChevronRight } from "lucide-react";
 import SedeCard from "@/components/SedeCard";
 import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
+import { sanitizeUrl } from "@/lib/validation";
 
 export default function NosotrosPage() {
   const { data: config } = useSWR<ConfiguracionTiendaDTO>(
@@ -142,19 +143,19 @@ export default function NosotrosPage() {
           {/* Redes sociales */}
           <div className="flex flex-wrap justify-center gap-4 mb-8">
             {config?.instagramUrl && (
-              <a href={config.instagramUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border-2 border-brand-rose bg-white px-4 py-2.5 text-sm font-medium text-stone-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard hover:text-pink-600">
+              <a href={sanitizeUrl(config.instagramUrl ?? "")} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border-2 border-brand-rose bg-white px-4 py-2.5 text-sm font-medium text-stone-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard hover:text-pink-600">
                 <FaInstagram className="size-4 text-pink-500" />
                 Instagram
               </a>
             )}
             {config?.facebookUrl && (
-              <a href={config.facebookUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border-2 border-brand-rose bg-white px-4 py-2.5 text-sm font-medium text-stone-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard hover:text-blue-600">
+              <a href={sanitizeUrl(config.facebookUrl ?? "")} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border-2 border-brand-rose bg-white px-4 py-2.5 text-sm font-medium text-stone-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard hover:text-blue-600">
                 <FaFacebook className="size-4 text-blue-600" />
                 Facebook
               </a>
             )}
             {config?.tiktokUrl && (
-              <a href={config.tiktokUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border-2 border-brand-rose bg-white px-4 py-2.5 text-sm font-medium text-stone-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard hover:text-stone-900">
+              <a href={sanitizeUrl(config.tiktokUrl ?? "")} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border-2 border-brand-rose bg-white px-4 py-2.5 text-sm font-medium text-stone-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard hover:text-stone-900">
                 <FaTiktok className="size-4" />
                 TikTok
               </a>

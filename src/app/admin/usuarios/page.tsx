@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/select";
 import { Users, Plus, Pencil, Trash2, Search } from "lucide-react";
 import Cookies from "js-cookie";
+import { useRequireSuperAdmin } from "@/lib/auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -60,6 +61,8 @@ const usuarioSchema = z
 type UsuarioFormData = z.infer<typeof usuarioSchema>;
 
 export default function UsuariosPage() {
+  const { isLoading: isAuthLoading } = useRequireSuperAdmin();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUsuario, setEditingUsuario] =
@@ -237,6 +240,16 @@ export default function UsuariosPage() {
       );
     }
   };
+
+  if (isAuthLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-stone-500">Verificando permisos...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (usuariosError) {
     return (

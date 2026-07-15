@@ -6,6 +6,7 @@ import { MapPin } from "lucide-react";
 import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 import { Sede } from "@/types";
+import { sanitizeUrl } from "@/lib/validation";
 
 interface SedeCardProps {
   sede: Sede;
@@ -83,7 +84,7 @@ export default function SedeCard({ sede, variant = "navigable" }: SedeCardProps)
           <div className="flex items-center justify-center gap-3 min-h-[40px]">
             {sede.instagramUrl && (
               <a
-                href={sede.instagramUrl}
+                href={sanitizeUrl(sede.instagramUrl ?? "")}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
@@ -95,7 +96,7 @@ export default function SedeCard({ sede, variant = "navigable" }: SedeCardProps)
             )}
             {sede.facebookUrl && (
               <a
-                href={sede.facebookUrl}
+                href={sanitizeUrl(sede.facebookUrl ?? "")}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
@@ -107,7 +108,7 @@ export default function SedeCard({ sede, variant = "navigable" }: SedeCardProps)
             )}
             {sede.tiktokUrl && (
               <a
-                href={sede.tiktokUrl}
+                href={sanitizeUrl(sede.tiktokUrl ?? "")}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
