@@ -55,8 +55,14 @@ export default function NosotrosPage() {
       {/* Descripción */}
       {descripcion && (
         <section className="py-12">
-          <div className="container mx-auto max-w-3xl px-4 text-center">
-            <p className="text-lg text-stone-600 leading-relaxed">{descripcion}</p>
+          <div className="container mx-auto max-w-3xl px-4">
+            <h2 className="text-2xl font-semibold text-stone-800 mb-6 flex items-center justify-center gap-2">
+              <Sparkles className="size-6 text-brand-mustard" />
+              Nuestra esencia
+            </h2>
+            {descripcion.split("\n\n").map((p: string, i: number) => (
+              <p key={i} className="text-stone-600 leading-relaxed mb-4">{p}</p>
+            ))}
           </div>
         </section>
       )}
@@ -65,7 +71,7 @@ export default function NosotrosPage() {
       {historia && (
         <section className="py-16">
           <div className="container mx-auto max-w-3xl px-4">
-            <h2 className="text-2xl font-semibold text-stone-800 mb-6 flex items-center gap-2">
+            <h2 className="text-2xl font-semibold text-stone-800 mb-6 flex items-center justify-center gap-2">
               <Heart className="size-6 text-brand-rose-dark" />
               Nuestra Historia
             </h2>
@@ -82,7 +88,7 @@ export default function NosotrosPage() {
           <div className="container mx-auto max-w-5xl px-4">
             <div className="grid gap-8 md:grid-cols-2">
               {mision && (
-                <div className="rounded-xl border border-stone-200 bg-white p-8">
+                <div className="rounded-xl border-2 border-brand-rose bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard">
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-mustard/10">
                     <Target className="size-6 text-brand-mustard" />
                   </div>
@@ -91,7 +97,7 @@ export default function NosotrosPage() {
                 </div>
               )}
               {vision && (
-                <div className="rounded-xl border border-stone-200 bg-white p-8">
+                <div className="rounded-xl border-2 border-brand-rose bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard">
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-rose/30">
                     <Sparkles className="size-6 text-brand-rose-dark" />
                   </div>
@@ -114,7 +120,7 @@ export default function NosotrosPage() {
 
           <div className="grid gap-4 sm:grid-cols-2 max-w-lg mx-auto mb-8">
             {config?.correoMaestro && (
-              <a href={`mailto:${config.correoMaestro}`} className="flex items-center gap-3 rounded-lg border border-stone-200 bg-white px-5 py-4 text-left text-sm font-medium text-stone-700 transition-colors hover:border-amber-300 hover:text-amber-600">
+              <a href={`mailto:${config.correoMaestro}`} className="flex items-center gap-3 rounded-lg border-2 border-brand-rose bg-white px-5 py-4 text-left text-sm font-medium text-stone-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard hover:text-amber-600">
                 <MdEmail className="size-5 shrink-0 text-amber-500" />
                 <div>
                   <p className="text-xs text-stone-400">Email</p>
@@ -123,7 +129,7 @@ export default function NosotrosPage() {
               </a>
             )}
             {config?.whatsappGeneral && (
-              <a href={`https://wa.me/${config.whatsappGeneral.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-lg border border-stone-200 bg-white px-5 py-4 text-left text-sm font-medium text-stone-700 transition-colors hover:border-emerald-300 hover:text-emerald-600">
+              <a href={`https://wa.me/${config.whatsappGeneral.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-lg border-2 border-brand-rose bg-white px-5 py-4 text-left text-sm font-medium text-stone-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard hover:text-emerald-600">
                 <FaWhatsapp className="size-5 shrink-0 text-emerald-500" />
                 <div>
                   <p className="text-xs text-stone-400">WhatsApp</p>
@@ -133,39 +139,39 @@ export default function NosotrosPage() {
             )}
           </div>
 
-          {/* Sedes */}
-          {sedes && sedes.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-xs font-heading font-semibold text-stone-400 uppercase tracking-wider mb-3">Nuestras Sedes</h3>
-              <div className="flex flex-wrap justify-center gap-4">
-                {sedes.map((sede) => (
-                  <SedeCard key={sede.id} sede={sede} variant="static" />
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Redes sociales */}
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-4 mb-8">
             {config?.instagramUrl && (
-              <a href={config.instagramUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:border-pink-300 hover:text-pink-600">
+              <a href={config.instagramUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border-2 border-brand-rose bg-white px-4 py-2.5 text-sm font-medium text-stone-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard hover:text-pink-600">
                 <FaInstagram className="size-4 text-pink-500" />
                 Instagram
               </a>
             )}
             {config?.facebookUrl && (
-              <a href={config.facebookUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:border-blue-300 hover:text-blue-600">
+              <a href={config.facebookUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border-2 border-brand-rose bg-white px-4 py-2.5 text-sm font-medium text-stone-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard hover:text-blue-600">
                 <FaFacebook className="size-4 text-blue-600" />
                 Facebook
               </a>
             )}
             {config?.tiktokUrl && (
-              <a href={config.tiktokUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:border-stone-400 hover:text-stone-900">
+              <a href={config.tiktokUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg border-2 border-brand-rose bg-white px-4 py-2.5 text-sm font-medium text-stone-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard hover:text-stone-900">
                 <FaTiktok className="size-4" />
                 TikTok
               </a>
             )}
           </div>
+
+          {/* Sedes */}
+          {sedes && sedes.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-xs font-heading font-semibold text-stone-400 uppercase tracking-wider mb-3">Nuestras Sedes</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-2xl mx-auto">
+                {sedes.map((sede) => (
+                  <SedeCard key={sede.id} sede={sede} />
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="mt-10">
             <Link href="/tienda" className="inline-flex items-center gap-1 text-brand-mustard hover:text-brand-mustard-dark font-medium transition-colors">
