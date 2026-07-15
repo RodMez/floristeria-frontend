@@ -146,6 +146,19 @@ function DialogDescription({
   )
 }
 
+function DialogPopup({
+  className,
+  ...props
+}: DialogPrimitive.Popup.Props) {
+  return (
+    <DialogPrimitive.Popup
+      data-slot="dialog-popup"
+      className={cn("outline-none", className)}
+      {...props}
+    />
+  )
+}
+
 export {
   Dialog,
   DialogClose,
@@ -155,6 +168,7 @@ export {
   DialogHeader,
   DialogOverlay,
   DialogPortal,
+  DialogPopup,
   DialogTitle,
   DialogTrigger,
 }

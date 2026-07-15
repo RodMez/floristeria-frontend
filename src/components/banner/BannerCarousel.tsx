@@ -6,7 +6,8 @@ import { fetcher } from "@/lib/fetcher";
 import { BannerDTO, UbicacionBanner } from "@/types";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
+import ImageLightbox from "@/components/ui/image-lightbox";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -49,6 +50,7 @@ export default function BannerCarousel({
 }: BannerCarouselProps) {
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const params = new URLSearchParams({ ubicacion });
@@ -115,6 +117,19 @@ export default function BannerCarousel({
         }
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
+
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setLightboxOpen(true);
+        }}
+        className="absolute right-3 top-3 z-10 rounded-full bg-black/40 p-1.5 text-white/90 backdrop-blur-sm transition-colors hover:bg-black/60 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/60 md:right-4 md:top-4 md:p-2"
+        aria-label="Ver imagen en grande"
+      >
+        <Maximize2 className="h-4 w-4 md:h-5 md:w-5" />
+      </button>
+
       <div className="absolute bottom-0 left-0 right-0 p-4 md:p-10">
         {banner.titulo && (
           <h2 className="text-white text-xl md:text-3xl font-bold drop-shadow-lg">
@@ -175,6 +190,15 @@ export default function BannerCarousel({
           ))}
         </div>
       )}
+
+      <ImageLightbox
+        open={lightboxOpen}
+        onOpenChange={setLightboxOpen}
+        images={banners.map((b) => b.imagenUrl)}
+        currentIndex={current}
+        onIndexChange={setCurrent}
+        alt={banner.titulo ?? "Banner promocional"}
+      />
     </div>
   );
 }
