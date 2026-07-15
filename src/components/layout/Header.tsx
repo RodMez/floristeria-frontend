@@ -86,8 +86,8 @@ export default function Header() {
         hidden ? "-translate-y-full" : "translate-y-0"
       } ${
         scrolled
-          ? "bg-[var(--color-brand-rose)]/90 backdrop-blur-md shadow-sm border-b border-[var(--color-brand-rose-dark)]"
-          : "bg-[var(--color-brand-rose)] border-b border-[var(--color-brand-rose-dark)]"
+          ? "bg-[var(--color-brand-rose-light)]/90 backdrop-blur-md shadow-sm border-b border-[var(--color-brand-rose)]"
+          : "bg-[var(--color-brand-rose-light)] border-b border-[var(--color-brand-rose)]"
       }`}
     >
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
