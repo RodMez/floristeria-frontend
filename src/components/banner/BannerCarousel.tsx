@@ -28,7 +28,7 @@ interface BannerCarouselProps {
 function BannerSkeleton({ maxHeight }: { maxHeight: number }) {
   return (
     <div
-      className="w-full aspect-[16/9] sm:aspect-[16/9] md:aspect-[3/1] lg:aspect-[3/1] xl:aspect-[3/1] 2xl:aspect-[3/1] overflow-hidden bg-stone-100 animate-pulse"
+      className="w-full aspect-[3/1] overflow-hidden bg-stone-100 animate-pulse"
       style={{ maxHeight }}
     >
       <div className="flex h-full items-end p-6 md:p-10">
@@ -89,7 +89,7 @@ export default function BannerCarousel({
         aspectRatio === "16/9" ? "aspect-[16/9]" :
         "aspect-[21/9] max-h-[400px]"
       }`
-    : "relative w-full overflow-hidden aspect-[16/9] sm:aspect-[16/9] md:aspect-[3/1] lg:aspect-[3/1] xl:aspect-[3/1] 2xl:aspect-[3/1]";
+    : "relative w-full overflow-hidden aspect-[3/1]";
 
   const content = (
     <div
