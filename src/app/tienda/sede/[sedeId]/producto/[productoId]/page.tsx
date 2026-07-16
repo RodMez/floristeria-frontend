@@ -82,6 +82,7 @@ export default function ProductoPage() {
   const cartItems = useCartStore((s) => s.items);
 
   const [cantidad, setCantidad] = useState(1);
+  const [isAdding, setIsAdding] = useState(false);
   const [reseñasModalOpen, setReseñasModalOpen] = useState(false);
 
   const { data: producto, isLoading, error } = useSWR<ProductoDetalleDTO>(
@@ -108,6 +109,8 @@ export default function ProductoPage() {
   const handleAddToCart = () => {
     if (!producto || !sede) return;
 
+    setIsAdding(true);
+
     addItem(
       {
         id: String(producto.productoId),
@@ -129,6 +132,8 @@ export default function ProductoPage() {
 
     setDrawerOpen(true);
     setCantidad(1);
+
+    setTimeout(() => setIsAdding(false), 1000);
   };
 
   const handleCategoryClick = (catNombre: string) => {
@@ -182,8 +187,8 @@ export default function ProductoPage() {
               sizes="(max-width: 1024px) 100vw, 60vw"
             />
             {tieneDescuento && (
-              <div className="discount-ribbon">
-                <span>-{producto.descuentoPorcentaje}% OFF</span>
+              <div className="absolute top-2 left-2 bg-brand-mustard text-white text-xs font-bold px-2.5 py-1 rounded z-10">
+                -{producto.descuentoPorcentaje}% OFF
               </div>
             )}
           </div>
@@ -192,7 +197,7 @@ export default function ProductoPage() {
         {/* Columna derecha: Info */}
         <div className="lg:col-span-2 space-y-5">
           {/* Título */}
-          <h1 className="text-3xl font-bold text-stone-800">
+          <h1 className="text-3xl font-bold text-brand-mustard">
             {producto.nombre}
           </h1>
 
@@ -251,12 +256,12 @@ export default function ProductoPage() {
                 <span className="text-lg text-stone-400 line-through">
                   {formatPrecio(producto.precioBase)}
                 </span>
-                <span className="text-4xl font-extrabold text-[var(--color-brand-sage)]">
+                <span className="text-4xl font-extrabold text-brand-mustard">
                   {formatPrecio(producto.precioFinal)}
                 </span>
               </>
             ) : (
-              <span className="text-4xl font-extrabold text-stone-900">
+              <span className="text-4xl font-extrabold text-[var(--color-brand-sage)]">
                 {formatPrecio(producto.precioBase)}
               </span>
             )}
@@ -313,11 +318,15 @@ export default function ProductoPage() {
 
               <Button
                 size="lg"
-                className="flex-1 h-14 text-base font-semibold bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]"
+                className={`flex-1 h-14 text-base font-extrabold transition-all duration-300 ${
+                  isAdding
+                    ? "bg-brand-mustard text-stone-900"
+                    : "bg-brand-rose-dark hover:bg-brand-mustard text-white hover:text-stone-900"
+                }`}
                 onClick={handleAddToCart}
               >
                 <ShoppingCart className="mr-2 h-5 w-5" />
-                Agregar al Carrito
+                {isAdding ? "¡Agregado!" : "Agregar al Carrito"}
               </Button>
             </div>
           )}
@@ -354,6 +363,7 @@ export default function ProductoPage() {
                   key={comp.productoId}
                   producto={comp}
                   isInCart={isInCart}
+                  sedeId={String(sede?.id ?? params.sedeId)}
                   onAdd={() => {
                     if (!sede) return;
                     addItem(

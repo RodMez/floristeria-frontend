@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
 
 function formatPrecio(value: number): string {
   return new Intl.NumberFormat("es-CO", {
@@ -30,6 +32,7 @@ export default function ComplementosSugeridos({
 }: ComplementosSugeridosProps) {
   const addItem = useCartStore((s) => s.addItem);
   const setDrawerOpen = useCartStore((s) => s.setDrawerOpen);
+  const [addingItems, setAddingItems] = useState<Set<string>>(new Set());
 
   const { data: catalogo } = useSWR<ProductoCatalogo[]>(
     `${process.env.NEXT_PUBLIC_API_URL}/api/v1/catalogo/sede/${sede.id}/complementos`,
@@ -56,31 +59,57 @@ export default function ComplementosSugeridos({
           return (
             <div
               key={comp.productoId}
-              className="w-[110px] flex-shrink-0 snap-start"
+              className="w-[110px] flex-shrink-0 snap-start group"
             >
-              <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-stone-50 border border-stone-100 mb-1">
-                <Image
-                  src={comp.imagenUrl}
-                  alt={comp.nombre}
-                  fill
-                  className="object-cover"
-                  sizes="110px"
-                />
+              <Link href={`/tienda/sede/${sede.id}/producto/${comp.productoId}`} className="block">
+                <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-stone-50 border border-stone-100 mb-1">
+                  <Image
+                    src={comp.imagenUrl}
+                    alt={comp.nombre}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    sizes="110px"
+                  />
+                  {comp.descuentoPorcentaje > 0 && (
+                    <div className="absolute top-1 left-1 bg-brand-mustard text-white text-[10px] font-bold px-2 py-0.5 rounded z-10">
+                      -{comp.descuentoPorcentaje}% OFF
+                    </div>
+                  )}
+                </div>
+                <p className="text-[11px] font-medium text-stone-700 line-clamp-1 leading-tight group-hover:text-brand-mustard transition-colors duration-250">
+                  {comp.nombre}
+                </p>
+              </Link>
+              <div className="mt-0.5 min-h-[28px]">
+                {comp.descuentoPorcentaje > 0 ? (
+                  <>
+                    <span className="text-[9px] font-normal text-stone-400 line-through block leading-tight">
+                      +{formatPrecio(comp.precio)}
+                    </span>
+                    <span className="text-[11px] font-extrabold text-brand-mustard block leading-tight">
+                      +{formatPrecio(precio)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-[11px] font-bold text-[var(--color-brand-sage)] block leading-tight">
+                    +{formatPrecio(precio)}
+                  </span>
+                )}
               </div>
-              <p className="text-[11px] font-medium text-stone-700 line-clamp-1 leading-tight">
-                {comp.nombre}
-              </p>
-              <p className="text-[11px] font-bold text-[var(--color-brand-sage)] mt-0.5">
-                +{formatPrecio(precio)}
-              </p>
               <Button
                 size="sm"
                 variant="ghost"
-                className="mt-1 h-6 w-full text-[10px] font-medium bg-brand-rose/15 text-stone-700 hover:bg-brand-rose/30 transition-all duration-200"
+                className={`mt-1 h-6 w-full text-[10px] font-extrabold transition-all duration-200 ${
+                  addingItems.has(String(comp.productoId))
+                    ? "bg-brand-mustard hover:bg-brand-mustard-dark text-stone-900!"
+                    : "bg-brand-rose-dark hover:bg-brand-mustard text-white! hover:text-stone-900!"
+                }`}
                 onClick={() => {
+                  const id = String(comp.productoId);
+                  setAddingItems((prev) => new Set(prev).add(id));
                   addItem(
                     {
-                      id: String(comp.productoId),
+                      id,
                       nombre: comp.nombre,
                       sku: comp.sku,
                       precio: comp.precio,
@@ -93,10 +122,17 @@ export default function ComplementosSugeridos({
                   );
                   toast.success(`Agregado: ${comp.nombre}`, { duration: 2000 });
                   setDrawerOpen(true);
+                  setTimeout(() => {
+                    setAddingItems((prev) => {
+                      const next = new Set(prev);
+                      next.delete(id);
+                      return next;
+                    });
+                  }, 1000);
                 }}
               >
                 <ShoppingCart className="mr-0.5 h-2.5 w-2.5" />
-                Agregar
+                {addingItems.has(String(comp.productoId)) ? "¡Agregado!" : "Agregar"}
               </Button>
             </div>
           );

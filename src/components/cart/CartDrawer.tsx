@@ -53,7 +53,7 @@ export default function CartDrawer() {
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-md overflow-hidden">
         <SheetHeader className="text-center py-2">
-          <SheetTitle>Carrito de Compras</SheetTitle>
+          <SheetTitle className="text-brand-mustard">Carrito de Compras</SheetTitle>
         </SheetHeader>
 
         {items.length === 0 ? (
@@ -80,7 +80,7 @@ export default function CartDrawer() {
             <ScrollArea className="flex-1 min-h-0 px-4">
               <div className="space-y-2.5 pt-1">
                 {items.map((item) => (
-                  <div key={item.id} className="flex gap-3">
+                  <div key={item.id} className="flex gap-3 group">
                     <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-stone-200">
                       <img
                         src={item.imagen_url}
@@ -90,7 +90,7 @@ export default function CartDrawer() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start gap-2">
-                        <h4 className="text-sm font-medium text-stone-800 line-clamp-1">
+                        <h4 className="text-sm font-medium text-stone-800 line-clamp-1 group-hover:text-brand-mustard transition-colors duration-250">
                           {item.nombre}
                         </h4>
                         <span className="text-sm font-semibold text-stone-800 whitespace-nowrap">
@@ -145,10 +145,10 @@ export default function CartDrawer() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className={`h-7 w-7 rounded-md border transition-all duration-200 ${
+                          className={`h-7 w-7 rounded-md border font-bold transition-all duration-200 ${
                             item.notaPersonalizacion
-                              ? "border-[var(--color-brand-mustard)] bg-[var(--color-brand-mustard)]/15 text-[var(--color-brand-mustard-dark)]"
-                              : "border-dashed border-[var(--color-brand-mustard)]/40 text-[var(--color-brand-mustard)] hover:bg-[var(--color-brand-mustard)]/10"
+                              ? "border-brand-mustard bg-brand-mustard/15 text-brand-mustard-dark"
+                              : "border-dashed border-brand-mustard/40 text-brand-mustard hover:bg-brand-mustard/10"
                           }`}
                           onClick={() => toggleNota(item.id)}
                           title={
@@ -175,7 +175,7 @@ export default function CartDrawer() {
             </ScrollArea>
 
             {sedeActual && items.length > 0 && (
-              <div className="px-4 py-2 border-t border-stone-100">
+              <div className="px-4 py-1 border-t border-stone-100">
                 <ComplementosSugeridos
                   sede={sedeActual}
                   excludeIds={new Set(items.map((i) => i.id))}
@@ -184,7 +184,7 @@ export default function CartDrawer() {
               </div>
             )}
 
-            <div className="px-4 py-2 border-t border-stone-100">
+            <div className="px-4 py-0.5 border-t border-stone-100">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-semibold text-stone-800">Total</span>
                 <span className="text-base font-bold text-stone-800">
@@ -197,14 +197,14 @@ export default function CartDrawer() {
               <Button
                 variant="outline"
                 onClick={clearCart}
-                className="flex-1 h-10 text-sm"
+                className="flex-1 h-10 text-sm border-2 border-dashed border-brand-mustard text-stone-900 hover:text-brand-mustard hover:bg-brand-mustard/10 hover:scale-105 transition-all duration-300"
               >
                 Vaciar carrito
               </Button>
               {sedeActual ? (
                 <Button
                   onClick={handlePagar}
-                  className="flex-[2] h-10 bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)] font-semibold text-sm transition-all duration-200"
+                  className="flex-[2] h-10 bg-brand-rose-dark hover:bg-gradient-to-r hover:from-brand-rose hover:via-brand-rose-dark hover:to-brand-rose-dark text-stone-900 font-extrabold text-base hover:scale-105 hover:shadow-[0_0_50px_rgba(229,190,111,0.8)] transition-all duration-300"
                 >
                   Pagar
                   <ArrowRight className="ml-1.5 h-4 w-4" />

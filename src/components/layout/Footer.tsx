@@ -9,14 +9,26 @@ import Link from "next/link";
 import { sanitizeUrl } from "@/lib/validation";
 
 export default function Footer() {
-  const { data: sedes } = useSWR<Sede[]>(
+  const { data: sedes, error: sedesError } = useSWR<Sede[]>(
     `${process.env.NEXT_PUBLIC_API_URL}/api/v1/sedes`,
-    fetcher
+    fetcher,
+    {
+      fallbackData: [],
+      errorRetryCount: 2,
+    }
   );
 
-  const { data: config } = useSWR<ConfiguracionTiendaDTO>(
+  const { data: config, error: configError } = useSWR<ConfiguracionTiendaDTO>(
     `${process.env.NEXT_PUBLIC_API_URL}/api/v1/configuracion`,
-    fetcher
+    fetcher,
+    {
+      fallbackData: {
+        nombreSitio: "TAO Boutique Floral",
+        tagline: "Flores que cuentan historias",
+        descripcion: "",
+      } as ConfiguracionTiendaDTO,
+      errorRetryCount: 2,
+    }
   );
 
   const sitioNombre = config?.nombreSitio || "TAO Boutique Floral";
@@ -118,6 +130,8 @@ export default function Footer() {
                   </li>
                 ))}
               </ul>
+            ) : sedesError ? (
+              <p className="text-sm text-stone-600 italic">No se pudieron cargar las sedes</p>
             ) : (
               <p className="text-sm text-stone-600 italic">Cargando sedes...</p>
             )}

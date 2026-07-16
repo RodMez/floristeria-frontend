@@ -107,12 +107,14 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
           <h3 className="font-semibold text-stone-800 line-clamp-1 group-hover:text-brand-mustard transition-colors duration-250">
             {producto.nombre}
           </h3>
-          {producto.ratingAverage != null && producto.ratingAverage > 0 && (
-            <div className="flex items-center gap-1 mt-1">
-              <StarDisplay calificacion={producto.ratingAverage} size="sm" />
-              <span className="text-xs text-stone-400">({producto.ratingCount})</span>
-            </div>
-          )}
+          <div className="flex items-center gap-1 mt-1 min-h-[1.25rem]">
+            {producto.ratingAverage != null && producto.ratingAverage > 0 && (
+              <>
+                <StarDisplay calificacion={producto.ratingAverage} size="sm" />
+                <span className="text-xs text-stone-400">({producto.ratingCount})</span>
+              </>
+            )}
+          </div>
           <p className="text-sm text-stone-500 line-clamp-2 mt-1 min-h-[2.5rem] flex-1">
             {producto.descripcion}
           </p>
@@ -134,11 +136,11 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
         {isAgotado ? (
           <Badge variant="destructive">Agotado</Badge>
         ) : isAdding ? (
-          <Button className="bg-brand-mustard hover:bg-brand-mustard-dark text-stone-900 px-6">
+          <Button className="bg-brand-mustard hover:bg-brand-mustard-dark text-stone-900 px-6 font-extrabold">
             ¡Agregado!
           </Button>
         ) : (
-          <Button className="bg-brand-rose-dark hover:bg-brand-rose text-white font-extrabold px-6" onClick={handleAddToCart}>
+          <Button className="bg-brand-rose-dark hover:bg-brand-mustard text-white hover:text-stone-900 font-extrabold px-6" onClick={handleAddToCart}>
             Agregar al Carrito
           </Button>
         )}

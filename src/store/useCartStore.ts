@@ -74,7 +74,7 @@ export const useCartStore = create<CartState>()(
         set((state) => ({
           items: state.items.map((i) => (i.id === id ? { ...i, notaPersonalizacion: nota } : i)),
         })),
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], sedeActual: null }),
     }),
     {
       name: "floristeria-cart",

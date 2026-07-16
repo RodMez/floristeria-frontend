@@ -19,6 +19,7 @@ export default function Header() {
   const router = useRouter();
   const { isAuthenticated, nombre, rol, isHydrated, logout } = useAuthStore();
   const items = useCartStore((state) => state.items);
+  const sedeActual = useCartStore((state) => state.sedeActual);
   const totalItems = items.reduce((sum, item) => sum + item.cantidad, 0);
 
   const { data: config } = useSWR<ConfiguracionTiendaDTO>(
@@ -110,22 +111,28 @@ export default function Header() {
         <nav className="hidden md:flex md:items-center md:gap-8">
           <Link
             href="/tienda"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-brand-mustard"
+            className="text-sm font-bold text-muted-foreground transition-colors hover:text-brand-mustard"
           >
             Inicio
           </Link>
           <Link
             href="/tienda/nosotros"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-brand-mustard"
+            className="text-sm font-bold text-muted-foreground transition-colors hover:text-brand-mustard"
           >
             Nosotros
           </Link>
-          <Link
-            href="/tienda"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-brand-mustard"
+          <button
+            onClick={() => {
+              if (sedeActual) {
+                router.push(`/tienda/sede/${sedeActual.id}`);
+              } else {
+                router.push("/tienda");
+              }
+            }}
+            className="text-sm font-bold text-muted-foreground transition-colors hover:text-brand-mustard"
           >
             Catálogo
-          </Link>
+          </button>
         </nav>
 
         {/* ── Right Section ──────────────────────────────────── */}
@@ -139,10 +146,10 @@ export default function Header() {
               <div ref={userMenuRef} className="relative">
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-brand-mustard transition-colors hover:text-brand-rose"
+                  className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-bold text-brand-mustard transition-colors hover:text-brand-rose"
                 >
                   <User className="size-4" />
-                  <span className="font-heading font-bold max-w-[240px] truncate">{nombre || "Mi cuenta"}</span>
+                  <span className="font-heading font-bold max-w-[240px] truncate text-base">{nombre || "Mi cuenta"}</span>
                 </button>
 
                 {userMenuOpen && (
@@ -177,7 +184,7 @@ export default function Header() {
             ) : (
               <Link
                 href="/tienda/auth"
-                className="inline-flex h-7 items-center justify-center gap-1 rounded-[min(var(--radius-md),12px)] border-[var(--color-brand-rose)] bg-[var(--color-brand-rose-light)]/50 px-2.5 text-[0.8rem] font-heading font-medium text-brand-mustard whitespace-nowrap transition-all hover:border-brand-mustard hover:text-brand-mustard-dark"
+                className="inline-flex h-8 items-center justify-center gap-1 rounded-[min(var(--radius-md),12px)] border-[var(--color-brand-rose)] bg-[var(--color-brand-rose-light)]/50 px-3 text-sm font-heading font-bold text-brand-mustard whitespace-nowrap transition-all hover:border-brand-mustard hover:text-brand-mustard-dark"
               >
                 Ingresar
               </Link>
@@ -237,7 +244,7 @@ export default function Header() {
                 <Separator className="mb-4" />
                 {isCliente ? (
                   <div className="space-y-1">
-                    <p className="px-3 font-heading text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <p className="px-3 font-heading text-sm font-bold uppercase tracking-wider text-muted-foreground">
                       {nombre || "Mi cuenta"}
                     </p>
                     <Link
@@ -269,14 +276,14 @@ export default function Header() {
                     <Link
                       href="/tienda/auth"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border-border bg-background px-2.5 py-2 text-sm font-medium text-muted-foreground whitespace-nowrap transition-all hover:border-brand-mustard hover:text-brand-mustard"
+                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border-border bg-background px-2.5 py-2.5 text-base font-bold text-muted-foreground whitespace-nowrap transition-all hover:border-brand-mustard hover:text-brand-mustard"
                     >
                       Iniciar sesión
                     </Link>
                     <Link
                       href="/tienda/auth"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-mustard px-2.5 py-2 text-sm font-medium text-stone-900 whitespace-nowrap transition-all hover:bg-brand-mustard-dark"
+                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-mustard px-2.5 py-2.5 text-base font-bold text-stone-900 whitespace-nowrap transition-all hover:bg-brand-mustard-dark"
                     >
                       Registrarse
                     </Link>
