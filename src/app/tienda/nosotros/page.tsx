@@ -7,8 +7,7 @@ import { fetcher } from "@/lib/fetcher";
 import { ConfiguracionTiendaDTO, Sede } from "@/types";
 import { Heart, Sparkles, Target, ChevronRight } from "lucide-react";
 import SedeCard from "@/components/SedeCard";
-import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
-import { MdEmail } from "react-icons/md";
+import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok, MdEmail } from "@/components/icons/SocialIcons";
 import { sanitizeUrl } from "@/lib/validation";
 
 export default function NosotrosPage() {

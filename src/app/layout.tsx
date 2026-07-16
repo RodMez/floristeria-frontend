@@ -16,23 +16,70 @@ const inter = Inter({
   variable: "--font-sans",
 });
 
+const DEFAULT_METADATA: Metadata = {
+  title: {
+    default: "TAO Boutique Floral | Flores que cuentan historias",
+    template: "%s | TAO Boutique Floral",
+  },
+  description:
+    "Transformamos flores en experiencias inolvidables. Diseños exclusivos, flores frescas y atención personalizada para cada ocasión especial.",
+  keywords: [
+    "floristería",
+    "arreglos florales",
+    "TAO Boutique Floral",
+    "flores a domicilio",
+    "flores bogotá",
+    "ramo de flores",
+  ],
+  authors: [{ name: "TAO Boutique Floral" }],
+  openGraph: {
+    title: "TAO Boutique Floral",
+    description:
+      "Transformamos flores en experiencias inolvidables. Diseños exclusivos, flores frescas y atención personalizada para cada ocasión especial.",
+    url: process.env.NEXT_PUBLIC_URL,
+    siteName: "TAO Boutique Floral",
+    images: [
+      {
+        url: "/tao-logo.png",
+        width: 500,
+        height: 500,
+        alt: "TAO Boutique Floral",
+      },
+    ],
+    locale: "es_CO",
+    type: "website",
+  },
+  icons: {
+    icon: "/tao-logo-icon.png",
+    apple: "/tao-logo-icon.png",
+  },
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) return DEFAULT_METADATA;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+
     const res = await fetch(`${apiUrl}/api/v1/configuracion`, {
+      signal: controller.signal,
       next: { revalidate: 3600 },
     });
+    clearTimeout(timeout);
+
+    if (!res.ok) return DEFAULT_METADATA;
     const config = await res.json();
 
     const nombre = config?.nombreSitio || "TAO Boutique Floral";
     const tagline = config?.tagline || "Flores que cuentan historias";
-    const descripcion =
-      config?.descripcion ||
-      "Transformamos flores en experiencias inolvidables. Diseños exclusivos, flores frescas y atención personalizada para cada ocasión especial.";
+    const descripcion = config?.descripcion || DEFAULT_METADATA.description!;
     const logoUrl = config?.logoUrl || "/tao-logo.png";
     const iconUrl = config?.iconUrl || "/tao-logo-icon.png";
 
     return {
+      ...DEFAULT_METADATA,
       title: {
         default: `${nombre} | ${tagline}`,
         template: `%s | ${nombre}`,
@@ -48,9 +95,9 @@ export async function generateMetadata(): Promise<Metadata> {
       ],
       authors: [{ name: nombre }],
       openGraph: {
+        ...DEFAULT_METADATA.openGraph,
         title: nombre,
         description: descripcion,
-        url: process.env.NEXT_PUBLIC_URL,
         siteName: nombre,
         images: [
           {
@@ -60,8 +107,6 @@ export async function generateMetadata(): Promise<Metadata> {
             alt: nombre,
           },
         ],
-        locale: "es_CO",
-        type: "website",
       },
       icons: {
         icon: iconUrl,
@@ -69,14 +114,7 @@ export async function generateMetadata(): Promise<Metadata> {
       },
     };
   } catch {
-    return {
-      title: {
-        default: "TAO Boutique Floral | Flores que cuentan historias",
-        template: "%s | TAO Boutique Floral",
-      },
-      description:
-        "Transformamos flores en experiencias inolvidables. Diseños exclusivos, flores frescas y atención personalizada para cada ocasión especial.",
-    };
+    return DEFAULT_METADATA;
   }
 }
 

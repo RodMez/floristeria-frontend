@@ -3,8 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
-import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
-import { MdEmail } from "react-icons/md";
+import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok, MdEmail } from "@/components/icons/SocialIcons";
 import { Sede } from "@/types";
 import { sanitizeUrl } from "@/lib/validation";
 

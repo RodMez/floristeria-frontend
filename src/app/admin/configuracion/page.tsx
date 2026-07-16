@@ -22,7 +22,7 @@ import {
   Download,
   FileSpreadsheet,
 } from "lucide-react";
-import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
+import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "@/components/icons/SocialIcons";
 import { Card, CardContent } from "@/components/ui/card";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";

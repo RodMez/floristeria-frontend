@@ -3,8 +3,7 @@
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { Sede, ConfiguracionTiendaDTO } from "@/types";
-import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
-import { MdEmail } from "react-icons/md";
+import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok, MdEmail } from "@/components/icons/SocialIcons";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { sanitizeUrl } from "@/lib/validation";

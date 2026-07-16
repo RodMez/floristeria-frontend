@@ -25,8 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Building2, Plus, Pencil, Trash2, Search, ArrowUpDown } from "lucide-react";
-import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
-import { MdEmail } from "react-icons/md";
+import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok, MdEmail } from "@/components/icons/SocialIcons";
 import Cookies from "js-cookie";
 import { z } from "zod";
 import { useRequireSuperAdmin } from "@/lib/auth";
