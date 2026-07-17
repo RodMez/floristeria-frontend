@@ -26,7 +26,6 @@ import {
   ZonaDomicilioResponse,
   ClientePerfilResponse,
 } from "@/types";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Card,
   CardContent,
@@ -62,12 +61,17 @@ import {
   PencilIcon,
   Trash2Icon,
   Eye,
+  EyeOff,
+  Lock,
   Download,
   CreditCard,
   Truck,
   StickyNote,
   MessageSquare,
   ShoppingBag,
+  LogOut,
+  CheckCircle,
+  AlertTriangle,
 } from "lucide-react";
 import {
   Table,
@@ -396,24 +400,38 @@ const perfilSchema = z.object({
 type PerfilFormData = z.infer<typeof perfilSchema>;
 
 const passwordSchema = z.object({
-  passwordActual: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
-  nuevaPassword: z.string().min(6, "La nueva contraseña debe tener al menos 6 caracteres"),
+  passwordActual: z.string().min(1, "Ingresa tu contraseña actual"),
+  nuevaPassword: z.string()
+    .min(8, "La nueva contraseña debe tener al menos 8 caracteres")
+    .refine((v) => /[A-Z]/.test(v) || /[0-9]/.test(v), "Incluye al menos una mayúscula o número"),
+  confirmarPassword: z.string().min(1, "Confirma tu nueva contraseña"),
+}).refine((data) => data.nuevaPassword === data.confirmarPassword, {
+  message: "Las contraseñas no coinciden",
+  path: ["confirmarPassword"],
 });
 
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
 export default function MiCuentaPage() {
   const router = useRouter();
-  const { isAuthenticated, rol, isHydrated } = useAuthStore();
+  const [activeTab, setActiveTab] = useState("pedidos");
+  const { isAuthenticated, rol, isHydrated, logout, nombre, email } = useAuthStore();
   const isAuthClient = isHydrated && isAuthenticated && rol === "CLIENTE";
 
   useEffect(() => {
     if (!isHydrated) return;
-
     if (!isAuthClient) {
       router.replace("/tienda/auth?redirect=/tienda/mi-cuenta");
     }
   }, [isHydrated, isAuthClient, router]);
+
+  const userInitial = (nombre || "U").charAt(0).toUpperCase();
+
+  const navItems = [
+    { id: "pedidos", label: "Pedidos", icon: Package },
+    { id: "direcciones", label: "Direcciones", icon: MapPinIcon },
+    { id: "perfil", label: "Perfil", icon: UserIcon },
+  ];
 
   if (!isHydrated) {
     return (
@@ -428,37 +446,99 @@ export default function MiCuentaPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-5xl px-4 py-8">
-      <h1 className="text-2xl font-semibold mb-6">Mi Cuenta</h1>
+    <div className="min-h-screen bg-[var(--color-brand-rose-light)]/30">
+      {/* ── Layout: Sidebar + Content ─────────── */}
+      <div className="container mx-auto max-w-5xl px-4 py-6">
+        <div className="flex gap-6">
 
-      <Tabs defaultValue="pedidos">
-        <TabsList>
-          <TabsTrigger value="pedidos">
-            <Package className="size-4" />
-            Pedidos
-          </TabsTrigger>
-          <TabsTrigger value="direcciones">
-            <MapPinIcon className="size-4" />
-            Direcciones
-          </TabsTrigger>
-          <TabsTrigger value="perfil">
-            <UserIcon className="size-4" />
-            Perfil
-          </TabsTrigger>
-        </TabsList>
+          {/* ═══ Sidebar (desktop) ═══ */}
+          <aside className="hidden md:block w-[260px] shrink-0">
+            <div className="sticky top-24">
+              <div className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden">
 
-        <TabsContent value="pedidos">
-          <PedidosTab />
-        </TabsContent>
+                <div className="p-5 pb-4 bg-gradient-to-r from-[var(--color-brand-rose-light)] to-[var(--color-brand-rose)]/30">
+                  <div className="flex items-center gap-3">
+                    <div className="size-12 rounded-full bg-[var(--color-brand-mustard)] flex items-center justify-center shrink-0 shadow-sm">
+                      <span className="font-heading text-lg font-bold text-stone-900">{userInitial}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-heading font-semibold text-[var(--color-brand-mustard-dark)] text-sm truncate">{nombre}</p>
+                      <p className="text-xs text-stone-600 truncate mt-0.5">{email}</p>
+                    </div>
+                  </div>
+                </div>
 
-        <TabsContent value="direcciones">
-          <DireccionesTab />
-        </TabsContent>
+                <div className="border-t border-stone-100" />
 
-        <TabsContent value="perfil">
-          <PerfilTab />
-        </TabsContent>
-      </Tabs>
+                <nav className="p-2">
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => setActiveTab(item.id)}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-200 ${
+                          activeTab === item.id
+                            ? "bg-[var(--color-brand-mustard)]/15 text-[var(--color-brand-mustard-dark)] font-semibold"
+                            : "text-stone-500 hover:bg-[var(--color-brand-rose-light)]/40 hover:text-stone-700"
+                        }`}
+                      >
+                        <Icon className={`size-5 ${activeTab === item.id ? "text-[var(--color-brand-mustard-dark)]" : "text-stone-400"}`} />
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </nav>
+
+                <div className="border-t border-stone-100" />
+
+                <div className="p-2">
+                  <button
+                    onClick={() => { logout(); router.push("/tienda"); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-stone-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
+                  >
+                    <LogOut className="size-5" />
+                    Cerrar sesión
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </aside>
+
+          {/* ═══ Content ═══ */}
+          <main className="flex-1 min-w-0">
+
+            <div className="flex md:hidden overflow-x-auto gap-2 pb-2 mb-4">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 shrink-0 ${
+                      activeTab === item.id
+                        ? "bg-[var(--color-brand-mustard)] text-stone-900 font-bold shadow-sm"
+                        : "bg-[var(--color-brand-rose-light)] text-stone-600 hover:bg-[var(--color-brand-rose)]/30"
+                    }`}
+                  >
+                    <Icon className="size-4" />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
+              {activeTab === "pedidos" && <PedidosTab />}
+              {activeTab === "direcciones" && <DireccionesTab />}
+              {activeTab === "perfil" && <PerfilTab />}
+            </div>
+
+          </main>
+
+        </div>
+      </div>
     </div>
   );
 }
@@ -478,8 +558,8 @@ function PedidosTab() {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
         <div className="text-center">
-          <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-pulse" />
-          <p className="text-muted-foreground">Cargando pedidos...</p>
+          <Package className="h-12 w-12 mx-auto mb-4 text-[var(--color-brand-rose)] animate-pulse" />
+          <p className="text-stone-500">Cargando pedidos...</p>
         </div>
       </div>
     );
@@ -488,7 +568,7 @@ function PedidosTab() {
   if (error) {
     return (
       <div className="py-12 text-center">
-        <p className="text-destructive">
+        <p className="text-red-500">
           Error al cargar los pedidos. Intenta de nuevo más tarde.
         </p>
       </div>
@@ -498,13 +578,20 @@ function PedidosTab() {
   if (!data || data.length === 0) {
     return (
       <div className="py-16 text-center">
-        <Package className="mx-auto mb-4 size-12 text-muted-foreground/60" />
-        <h2 className="text-xl font-semibold mb-2">
+        <Package className="mx-auto mb-4 size-12 text-[var(--color-brand-rose)]" />
+        <h2 className="font-heading text-xl font-bold text-[var(--color-brand-mustard-dark)] mb-2">
           Aún no has realizado ninguna compra.
         </h2>
-        <p className="text-muted-foreground">
+        <p className="text-stone-500 mb-6">
           Explora nuestros productos y haz tu primer pedido.
         </p>
+        <Button
+          onClick={() => window.location.href = "/tienda"}
+          className="bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)] font-bold"
+        >
+          <ShoppingBag className="size-4 mr-1.5" />
+          Explorar productos
+        </Button>
       </div>
     );
   }
@@ -512,79 +599,73 @@ function PedidosTab() {
   const pedidosOrdenados = [...data].sort((a, b) => (b.id ?? "").localeCompare(a.id ?? ""));
 
   return (
-    <div className="mt-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {pedidosOrdenados.map((pedido) => (
-          <Card
-            key={pedido.id}
-            className={`flex flex-col border-l-4 ${STATUS_BORDER_COLORS[pedido.estado] ?? "border-l-stone-400"}`}
-          >
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between gap-2">
-                <span className="font-mono text-sm truncate">#{pedido.id}</span>
-                <Badge
-                  className={`${ORDER_STATUS_COLORS[pedido.estado as keyof typeof ORDER_STATUS_COLORS] ?? "bg-stone-100 text-stone-700 border-stone-200"} text-xs px-3 py-1.5 font-semibold flex items-center gap-1.5 shrink-0`}
-                >
-                  <span className={`size-2 rounded-full ${STATUS_DOT_COLORS[pedido.estado] ?? "bg-stone-400"}`} />
-                  {ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-
-            <CardContent className="flex-1 space-y-2 text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                <span>{formatDate(pedido.creadoEn)}</span>
-                <span>·</span>
-                <span>{pedido.sedeNombre}</span>
+    <div className="space-y-4">
+      {pedidosOrdenados.map((pedido) => (
+        <div
+          key={pedido.id}
+          className={`rounded-lg bg-white border border-stone-200 border-l-4 ${STATUS_BORDER_COLORS[pedido.estado] ?? "border-l-stone-400"} hover:shadow-md transition-shadow p-4`}
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <span className="font-mono text-sm font-bold text-stone-800">#{pedido.id}</span>
+              <div className="text-xs text-stone-500 mt-1 space-y-0.5">
+                <p>{formatDate(pedido.creadoEn)}</p>
+                <p className="text-stone-400">{pedido.sedeNombre}</p>
               </div>
+            </div>
+            <Badge
+              className={`${ORDER_STATUS_COLORS[pedido.estado as keyof typeof ORDER_STATUS_COLORS] ?? "bg-stone-100 text-stone-700 border-stone-200"} text-xs px-3 py-1.5 font-semibold flex items-center gap-1.5 shrink-0`}
+            >
+              <span className={`size-2 rounded-full ${STATUS_DOT_COLORS[pedido.estado] ?? "bg-stone-400"}`} />
+              {ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado}
+            </Badge>
+          </div>
 
-              <div className="border-t pt-2 mt-2">
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
-                  Productos
+          <div className="border-t border-stone-100 my-3" />
+
+          <div className="space-y-1.5">
+            {pedido.detalles?.map((d, i) => (
+              <div key={i}>
+                <p className="text-sm flex items-baseline gap-1">
+                  <span className="font-medium shrink-0 text-stone-700">{d.cantidad}x</span>
+                  <span className="truncate text-stone-600">{d.productoNombre}</span>
+                  {pedido.estado === "ENTREGADO" && d.productoId && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 px-1.5 text-[10px] text-[var(--color-brand-mustard-dark)] hover:text-[var(--color-brand-mustard)] shrink-0"
+                      onClick={() => setReviewModal({ productoId: d.productoId, productoNombre: d.productoNombre })}
+                    >
+                      <MessageSquare className="h-2.5 w-2.5 mr-0.5" />
+                      Reseña
+                    </Button>
+                  )}
                 </p>
-                <div className="max-h-[108px] overflow-y-auto space-y-1.5">
-                  {pedido.detalles?.map((d, i) => (
-                    <div key={i}>
-                      <p className="text-xs flex items-baseline gap-1">
-                        <span className="font-medium shrink-0">{d.cantidad}x</span>
-                        <span className="truncate">{d.productoNombre}</span>
-                        {pedido.estado === "ENTREGADO" && d.productoId && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-5 px-1.5 text-[10px] text-brand-mustard hover:text-brand-mustard/80 shrink-0"
-                            onClick={() => setReviewModal({ productoId: d.productoId, productoNombre: d.productoNombre })}
-                          >
-                            <MessageSquare className="h-2.5 w-2.5 mr-0.5" />
-                            Reseña
-                          </Button>
-                        )}
-                      </p>
-                      {d.notaPersonalizacion && (
-                        <div className="flex items-baseline gap-1 ml-4 mt-0.5">
-                          <StickyNote className="h-2.5 w-2.5 text-muted-foreground shrink-0" />
-                          <p className="text-[11px] text-muted-foreground italic leading-tight">
-                            {d.notaPersonalizacion}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )) ?? <p className="text-xs text-muted-foreground">Sin productos</p>}
-                </div>
+                {d.notaPersonalizacion && (
+                  <div className="flex items-baseline gap-1 ml-4 mt-0.5">
+                    <StickyNote className="h-2.5 w-2.5 text-stone-400 shrink-0" />
+                    <p className="text-[11px] text-stone-400 italic leading-tight">
+                      {d.notaPersonalizacion}
+                    </p>
+                  </div>
+                )}
               </div>
+            )) ?? <p className="text-xs text-stone-400">Sin productos</p>}
+          </div>
 
-              <div className="flex justify-between font-bold text-sm pt-2 border-t mt-2">
-                <span>Total</span>
-                <span>{formatCurrency(pedido.total)}</span>
-              </div>
-            </CardContent>
+          <div className="border-t border-stone-100 my-3" />
 
-            <CardFooter className="flex justify-end gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-baseline gap-2">
+              <span className="text-sm text-stone-500 font-medium">Total</span>
+              <span className="text-lg font-bold text-[var(--color-brand-mustard-dark)]">{formatCurrency(pedido.total)}</span>
+            </div>
+            <div className="flex flex-wrap gap-2 shrink-0">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setPedidoSeleccionado(pedido)}
-                className="gap-1.5"
+                className="gap-1.5 border-stone-200 text-stone-600 hover:border-[var(--color-brand-mustard)] hover:text-[var(--color-brand-mustard-dark)]"
               >
                 <Eye className="size-4" />
                 Ver Detalles
@@ -592,15 +673,15 @@ function PedidosTab() {
               <Button
                 size="sm"
                 onClick={() => generarPDF(pedido)}
-                className="gap-1.5"
+                className="gap-1.5 bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)] font-bold"
               >
                 <Download className="size-4" />
                 Descargar
               </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+            </div>
+          </div>
+        </div>
+      ))}
 
       <PedidoDetalleDialog
         pedido={pedidoSeleccionado}
@@ -656,7 +737,7 @@ function PedidoDetalleDialog({ pedido, onOpenChange }: PedidoDetalleDialogProps)
 
         <div className="px-6 pb-6 space-y-4">
           {/* Sección 1: Información del Pago */}
-          <div className="rounded-lg border border-stone-100 bg-stone-50/50 p-3.5">
+          <div className="rounded-lg border border-[var(--color-brand-rose-light)] bg-[var(--color-brand-rose-light)]/20 p-3.5">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2.5 flex items-center gap-1.5">
               <CreditCard className="size-3.5 text-[var(--color-brand-mustard-dark)]" />
               Información del Pago
@@ -674,7 +755,7 @@ function PedidoDetalleDialog({ pedido, onOpenChange }: PedidoDetalleDialogProps)
                   {pedido?.metodoPago || "—"}
                 </span>
               </div>
-              <div className="flex justify-between border-t border-stone-200 pt-2">
+              <div className="flex justify-between border-t border-[var(--color-brand-rose-light)] pt-2">
                 <span className="text-stone-500 font-medium">Total</span>
                 <span className="font-bold text-[var(--color-brand-mustard-dark)]">
                   {formatCurrency(pedido?.total ?? 0)}
@@ -684,7 +765,7 @@ function PedidoDetalleDialog({ pedido, onOpenChange }: PedidoDetalleDialogProps)
           </div>
 
           {/* Sección 2: Información de Entrega */}
-          <div className="rounded-lg border border-stone-100 bg-stone-50/50 p-3.5">
+          <div className="rounded-lg border border-[var(--color-brand-rose-light)] bg-[var(--color-brand-rose-light)]/20 p-3.5">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2.5 flex items-center gap-1.5">
               <Truck className="size-3.5 text-[var(--color-brand-mustard-dark)]" />
               Información de Entrega
@@ -718,7 +799,7 @@ function PedidoDetalleDialog({ pedido, onOpenChange }: PedidoDetalleDialogProps)
                   </span>
                 </div>
               )}
-              <div className="flex justify-between border-t border-stone-200 pt-2">
+              <div className="flex justify-between border-t border-[var(--color-brand-rose-light)] pt-2">
                 <span className="text-stone-400">Zona de Envío</span>
                 <span className="font-medium text-stone-700">
                   {pedido?.zonaDomicilioNombre || "—"}
@@ -734,7 +815,7 @@ function PedidoDetalleDialog({ pedido, onOpenChange }: PedidoDetalleDialogProps)
           </div>
 
           {/* Sección 3: Productos */}
-          <div className="rounded-lg border border-stone-100 bg-stone-50/50 p-3.5">
+          <div className="rounded-lg border border-[var(--color-brand-rose-light)] bg-[var(--color-brand-rose-light)]/20 p-3.5">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2.5 flex items-center gap-1.5">
               <Package className="size-3.5 text-[var(--color-brand-mustard-dark)]" />
               Productos
@@ -783,7 +864,7 @@ function PedidoDetalleDialog({ pedido, onOpenChange }: PedidoDetalleDialogProps)
           </div>
         </div>
 
-        <DialogFooter className="px-6 pb-5 border-t border-stone-100 pt-4">
+        <DialogFooter className="px-6 pb-5 border-t border-[var(--color-brand-rose-light)] pt-4">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
@@ -793,7 +874,7 @@ function PedidoDetalleDialog({ pedido, onOpenChange }: PedidoDetalleDialogProps)
           </Button>
           <Button
             onClick={() => pedido && generarPDF(pedido)}
-            className="gap-1.5 bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]"
+            className="gap-1.5 bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)] font-bold"
           >
             <Download className="size-4" />
             Descargar Comprobante
@@ -810,6 +891,9 @@ function PerfilTab() {
   const { nombre, updateProfile } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPassword, setIsLoadingPassword] = useState(false);
+  const [showActual, setShowActual] = useState(false);
+  const [showNueva, setShowNueva] = useState(false);
+  const [showConfirmar, setShowConfirmar] = useState(false);
 
   const { data: perfil, mutate } = useSWR<ClientePerfilResponse>(
     "perfil-cliente",
@@ -830,8 +914,27 @@ function PerfilTab() {
     defaultValues: {
       passwordActual: "",
       nuevaPassword: "",
+      confirmarPassword: "",
     },
   });
+
+  const nuevaPasswordValue = passwordForm.watch("nuevaPassword") ?? "";
+  const confirmarPasswordValue = passwordForm.watch("confirmarPassword") ?? "";
+  const passwordsMatch = nuevaPasswordValue.length > 0 && nuevaPasswordValue === confirmarPasswordValue;
+
+  const getPasswordStrength = (pwd: string) => {
+    let score = 0;
+    if (pwd.length >= 6) score++;
+    if (pwd.length >= 8) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+    if (score <= 1) return { label: "Débil", color: "bg-red-400", width: "w-1/5", textColor: "text-red-500" };
+    if (score <= 3) return { label: "Media", color: "bg-amber-400", width: "w-3/5", textColor: "text-amber-600" };
+    return { label: "Fuerte", color: "bg-emerald-400", width: "w-full", textColor: "text-emerald-600" };
+  };
+
+  const strength = getPasswordStrength(nuevaPasswordValue);
 
   const handleSubmit = async (data: PerfilFormData) => {
     setIsLoading(true);
@@ -856,7 +959,10 @@ function PerfilTab() {
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/perfil/password`,
         {
           method: "PUT",
-          body: JSON.stringify(data),
+          body: JSON.stringify({
+            passwordActual: data.passwordActual,
+            nuevaPassword: data.nuevaPassword,
+          }),
         }
       );
       toast.success("Contraseña cambiada correctamente.");
@@ -877,81 +983,137 @@ function PerfilTab() {
     }
   };
 
+  const initial = (perfil?.nombre ?? nombre ?? "?").charAt(0).toUpperCase();
+  const email = perfil?.email ?? "";
+
   return (
-    <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card>
+    <div className="space-y-6">
+      {/* ─── Header perfil ─────────────────────────────────────────── */}
+      <div className="rounded-xl bg-gradient-to-r from-[var(--color-brand-rose-light)] to-[var(--color-brand-rose)]/30 p-6 flex items-center gap-5">
+        <div className="h-16 w-16 rounded-full bg-[var(--color-brand-mustard)] flex items-center justify-center shrink-0 shadow-md">
+          <span className="font-heading text-2xl text-stone-900 font-bold select-none">{initial}</span>
+        </div>
+        <div>
+          <h2 className="font-heading text-xl font-bold text-[var(--color-brand-mustard-dark)]">
+            {perfil?.nombre ?? nombre}
+          </h2>
+          <p className="text-sm text-stone-600 mt-0.5">{email}</p>
+        </div>
+      </div>
+
+      {/* ─── Información Personal ──────────────────────────────────── */}
+      <Card className="border-stone-200">
         <CardHeader>
-          <CardTitle>Editar Perfil</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-[var(--color-brand-mustard)]/15 flex items-center justify-center shrink-0">
+              <UserIcon className="h-5 w-5 text-[var(--color-brand-mustard-dark)]" />
+            </div>
+            <div>
+              <CardTitle className="font-heading text-lg">Información Personal</CardTitle>
+              <p className="text-sm text-stone-500 mt-0.5">Actualiza tus datos personales</p>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
             className="space-y-4"
           >
-            <div className="space-y-2">
-              <Label htmlFor="perfil-nombre">Nombre</Label>
-              <Input
-                id="perfil-nombre"
-                type="text"
-                placeholder="Tu nombre"
-                {...form.register("nombre")}
-                disabled={isLoading}
-              />
-              {form.formState.errors.nombre && (
-                <p className="text-sm text-red-500">
-                  {form.formState.errors.nombre.message}
-                </p>
-              )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="perfil-nombre" className="text-stone-700 font-medium text-sm">Nombre</Label>
+                <Input
+                  id="perfil-nombre"
+                  type="text"
+                  placeholder="Tu nombre"
+                  className="border-[var(--color-brand-rose)] focus:border-[var(--color-brand-mustard)] focus:ring-[var(--color-brand-mustard)]/20 bg-white h-11"
+                  {...form.register("nombre")}
+                  disabled={isLoading}
+                />
+                {form.formState.errors.nombre && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.nombre.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="perfil-telefono" className="text-stone-700 font-medium text-sm">Teléfono</Label>
+                <Input
+                  id="perfil-telefono"
+                  type="tel"
+                  placeholder="+57 300 000 0000"
+                  className="border-[var(--color-brand-rose)] focus:border-[var(--color-brand-mustard)] focus:ring-[var(--color-brand-mustard)]/20 bg-white h-11"
+                  {...form.register("telefono")}
+                  disabled={isLoading}
+                />
+                {form.formState.errors.telefono && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.telefono.message}
+                  </p>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="perfil-telefono">Teléfono</Label>
-              <Input
-                id="perfil-telefono"
-                type="tel"
-                placeholder="+57 300 000 0000"
-                {...form.register("telefono")}
+            <div className="flex justify-end pt-2">
+              <Button
+                type="submit"
                 disabled={isLoading}
-              />
-              {form.formState.errors.telefono && (
-                <p className="text-sm text-red-500">
-                  {form.formState.errors.telefono.message}
-                </p>
-              )}
+                className="bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)] font-bold h-11 px-8"
+              >
+                {isLoading ? (
+                  <>
+                    <LoaderIcon className="size-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  "Guardar cambios"
+                )}
+              </Button>
             </div>
-
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <LoaderIcon className="size-4 animate-spin" />
-                  Guardando...
-                </>
-              ) : (
-                "Guardar cambios"
-              )}
-            </Button>
           </form>
         </CardContent>
       </Card>
 
-      <Card>
+      {/* ─── Seguridad ────────────────────────────────────────────── */}
+      <Card className="border-stone-200">
         <CardHeader>
-          <CardTitle>Cambiar Contraseña</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-[var(--color-brand-rose)] flex items-center justify-center shrink-0">
+              <Lock className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <CardTitle className="font-heading text-lg">Seguridad</CardTitle>
+              <p className="text-sm text-stone-500 mt-0.5">Cambia tu contraseña para mantener tu cuenta segura</p>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <form
             onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)}
             className="space-y-4"
           >
+            {/* Contraseña actual */}
             <div className="space-y-2">
-              <Label htmlFor="password-actual">Contraseña actual</Label>
-              <Input
-                id="password-actual"
-                type="password"
-                placeholder="Tu contraseña actual"
-                {...passwordForm.register("passwordActual")}
-                disabled={isLoadingPassword}
-              />
+              <Label htmlFor="password-actual" className="text-stone-700 font-medium text-sm">Contraseña actual</Label>
+              <div className="relative">
+                <Input
+                  id="password-actual"
+                  type={showActual ? "text" : "password"}
+                  placeholder="Tu contraseña actual"
+                  className="border-[var(--color-brand-rose)] focus:border-[var(--color-brand-mustard)] focus:ring-[var(--color-brand-mustard)]/20 bg-white h-11 pr-10"
+                  {...passwordForm.register("passwordActual")}
+                  disabled={isLoadingPassword}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowActual(!showActual)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showActual ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                </button>
+              </div>
               {passwordForm.formState.errors.passwordActual && (
                 <p className="text-sm text-red-500">
                   {passwordForm.formState.errors.passwordActual.message}
@@ -959,32 +1121,103 @@ function PerfilTab() {
               )}
             </div>
 
+            {/* Nueva contraseña */}
             <div className="space-y-2">
-              <Label htmlFor="nueva-password">Nueva contraseña</Label>
-              <Input
-                id="nueva-password"
-                type="password"
-                placeholder="Tu nueva contraseña"
-                {...passwordForm.register("nuevaPassword")}
-                disabled={isLoadingPassword}
-              />
+              <Label htmlFor="nueva-password" className="text-stone-700 font-medium text-sm">Nueva contraseña</Label>
+              <div className="relative">
+                <Input
+                  id="nueva-password"
+                  type={showNueva ? "text" : "password"}
+                  placeholder="Mínimo 8 caracteres"
+                  className="border-[var(--color-brand-rose)] focus:border-[var(--color-brand-mustard)] focus:ring-[var(--color-brand-mustard)]/20 bg-white h-11 pr-10"
+                  {...passwordForm.register("nuevaPassword")}
+                  disabled={isLoadingPassword}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNueva(!showNueva)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showNueva ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                </button>
+              </div>
               {passwordForm.formState.errors.nuevaPassword && (
                 <p className="text-sm text-red-500">
                   {passwordForm.formState.errors.nuevaPassword.message}
                 </p>
               )}
+              {/* Strength indicator */}
+              {nuevaPasswordValue.length > 0 && (
+                <div className="space-y-1">
+                  <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full transition-all duration-300 ${strength.color} ${strength.width}`} />
+                  </div>
+                  <p className={`text-xs font-medium ${strength.textColor}`}>
+                    Fortaleza: {strength.label}
+                  </p>
+                </div>
+              )}
             </div>
 
-            <Button type="submit" disabled={isLoadingPassword}>
-              {isLoadingPassword ? (
-                <>
-                  <LoaderIcon className="size-4 animate-spin" />
-                  Cambiando...
-                </>
-              ) : (
-                "Cambiar contraseña"
+            {/* Confirmar contraseña */}
+            <div className="space-y-2">
+              <Label htmlFor="confirmar-password" className="text-stone-700 font-medium text-sm">Confirmar nueva contraseña</Label>
+              <div className="relative">
+                <Input
+                  id="confirmar-password"
+                  type={showConfirmar ? "text" : "password"}
+                  placeholder="Repite tu nueva contraseña"
+                  className="border-[var(--color-brand-rose)] focus:border-[var(--color-brand-mustard)] focus:ring-[var(--color-brand-mustard)]/20 bg-white h-11 pr-10"
+                  {...passwordForm.register("confirmarPassword")}
+                  disabled={isLoadingPassword}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmar(!showConfirmar)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showConfirmar ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                </button>
+              </div>
+              {/* Match indicator */}
+              {confirmarPasswordValue.length > 0 && (
+                passwordsMatch ? (
+                  <p className="text-sm text-emerald-600 flex items-center gap-1">
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    Las contraseñas coinciden
+                  </p>
+                ) : (
+                  <p className="text-sm text-red-500 flex items-center gap-1">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    Las contraseñas no coinciden
+                  </p>
+                )
               )}
-            </Button>
+              {passwordForm.formState.errors.confirmarPassword && (
+                <p className="text-sm text-red-500">
+                  {passwordForm.formState.errors.confirmarPassword.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <Button
+                type="submit"
+                disabled={isLoadingPassword}
+                className="bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)] font-bold h-11 px-8"
+              >
+                {isLoadingPassword ? (
+                  <>
+                    <LoaderIcon className="size-4 animate-spin" />
+                    Cambiando...
+                  </>
+                ) : (
+                  "Cambiar contraseña"
+                )}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
@@ -1044,8 +1277,8 @@ function DireccionesTab() {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
         <div className="text-center">
-          <MapPinIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-pulse" />
-          <p className="text-muted-foreground">Cargando direcciones...</p>
+          <MapPinIcon className="h-12 w-12 mx-auto mb-4 text-[var(--color-brand-rose)] animate-pulse" />
+          <p className="text-stone-500">Cargando direcciones...</p>
         </div>
       </div>
     );
@@ -1054,7 +1287,7 @@ function DireccionesTab() {
   if (error) {
     return (
       <div className="py-12 text-center">
-        <p className="text-destructive">
+        <p className="text-red-500">
           Error al cargar las direcciones. Intenta de nuevo más tarde.
         </p>
       </div>
@@ -1062,9 +1295,13 @@ function DireccionesTab() {
   }
 
   return (
-    <div className="mt-6">
+    <div>
       <div className="mb-4">
-        <Button variant="outline" size="sm" onClick={handleAdd}>
+        <Button
+          size="sm"
+          onClick={handleAdd}
+          className="bg-[var(--color-brand-mustard-dark)] text-stone-900 hover:bg-[var(--color-brand-mustard)] font-bold gap-1.5"
+        >
           <PlusIcon className="size-4" />
           Agregar nueva dirección
         </Button>
@@ -1072,23 +1309,30 @@ function DireccionesTab() {
 
       {!data || data.length === 0 ? (
         <div className="py-12 text-center">
-          <MapPinIcon className="mx-auto mb-4 size-12 text-muted-foreground/60" />
-          <p className="text-muted-foreground">
-            No tienes direcciones guardadas.
+          <MapPinIcon className="mx-auto mb-4 size-12 text-[var(--color-brand-rose)]" />
+          <h3 className="font-heading text-lg font-bold text-stone-800 mb-1">No tienes direcciones guardadas</h3>
+          <p className="text-stone-500 mb-4">
+            Agrega una dirección para que podamos entregarte tus pedidos.
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {data.map((dir) => (
-            <Card key={dir.id}>
-              <CardHeader>
+            <Card key={dir.id} className="border-stone-200 hover:shadow-md transition-shadow hover:border-[var(--color-brand-mustard)]/40">
+              <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle>{dir.alias}</CardTitle>
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-full bg-[var(--color-brand-rose-light)] flex items-center justify-center shrink-0">
+                      <MapPinIcon className="h-4 w-4 text-[var(--color-brand-rose-dark)]" />
+                    </div>
+                    <CardTitle className="font-heading text-base text-[var(--color-brand-mustard-dark)]">{dir.alias}</CardTitle>
+                  </div>
                   <div className="flex gap-1">
                     <Button
                       variant="ghost"
                       size="icon-sm"
                       onClick={() => handleEdit(dir)}
+                      className="text-stone-400 hover:text-[var(--color-brand-mustard-dark)]"
                     >
                       <PencilIcon className="size-4" />
                     </Button>
@@ -1096,18 +1340,25 @@ function DireccionesTab() {
                       variant="ghost"
                       size="icon-sm"
                       onClick={() => handleDelete(dir)}
+                      className="text-stone-400 hover:text-red-500"
                     >
                       <Trash2Icon className="size-4" />
                     </Button>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="text-sm text-muted-foreground space-y-1">
+              <CardContent className="text-sm text-stone-600 space-y-1 pt-0">
                 <p>
                   {dir.direccion}, {dir.ciudad}
                 </p>
+                {dir.zonaDomicilioNombre && (
+                  <p className="text-xs text-stone-400 flex items-center gap-1">
+                    <Truck className="size-3 shrink-0" />
+                    {dir.zonaDomicilioNombre}
+                  </p>
+                )}
                 {dir.detalles && (
-                  <p className="text-xs text-muted-foreground/70">
+                  <p className="text-xs text-stone-400">
                     {dir.detalles}
                   </p>
                 )}
@@ -1130,15 +1381,19 @@ function DireccionesTab() {
       />
 
       <Dialog open={direccionToDelete !== null} onOpenChange={(open) => { if (!open) setDireccionToDelete(null); }}>
-        <DialogContent>
+        <DialogContent className="border-[var(--color-brand-rose)]">
           <DialogHeader>
-            <DialogTitle>Eliminar dirección</DialogTitle>
+            <DialogTitle className="font-heading text-lg">Eliminar dirección</DialogTitle>
             <DialogDescription>
               ¿Estás seguro de eliminar la dirección &ldquo;{direccionToDelete?.alias}&rdquo;? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDireccionToDelete(null)}>
+            <Button
+              variant="outline"
+              onClick={() => setDireccionToDelete(null)}
+              className="border-stone-200 text-stone-600 hover:border-[var(--color-brand-mustard)] hover:text-[var(--color-brand-mustard-dark)]"
+            >
               No, volver
             </Button>
             <Button variant="destructive" onClick={confirmDelete}>
@@ -1189,32 +1444,48 @@ function DireccionDialog({
   // ── Zona de Domicilio (Selects Dependientes) ───────────────
   const [selectedSedeId, setSelectedSedeId] = useState<number | null>(null);
 
-  const { data: zonas, isLoading: loadingZonas } = useSWR<ZonaDomicilioResponse[]>(
-    selectedSedeId
-      ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1/zonas-domicilio/sede/${selectedSedeId}`
-      : null,
-    fetcher,
-    { shouldRetryOnError: false }
+  const API_ZONAS_BASE = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/zonas-domicilio`;
+
+  const { data: allZones, isLoading: loadingZonas } = useSWR<ZonaDomicilioResponse[]>(
+    sedes ? `zonas-todas` : null,
+    async () => {
+      if (!sedes) return [];
+      const results = await Promise.all(
+        sedes.map((s) =>
+          fetch(`${API_ZONAS_BASE}/sede/${s.id}`).then((r) => {
+            if (!r.ok) throw new Error("Error al cargar zonas");
+            return r.json();
+          })
+        )
+      );
+      return results.flat();
+    },
+    { shouldRetryOnError: false, revalidateOnFocus: false }
   );
+
+  const zonasBySede = useMemo(() => {
+    if (!allZones || !selectedSedeId) return [];
+    return allZones.filter((z) => z.sedeId === selectedSedeId);
+  }, [allZones, selectedSedeId]);
 
   const [selectedLocalidad, setSelectedLocalidad] = useState<string>("");
   const [selectedBarrio, setSelectedBarrio] = useState<string>("");
   const [selectedZonaId, setSelectedZonaId] = useState<number | null>(null);
 
   const localidades = useMemo(() => {
-    if (!zonas) return [];
-    return [...new Set(zonas.map((z) => z.localidad))].sort();
-  }, [zonas]);
+    if (!zonasBySede.length) return [];
+    return [...new Set(zonasBySede.map((z) => z.localidad))].sort();
+  }, [zonasBySede]);
 
   const barrios = useMemo(() => {
-    if (!zonas || !selectedLocalidad) return [];
-    const filtradas = zonas.filter((z) => z.localidad === selectedLocalidad);
+    if (!zonasBySede.length || !selectedLocalidad) return [];
+    const filtradas = zonasBySede.filter((z) => z.localidad === selectedLocalidad);
     return filtradas.map((z) => ({
       id: z.id,
       label: z.barrio || "Otro",
       hasBarrio: !!z.barrio,
     }));
-  }, [zonas, selectedLocalidad]);
+  }, [zonasBySede, selectedLocalidad]);
 
   const handleLocalidadChange = (value: string | null) => {
     if (!value || value === "__none") return;
@@ -1250,38 +1521,34 @@ function DireccionDialog({
   };
 
   useEffect(() => {
-    if (open) {
-      if (direccion) {
-        setForm({
-          alias: direccion.alias,
-          direccion: direccion.direccion,
-          ciudad: direccion.ciudad,
-          detalles: direccion.detalles ?? "",
-          zonaDomicilioId: direccion.zonaDomicilioId ?? 0,
-        });
-        setSelectedZonaId(direccion.zonaDomicilioId ?? null);
-        const sedeEncontrada = sedes?.find((s) => s.ciudad === direccion.ciudad);
-        setSelectedSedeId(sedeEncontrada?.id ?? null);
-      } else {
-        setForm({ alias: "", direccion: "", ciudad: "", detalles: "", zonaDomicilioId: 0 });
-        setSelectedLocalidad("");
-        setSelectedBarrio("");
-        setSelectedZonaId(null);
-        setSelectedSedeId(null);
-      }
+    if (!open) return;
+    if (direccion) {
+      setForm({
+        alias: direccion.alias,
+        direccion: direccion.direccion,
+        ciudad: direccion.ciudad,
+        detalles: direccion.detalles ?? "",
+        zonaDomicilioId: direccion.zonaDomicilioId ?? 0,
+      });
+      setSelectedZonaId(direccion.zonaDomicilioId ?? null);
+    } else {
+      setForm({ alias: "", direccion: "", ciudad: "", detalles: "", zonaDomicilioId: 0 });
+      setSelectedLocalidad("");
+      setSelectedBarrio("");
+      setSelectedZonaId(null);
+      setSelectedSedeId(null);
     }
-  }, [open, direccion, sedes]);
+  }, [open, direccion]);
 
-  // Pre-seleccionar localidad y barrio al editar
   useEffect(() => {
-    if (open && isEditing && zonas && direccion?.zonaDomicilioId) {
-      const zona = zonas.find((z) => z.id === direccion.zonaDomicilioId);
-      if (zona) {
-        setSelectedLocalidad(zona.localidad);
-        setSelectedBarrio(zona.barrio || "Otro");
-      }
+    if (!open || !direccion || !allZones) return;
+    const zonaEncontrada = allZones.find((z) => z.id === direccion.zonaDomicilioId);
+    if (zonaEncontrada) {
+      setSelectedSedeId(zonaEncontrada.sedeId);
+      setSelectedLocalidad(zonaEncontrada.localidad);
+      setSelectedBarrio(zonaEncontrada.barrio || "Otro");
     }
-  }, [open, isEditing, zonas, direccion]);
+  }, [open, direccion, allZones]);
 
   const handleChange = (field: keyof DireccionRequest, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -1303,7 +1570,7 @@ function DireccionDialog({
       return;
     }
 
-    if (!form.zonaDomicilioId && zonas && zonas.length > 0) {
+    if (!form.zonaDomicilioId && zonasBySede.length > 0) {
       toast.error("Selecciona una zona de domicilio (localidad y barrio).");
       return;
     }
@@ -1331,9 +1598,9 @@ function DireccionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md border-[var(--color-brand-rose)]">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="font-heading text-lg">
             {isEditing ? "Editar dirección" : "Nueva dirección"}
           </DialogTitle>
           <DialogDescription>
@@ -1345,31 +1612,33 @@ function DireccionDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="dialog-alias">Alias *</Label>
+            <Label htmlFor="dialog-alias" className="text-stone-700 font-medium">Alias *</Label>
             <Input
               id="dialog-alias"
               placeholder="Ej: Casa, Oficina"
               value={form.alias}
               onChange={(e) => handleChange("alias", e.target.value)}
               disabled={isSubmitting}
+              className="border-[var(--color-brand-rose)] focus:border-[var(--color-brand-mustard)] focus:ring-[var(--color-brand-mustard)]/20 bg-white h-12"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dialog-direccion">Dirección *</Label>
+            <Label htmlFor="dialog-direccion" className="text-stone-700 font-medium">Dirección *</Label>
             <Input
               id="dialog-direccion"
               placeholder="Calle 10 # 20-30, Apto 501"
               value={form.direccion}
               onChange={(e) => handleChange("direccion", e.target.value)}
               disabled={isSubmitting}
+              className="border-[var(--color-brand-rose)] focus:border-[var(--color-brand-mustard)] focus:ring-[var(--color-brand-mustard)]/20 bg-white h-12"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dialog-ciudad">Sede de Despacho *</Label>
+            <Label htmlFor="dialog-ciudad" className="text-stone-700 font-medium">Sede de Despacho *</Label>
             <Select
               value={selectedSedeId?.toString() ?? ""}
               onValueChange={handleSedeChange}
@@ -1406,17 +1675,17 @@ function DireccionDialog({
             </div>
           )}
 
-          {!loadingZonas && zonas && zonas.length === 0 && selectedSedeId && (
+          {!loadingZonas && allZones && zonasBySede.length === 0 && selectedSedeId && (
             <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 rounded-md p-3">
               <MapPinIcon className="size-4 shrink-0" />
               No hay zonas de domicilio configuradas para esta sede. Contacta al administrador.
             </div>
           )}
 
-          {!loadingZonas && zonas && zonas.length > 0 && form.ciudad && (
+          {!loadingZonas && allZones && zonasBySede.length > 0 && selectedSedeId && (
             <>
               <div className="space-y-2">
-                <Label>Localidad / Municipio *</Label>
+                <Label className="text-stone-700 font-medium">Localidad / Municipio *</Label>
                 <Select
                   value={selectedLocalidad}
                   onValueChange={handleLocalidadChange}
@@ -1438,7 +1707,7 @@ function DireccionDialog({
 
               {selectedLocalidad && (
                 <div className="space-y-2">
-                  <Label>Barrio</Label>
+                  <Label className="text-stone-700 font-medium">Barrio</Label>
                   <Select
                     value={selectedBarrio}
                     onValueChange={handleBarrioChange}
@@ -1462,13 +1731,14 @@ function DireccionDialog({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="dialog-detalles">Detalles adicionales</Label>
+            <Label htmlFor="dialog-detalles" className="text-stone-700 font-medium">Detalles adicionales</Label>
             <Input
               id="dialog-detalles"
               placeholder="Casa azul, portería, etc."
               value={form.detalles}
               onChange={(e) => handleChange("detalles", e.target.value)}
               disabled={isSubmitting}
+              className="border-[var(--color-brand-rose)] focus:border-[var(--color-brand-mustard)] focus:ring-[var(--color-brand-mustard)]/20 bg-white h-12"
             />
           </div>
 
@@ -1478,10 +1748,15 @@ function DireccionDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
+              className="border-stone-200 text-stone-600 hover:border-[var(--color-brand-mustard)] hover:text-[var(--color-brand-mustard-dark)]"
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)] font-bold"
+            >
               {isSubmitting ? (
                 <>
                   <LoaderIcon className="size-4 animate-spin" />
