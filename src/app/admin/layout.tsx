@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuthStore, useSessionExpiredSync } from "@/store/useAuthStore";
+import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
 import {
   LogOut,
@@ -27,9 +27,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  // Sincronizar con el evento de sesión expirada del fetcher
-  useSessionExpiredSync();
 
   const closeSidebar = () => setIsSidebarOpen(false);
 

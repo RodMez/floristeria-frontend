@@ -79,7 +79,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
-        Cookies.remove('token');
+        Cookies.remove('token', { path: '/' });
         set({
           token: null,
           rol: null,
@@ -89,12 +89,20 @@ export const useAuthStore = create<AuthState>()(
           email: null,
           telefono: null,
           isAuthenticated: false,
-          isHydrated: true,
         });
       },
     }),
     {
       name: 'floristeria-auth',
+      partialize: (state) => ({
+        rol: state.rol,
+        sedeId: state.sedeId,
+        clienteId: state.clienteId,
+        nombre: state.nombre,
+        email: state.email,
+        telefono: state.telefono,
+        isAuthenticated: state.isAuthenticated,
+      }),
       onRehydrateStorage: () => (state) => {
         // Marcar como hidratado cuando Zustand termine de restaurar
         if (state) state.isHydrated = true;
