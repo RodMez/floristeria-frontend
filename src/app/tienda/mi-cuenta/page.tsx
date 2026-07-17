@@ -993,11 +993,11 @@ function PerfilTab() {
         <div className="h-16 w-16 rounded-full bg-[var(--color-brand-mustard)] flex items-center justify-center shrink-0 shadow-md">
           <span className="font-heading text-2xl text-stone-900 font-bold select-none">{initial}</span>
         </div>
-        <div>
+        <div className="min-w-0">
           <h2 className="font-heading text-xl font-bold text-[var(--color-brand-mustard-dark)]">
             {perfil?.nombre ?? nombre}
           </h2>
-          <p className="text-sm text-stone-600 mt-0.5">{email}</p>
+          <p className="text-sm text-stone-600 mt-0.5 truncate">{email}</p>
         </div>
       </div>
 
@@ -1318,7 +1318,7 @@ function DireccionesTab() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {data.map((dir) => (
-            <Card key={dir.id} className="border-stone-200 hover:shadow-md transition-shadow hover:border-[var(--color-brand-mustard)]/40">
+            <Card key={dir.id} className="border border-dashed border-[var(--color-brand-mustard)] hover:shadow-md transition-shadow hover:border-[var(--color-brand-mustard-dark)]">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -1352,9 +1352,9 @@ function DireccionesTab() {
                   {dir.direccion}, {dir.ciudad}
                 </p>
                 {dir.zonaDomicilioNombre && (
-                  <p className="text-xs text-stone-400 flex items-center gap-1">
+                  <p className="text-xs text-[var(--color-brand-rose-dark)]/70 flex items-center gap-1">
                     <Truck className="size-3 shrink-0" />
-                    {dir.zonaDomicilioNombre}
+                    Zona: {dir.zonaDomicilioNombre}
                   </p>
                 )}
                 {dir.detalles && (

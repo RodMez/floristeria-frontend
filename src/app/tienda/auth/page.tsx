@@ -158,8 +158,8 @@ function AuthContent() {
               onClick={() => setActiveTab("login")}
               className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all duration-200 ${
                 activeTab === "login"
-                  ? "bg-[#E5BE6F] text-stone-900 shadow-sm"
-                  : "text-stone-500 hover:text-stone-700"
+                  ? "bg-[var(--color-brand-mustard)]/15 text-[var(--color-brand-mustard-dark)]"
+                  : "text-stone-500 hover:bg-[var(--color-brand-rose-light)]/40 hover:text-stone-700"
               }`}
             >
               Iniciar Sesión
@@ -168,8 +168,8 @@ function AuthContent() {
               onClick={() => setActiveTab("register")}
               className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all duration-200 ${
                 activeTab === "register"
-                  ? "bg-[#E5BE6F] text-stone-900 shadow-sm"
-                  : "text-stone-500 hover:text-stone-700"
+                  ? "bg-[var(--color-brand-mustard)]/15 text-[var(--color-brand-mustard-dark)]"
+                  : "text-stone-500 hover:bg-[var(--color-brand-rose-light)]/40 hover:text-stone-700"
               }`}
             >
               Registrarse
@@ -232,7 +232,7 @@ function AuthContent() {
 
                 <Button
                   type="submit"
-                  className="w-full h-12 bg-[#E5BE6F] hover:bg-[#d4af5c] text-stone-900 font-bold text-base transition-all duration-200"
+                  className="w-full h-12 bg-brand-rose-dark hover:bg-brand-mustard text-white hover:text-stone-900 font-bold text-base transition-all duration-200"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -348,7 +348,7 @@ function AuthContent() {
 
                 <Button
                   type="submit"
-                  className="w-full h-12 bg-[#E5BE6F] hover:bg-[#d4af5c] text-stone-900 font-bold text-base transition-all duration-200"
+                  className="w-full h-12 bg-brand-rose-dark hover:bg-brand-mustard text-white hover:text-stone-900 font-bold text-base transition-all duration-200"
                   disabled={isLoading}
                 >
                   {isLoading ? (

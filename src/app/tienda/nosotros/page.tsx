@@ -34,9 +34,9 @@ export default function NosotrosPage() {
   const nombreAcento = sitiNombreParts.slice(1).join(" ");
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[var(--color-brand-rose-light)]/30">
       {/* Hero */}
-      <section className="bg-gradient-to-b from-stone-100 to-stone-50 py-20">
+      <section className="bg-gradient-to-b from-[var(--color-brand-rose-light)] to-white py-20">
         <div className="container mx-auto px-4 text-center">
           <Image
             src={logoUrl}
@@ -84,11 +84,11 @@ export default function NosotrosPage() {
 
       {/* Misión + Visión */}
       {(mision || vision) && (
-        <section className="bg-stone-50 border-t border-stone-200 py-16">
+        <section className="bg-[var(--color-brand-rose-light)]/50 border-t border-[var(--color-brand-rose)]/20 py-16">
           <div className="container mx-auto max-w-5xl px-4">
             <div className="grid gap-8 md:grid-cols-2">
               {mision && (
-                <div className="rounded-xl border-2 border-brand-rose bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard">
+                <div className="rounded-xl border-2 border-brand-rose bg-white/70 p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard">
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-mustard/10">
                     <Target className="size-6 text-brand-mustard" />
                   </div>
@@ -97,7 +97,7 @@ export default function NosotrosPage() {
                 </div>
               )}
               {vision && (
-                <div className="rounded-xl border-2 border-brand-rose bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard">
+                <div className="rounded-xl border-2 border-brand-rose bg-white/70 p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard">
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-rose/30">
                     <Sparkles className="size-6 text-brand-rose-dark" />
                   </div>
