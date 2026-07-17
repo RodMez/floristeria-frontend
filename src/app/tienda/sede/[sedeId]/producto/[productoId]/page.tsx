@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import BannerCarousel from "@/components/banner/BannerCarousel";
 import { StarDisplay, ReseñasModal } from "@/components/reseñas";
 import ComplementCard from "@/components/ComplementCard";
 
@@ -163,6 +162,7 @@ export default function ProductoPage() {
   }
 
   return (
+    <div className="min-h-screen bg-[var(--color-brand-rose-light)]/30">
     <div className="container mx-auto max-w-7xl px-4 py-8">
       {/* Breadcrumb */}
       <Link
@@ -173,11 +173,11 @@ export default function ProductoPage() {
         Volver al catálogo
       </Link>
 
-      {/* Grid: 3/5 imagen + 2/5 info */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
+      {/* Grid: 3/5 imagen + 2/5 info + complementos */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 lg:items-start">
         {/* Columna izquierda: Imagen */}
-        <div className="lg:col-span-3">
-          <div className="relative aspect-square w-full overflow-hidden rounded-2xl shadow-lg bg-stone-100">
+        <div className="lg:col-span-3 lg:sticky lg:top-24">
+          <div className="relative aspect-square w-full overflow-hidden rounded-2xl shadow-lg bg-stone-100 lg:h-auto">
             <Image
               src={producto.imagenUrl}
               alt={producto.nombre}
@@ -187,15 +187,15 @@ export default function ProductoPage() {
               sizes="(max-width: 1024px) 100vw, 60vw"
             />
             {tieneDescuento && (
-              <div className="absolute top-2 left-2 bg-brand-mustard text-white text-xs font-bold px-2.5 py-1 rounded z-10">
+              <div className="absolute top-4 left-4 bg-brand-mustard hover:bg-brand-rose-dark text-white text-base font-bold px-4 py-2 rounded-lg z-10 shadow-lg transition-colors duration-300 cursor-default">
                 -{producto.descuentoPorcentaje}% OFF
               </div>
             )}
           </div>
         </div>
 
-        {/* Columna derecha: Info */}
-        <div className="lg:col-span-2 space-y-5">
+        {/* Columna derecha: Info + Cantidad + Complementos */}
+        <div className="lg:col-span-2 lg:flex lg:flex-col lg:h-full space-y-5">
           {/* Título */}
           <h1 className="text-3xl font-bold text-brand-mustard">
             {producto.nombre}
@@ -250,7 +250,7 @@ export default function ProductoPage() {
           <div className="flex items-center gap-3">
             {tieneDescuento ? (
               <>
-                <Badge variant="destructive" className="text-sm px-2.5 py-1">
+                <Badge className="text-sm px-2.5 py-1 bg-brand-mustard text-white">
                   -{producto.descuentoPorcentaje}% OFF
                 </Badge>
                 <span className="text-lg text-stone-400 line-through">
@@ -283,8 +283,6 @@ export default function ProductoPage() {
             )}
           </div>
 
-          <Separator />
-
           {/* Selector de cantidad + Botón */}
           {isAgotado ? (
             <Button disabled className="w-full h-14 text-base" size="lg">
@@ -292,7 +290,7 @@ export default function ProductoPage() {
             </Button>
           ) : (
             <div className="flex items-center gap-4">
-              <div className="flex items-center border rounded-lg overflow-hidden shrink-0">
+              <div className="flex items-center border-2 border-dashed border-[var(--color-brand-mustard)] rounded-lg overflow-hidden shrink-0">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -331,66 +329,57 @@ export default function ProductoPage() {
             </div>
           )}
 
-          <Separator />
-
-          {/* Banners promocionales */}
-          <BannerCarousel
-            ubicacion="PRODUCTO_INDIVIDUAL"
-            sedeId={Number(sedeId)}
-            aspectRatio="16/9"
-          />
+          {/* Complementos — dentro de la columna derecha */}
+          {producto.productosComplementarios && producto.productosComplementarios.length > 0 && (
+            <div className="lg:mt-auto pt-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="h-5 w-5 text-[var(--color-brand-mustard)]" />
+                <h2 className="text-lg font-semibold text-stone-800">
+                  Complementa tu pedido
+                </h2>
+                <span className="text-xs text-stone-400 font-normal">
+                  ({producto.productosComplementarios.length})
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {producto.productosComplementarios.map((comp) => {
+                  const compId = String(comp.productoId);
+                  const isInCart = cartItemIds.has(compId);
+                  return (
+                    <ComplementCard
+                      key={comp.productoId}
+                      producto={comp}
+                      isInCart={isInCart}
+                      sedeId={String(sede?.id ?? params.sedeId)}
+                      onAdd={() => {
+                        if (!sede) return;
+                        addItem(
+                          {
+                            id: compId,
+                            nombre: comp.nombre,
+                            sku: comp.sku,
+                            precio: comp.precio,
+                            descuentoPorcentaje: comp.descuentoPorcentaje ?? 0,
+                            cantidad: 1,
+                            imagen_url: comp.imagenUrl,
+                            sede_id: String(sede.id),
+                          },
+                          sede
+                        );
+                        toast.success("¡Agregado al carrito!", {
+                          description: comp.nombre,
+                          duration: 2000,
+                        });
+                        setDrawerOpen(true);
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Complementos */}
-      {producto.productosComplementarios && producto.productosComplementarios.length > 0 && (
-        <section className="mt-12">
-          <div className="flex items-center gap-2 mb-5">
-            <Sparkles className="h-5 w-5 text-[var(--color-brand-mustard)]" />
-            <h2 className="text-xl font-semibold text-stone-800">
-              Complementa tu pedido
-            </h2>
-            <span className="text-sm text-stone-400 font-normal">
-              ({producto.productosComplementarios.length} adicionales)
-            </span>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {producto.productosComplementarios.map((comp) => {
-              const compId = String(comp.productoId);
-              const isInCart = cartItemIds.has(compId);
-              return (
-                <ComplementCard
-                  key={comp.productoId}
-                  producto={comp}
-                  isInCart={isInCart}
-                  sedeId={String(sede?.id ?? params.sedeId)}
-                  onAdd={() => {
-                    if (!sede) return;
-                    addItem(
-                      {
-                        id: compId,
-                        nombre: comp.nombre,
-                        sku: comp.sku,
-                        precio: comp.precio,
-                        descuentoPorcentaje: comp.descuentoPorcentaje ?? 0,
-                        cantidad: 1,
-                        imagen_url: comp.imagenUrl,
-                        sede_id: String(sede.id),
-                      },
-                      sede
-                    );
-                    toast.success("¡Agregado al carrito!", {
-                      description: comp.nombre,
-                      duration: 2000,
-                    });
-                    setDrawerOpen(true);
-                  }}
-                />
-              );
-            })}
-          </div>
-        </section>
-      )}
 
       <ReseñasModal
         open={reseñasModalOpen}
@@ -398,6 +387,7 @@ export default function ProductoPage() {
         productoId={producto.productoId}
         productoNombre={producto.nombre}
       />
+    </div>
     </div>
   );
 }

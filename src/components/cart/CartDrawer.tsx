@@ -51,7 +51,7 @@ export default function CartDrawer() {
       <SheetTrigger className="relative inline-flex items-center justify-center rounded-md text-sm font-medium hover:text-brand-mustard transition-colors h-10 w-10">
         <ShoppingCart className="h-5 w-5" />
       </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-md overflow-hidden">
+      <SheetContent className="w-full sm:max-w-md overflow-hidden bg-[#fdf5f3]">
         <SheetHeader className="text-center py-2">
           <SheetTitle className="text-brand-mustard">Carrito de Compras</SheetTitle>
         </SheetHeader>
@@ -80,7 +80,7 @@ export default function CartDrawer() {
             <ScrollArea className="flex-1 min-h-0 px-4">
               <div className="space-y-2.5 pt-1">
                 {items.map((item) => (
-                  <div key={item.id} className="flex gap-3 group">
+                  <div key={item.id} className="flex gap-3 group pb-3 border-b-2 border-dashed border-[var(--color-brand-mustard)]">
                     <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-stone-200">
                       <img
                         src={item.imagen_url}
@@ -93,7 +93,7 @@ export default function CartDrawer() {
                         <h4 className="text-sm font-medium text-stone-800 line-clamp-1 group-hover:text-brand-mustard transition-colors duration-250">
                           {item.nombre}
                         </h4>
-                        <span className="text-sm font-semibold text-stone-800 whitespace-nowrap">
+                        <span className={`text-sm font-semibold whitespace-nowrap ${item.descuentoPorcentaje > 0 ? "text-[var(--color-brand-mustard-dark)]" : "text-[var(--color-brand-sage)]"}`}>
                           ${(getPrecioFinal(item) * item.cantidad).toLocaleString("es-CO")}
                         </span>
                       </div>
@@ -103,20 +103,20 @@ export default function CartDrawer() {
                             <span className="line-through mr-1">
                               ${item.precio.toLocaleString("es-CO")}
                             </span>
-                            <span className="text-[var(--color-brand-sage)] font-medium">
+                            <span className="text-[var(--color-brand-mustard-dark)] font-medium">
                               ${getPrecioFinal(item).toLocaleString("es-CO")}
                             </span>{" "}
                             c/u
                           </>
                         ) : (
-                          `$${item.precio.toLocaleString("es-CO")} c/u`
+                          <span className="text-[var(--color-brand-sage)] font-medium">${item.precio.toLocaleString("es-CO")} c/u</span>
                         )}
                       </p>
                       <div className="flex items-center gap-1 mt-1.5">
                         <Button
                           variant="outline"
                           size="icon"
-                          className="h-7 w-7 rounded-md"
+                          className="h-7 w-7 rounded-md bg-[#fdf5f3] border border-dashed border-brand-mustard/40 hover:bg-[var(--color-brand-mustard)]/20 hover:border-[var(--color-brand-mustard)]"
                           onClick={() =>
                             updateQuantity(item.id, Math.max(1, item.cantidad - 1))
                           }
@@ -129,7 +129,7 @@ export default function CartDrawer() {
                         <Button
                           variant="outline"
                           size="icon"
-                          className="h-7 w-7 rounded-md"
+                          className="h-7 w-7 rounded-md bg-[#fdf5f3] border border-dashed border-brand-mustard/40 hover:bg-[var(--color-brand-mustard)]/20 hover:border-[var(--color-brand-mustard)]"
                           onClick={() => updateQuantity(item.id, item.cantidad + 1)}
                         >
                           <Plus className="h-3 w-3" />
@@ -175,7 +175,7 @@ export default function CartDrawer() {
             </ScrollArea>
 
             {sedeActual && items.length > 0 && (
-              <div className="px-4 py-1 border-t border-stone-100">
+              <div className="px-4 py-1 border-t border-dotted border-[var(--color-brand-mustard)]">
                 <ComplementosSugeridos
                   sede={sedeActual}
                   excludeIds={new Set(items.map((i) => i.id))}
@@ -184,10 +184,10 @@ export default function CartDrawer() {
               </div>
             )}
 
-            <div className="px-4 py-0.5 border-t border-stone-100">
+            <div className="px-4 py-0.5 border-t border-dotted border-[var(--color-brand-mustard)]">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-semibold text-stone-800">Total</span>
-                <span className="text-base font-bold text-stone-800">
+                <span className="text-base font-bold text-[var(--color-brand-mustard-dark)]">
                   ${total.toLocaleString("es-CO")}
                 </span>
               </div>
@@ -197,7 +197,7 @@ export default function CartDrawer() {
               <Button
                 variant="outline"
                 onClick={clearCart}
-                className="flex-1 h-10 text-sm border-2 border-dashed border-brand-mustard text-stone-900 hover:text-brand-mustard hover:bg-brand-mustard/10 hover:scale-105 transition-all duration-300"
+                className="flex-1 h-10 text-sm border-2 border-dashed border-brand-mustard bg-[#fdf5f3] text-stone-900 hover:text-brand-mustard hover:bg-brand-mustard/10 hover:scale-105 transition-all duration-300"
               >
                 Vaciar carrito
               </Button>

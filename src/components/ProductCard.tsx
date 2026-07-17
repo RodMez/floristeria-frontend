@@ -9,6 +9,7 @@ import { useCartStore } from "@/store/useCartStore";
 import { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { ShoppingCart } from "lucide-react";
 
 interface ProductCardProps {
   producto: ProductoCatalogo;
@@ -122,7 +123,7 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
           <p className="text-sm text-stone-500 line-clamp-2 mt-1 min-h-[2.5rem] flex-1">
             {producto.descripcion}
           </p>
-          <p className="text-lg font-semibold text-stone-900 mt-2">
+          <p className="text-lg font-semibold text-[var(--color-brand-sage)] mt-2">
             {tieneDescuento ? (
               <>
                 <span className="text-sm font-normal text-stone-400 line-through mr-2">
@@ -145,6 +146,7 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
           </Button>
         ) : (
           <Button className="bg-brand-rose-dark hover:bg-brand-mustard text-white hover:text-stone-900 font-extrabold px-6" onClick={handleAddToCart}>
+            <ShoppingCart className="mr-1.5 h-4 w-4" />
             Agregar al Carrito
           </Button>
         )}
