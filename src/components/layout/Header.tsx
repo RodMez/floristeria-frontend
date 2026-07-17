@@ -123,10 +123,10 @@ export default function Header() {
           </Link>
           <button
             onClick={() => {
-              if (sedeActual) {
+              if (sedeActual && items.length > 0) {
                 router.push(`/tienda/sede/${sedeActual.id}`);
               } else {
-                router.push("/tienda");
+                router.push("/tienda/showcase");
               }
             }}
             className="text-sm font-bold text-muted-foreground transition-colors hover:text-brand-mustard"
@@ -209,9 +209,9 @@ export default function Header() {
             <SheetTrigger className="inline-flex md:hidden items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
               <Menu className="size-5" />
             </SheetTrigger>
-            <SheetContent className="w-72 sm:w-80 p-0">
+            <SheetContent className="w-72 sm:w-80 p-0 bg-[var(--color-brand-rose-light)]">
               <div className="flex h-full flex-col px-6">
-                <div className="flex items-center justify-between border-b border-[var(--color-brand-rose)]/20 pt-6 pb-4 -mx-6 px-6">
+                <div className="flex items-center justify-center border-b border-[var(--color-brand-rose)]/20 pt-6 pb-4 -mx-6 px-6">
                   <span className="font-heading text-base font-semibold text-[var(--color-brand-mustard-dark)]">
                     {nombreBase}{nombreAcento && <span className="text-[var(--color-brand-mustard)]"> {nombreAcento}</span>}
                   </span>
@@ -236,10 +236,10 @@ export default function Header() {
                   </Link>
                   <button
                     onClick={() => {
-                      if (sedeActual) {
+                      if (sedeActual && items.length > 0) {
                         router.push(`/tienda/sede/${sedeActual.id}`);
                       } else {
-                        router.push("/tienda");
+                        router.push("/tienda/showcase");
                       }
                       setMobileMenuOpen(false);
                     }}
@@ -305,7 +305,7 @@ export default function Header() {
                       <Link
                         href="/tienda/auth"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-[var(--color-brand-mustard)] px-2.5 py-2.5 text-base font-bold text-stone-900 transition-all hover:bg-[var(--color-brand-mustard-dark)]"
+                        className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-rose-dark px-2.5 py-2.5 text-base font-bold text-white transition-all hover:bg-brand-mustard hover:text-stone-900"
                       >
                         Registrarse
                       </Link>

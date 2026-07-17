@@ -46,7 +46,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 const UBICACIONES: { value: UbicacionBanner; label: string }[] = [
   { value: "SELECTOR_SEDE", label: "Página de inicio" },
   { value: "HOME_SEDE", label: "Inicio de sede" },
-  { value: "PRODUCTO_INDIVIDUAL", label: "Página de producto" },
+  { value: "SHOWCASE", label: "Showcase / Catálogo" },
 ];
 
 const ORDINALES = ["Primero", "Segundo", "Tercero", "Cuarto", "Quinto", "Sexto", "Séptimo", "Octavo", "Noveno", "Décimo"];
