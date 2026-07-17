@@ -88,14 +88,15 @@ export default function DireccionSelector({
       <>
         <Card>
           <CardContent className="py-6 text-center">
-            <MapPinIcon className="mx-auto mb-2 size-8 text-muted-foreground" />
-            <p className="text-muted-foreground mb-3">
+            <MapPinIcon className="mx-auto mb-2 size-8 text-[var(--color-brand-rose-dark)]" />
+            <p className="text-[var(--color-brand-rose-dark)] mb-3">
               No tienes direcciones guardadas.
             </p>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setDialogOpen(true)}
+              className="border-[var(--color-brand-rose)] hover:bg-[var(--color-brand-mustard)]/10 hover:border-[var(--color-brand-mustard)]"
             >
               <PlusIcon className="size-4" />
               Agregar dirección
@@ -124,16 +125,16 @@ export default function DireccionSelector({
               key={dir.id}
               className={`cursor-pointer transition-all ${
                 isSelected
-                  ? "ring-2 ring-primary bg-primary/5"
-                  : "hover:ring-1 hover:ring-foreground/20"
+                  ? "ring-2 ring-[var(--color-brand-mustard)] bg-[var(--color-brand-mustard)]/5"
+                  : "hover:ring-1 hover:ring-[var(--color-brand-mustard)]/20"
               }`}
               onClick={() => onSelect(dir.id)}
             >
               <CardContent className="flex items-start gap-3 py-3">
                 <div className="mt-0.5">
                   {isSelected ? (
-                    <div className="flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                      <CheckIcon className="size-3.5" />
+                    <div className="flex size-5 items-center justify-center rounded-full bg-[var(--color-brand-mustard)]">
+                      <CheckIcon className="size-3.5 text-stone-900" />
                     </div>
                   ) : (
                     <div className="flex size-5 items-center justify-center rounded-full border border-input" />
@@ -144,7 +145,7 @@ export default function DireccionSelector({
                   <div className="flex items-center gap-2 mb-0.5">
                     <span className="font-medium text-sm">{dir.alias}</span>
                     {isSelected && (
-                      <Badge variant="default" className="text-xs">
+                      <Badge className="bg-[var(--color-brand-mustard)] text-stone-900 text-xs">
                         Seleccionada
                       </Badge>
                     )}
@@ -153,7 +154,7 @@ export default function DireccionSelector({
                     {dir.direccion}, {dir.ciudad}
                   </p>
                   {dir.zonaDomicilioNombre && (
-                    <p className="text-xs text-muted-foreground/70 mt-0.5">
+                    <p className="text-xs text-[var(--color-brand-rose-dark)]/70 mt-0.5">
                       Zona: {dir.zonaDomicilioNombre}
                     </p>
                   )}
@@ -171,7 +172,7 @@ export default function DireccionSelector({
         <Button
           variant="outline"
           size="sm"
-          className="w-full"
+          className="w-full border-[var(--color-brand-rose)] hover:bg-[var(--color-brand-mustard)]/10 hover:border-[var(--color-brand-mustard)]"
           onClick={() => setDialogOpen(true)}
         >
           <PlusIcon className="size-4" />

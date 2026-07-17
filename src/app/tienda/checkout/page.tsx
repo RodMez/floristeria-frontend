@@ -14,10 +14,11 @@ import DireccionSelector from "@/components/checkout/DireccionSelector";
 import ResumenPedido from "@/components/checkout/ResumenPedido";
 import ZonaExcluidaModal from "@/components/checkout/ZonaExcluidaModal";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LoaderIcon, ShoppingCartIcon, MapPinIcon, LogInIcon } from "lucide-react";
+import { LoaderIcon, ShoppingCartIcon, MapPinIcon, LogInIcon, ShoppingBag, Lock } from "lucide-react";
 
 const API_PEDIDOS_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/pedidos`;
 const API_DIRECCIONES_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/direcciones`;
@@ -79,20 +80,23 @@ export default function CheckoutPage() {
   // ── No autenticado → mensaje para iniciar sesión ────────────
   if (!isAuthenticated || rol !== "CLIENTE") {
     return (
+      <div className="min-h-screen bg-[var(--color-brand-rose-light)]/30">
       <div className="container mx-auto max-w-5xl px-4 py-10">
         <div className="text-center py-16">
-          <LogInIcon className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <LogInIcon className="mx-auto mb-4 size-12 text-[var(--color-brand-rose-dark)]" />
           <h2 className="text-xl font-semibold mb-2">Inicia sesión para continuar</h2>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+          <p className="text-stone-500 mb-6 max-w-md mx-auto">
             Debes iniciar sesión o registrarte para ver tus direcciones de entrega y
             poder completar la compra.
           </p>
           <Button
             onClick={() => router.replace("/tienda/auth?redirect=/tienda/checkout")}
+            className="bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)] font-bold"
           >
             Iniciar sesión / Registrarse
           </Button>
         </div>
+      </div>
       </div>
     );
   }
@@ -100,17 +104,22 @@ export default function CheckoutPage() {
   // ── Carrito vacío ────────────────────────────────────────────
   if (items.length === 0) {
     return (
+      <div className="min-h-screen bg-[var(--color-brand-rose-light)]/30">
       <div className="container mx-auto max-w-5xl px-4 py-10">
         <div className="text-center py-16">
-          <ShoppingCartIcon className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <ShoppingCartIcon className="mx-auto mb-4 size-12 text-[var(--color-brand-rose-dark)]" />
           <h2 className="text-xl font-semibold mb-2">Tu carrito está vacío</h2>
-          <p className="text-muted-foreground mb-6">
+          <p className="text-stone-500 mb-6">
             Agrega productos antes de proceder al checkout.
           </p>
-          <Button onClick={() => router.push("/tienda")}>
+          <Button
+            onClick={() => router.push("/tienda")}
+            className="bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)] font-bold"
+          >
             Ir a la tienda
           </Button>
         </div>
+      </div>
       </div>
     );
   }
@@ -230,15 +239,21 @@ export default function CheckoutPage() {
   return (
     <>
       <Script src="https://checkout.wompi.co/widget.js" strategy="lazyOnload" />
-      <div className="container mx-auto max-w-5xl px-4 py-8">
-      <h1 className="text-2xl font-semibold mb-6">Checkout</h1>
+      <div className="min-h-screen bg-[var(--color-brand-rose-light)]/30 overflow-x-hidden">
+      <div className="container mx-auto max-w-5xl px-4 py-10 overflow-hidden">
+      <div className="flex items-center gap-3 mb-8">
+        <div className="h-10 w-10 rounded-full bg-[var(--color-brand-mustard)]/15 flex items-center justify-center shrink-0">
+          <ShoppingBag className="h-5 w-5 text-[var(--color-brand-mustard-dark)]" />
+        </div>
+        <h1 className="font-heading text-2xl font-bold text-brand-mustard">Checkout</h1>
+      </div>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
-        {/* ── Columna izquierda: Direcciones ─────────────────── */}
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1.5fr_1fr_1.25fr]">
+        {/* ── Columna 1: Direcciones ────────────────────────── */}
         <section>
           <div className="flex items-center gap-2 mb-4">
-            <MapPinIcon className="size-5 text-muted-foreground" />
-            <h2 className="text-lg font-medium">Dirección de entrega</h2>
+            <MapPinIcon className="size-5 text-[var(--color-brand-rose-dark)]" />
+            <h2 className="font-heading text-lg font-semibold text-[var(--color-brand-rose-dark)]">Dirección de entrega</h2>
           </div>
 
           <DireccionSelector
@@ -246,66 +261,80 @@ export default function CheckoutPage() {
             selectedDireccionId={selectedDireccionId}
             onSelect={setSelectedDireccionId}
           />
-
-          <div className="mt-4">
-            <Label htmlFor="notas-entrega" className="text-sm text-muted-foreground">
-              Notas de entrega <span className="text-xs text-muted-foreground">(opcional)</span>
-            </Label>
-            <p className="text-xs text-muted-foreground mb-1">
-              Instrucciones sobre cuándo o cómo entregar el pedido
-            </p>
-            <Textarea
-              id="notas-entrega"
-              placeholder="Ej: Llamar antes de llegar, entregar solo en horario de la mañana, dejar con el conserje..."
-              value={notasEntrega}
-              onChange={(e) => setNotasEntrega(e.target.value)}
-              rows={2}
-              className="mt-1"
-            />
-          </div>
         </section>
 
-        {/* ── Columna derecha: Resumen + Acción ──────────────── */}
-        <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+        {/* ── Columna 2: Resumen del pedido ─────────────────── */}
+        <aside className="lg:sticky lg:top-20 lg:self-start">
           <ResumenPedido costoEnvio={costoEnvio} zonaNombre={zonaNombre} />
-
-          <div className="flex items-start space-x-2">
-            <Checkbox
-              id="acepta-terminos"
-              checked={aceptaTerminos}
-              onCheckedChange={(checked) => setAceptaTerminos(checked === true)}
-              disabled={isSubmitting}
-            />
-            <Label htmlFor="acepta-terminos" className="text-sm font-normal leading-snug cursor-pointer">
-              Acepto los{" "}
-              <a href="/legal/terminos" target="_blank" className="underline text-primary hover:text-primary/80">
-                Términos y Condiciones
-              </a>{" "}
-            </Label>
-          </div>
-
-          <Button
-            size="lg"
-            className="w-full"
-            disabled={isButtonDisabled}
-            onClick={handleCrearPedido}
-          >
-            {isSubmitting ? (
-              <>
-                <LoaderIcon className="size-4 animate-spin" />
-                Procesando pedido...
-              </>
-            ) : (
-              "Confirmar y proceder al pago"
-            )}
-          </Button>
-
-          {!selectedDireccionId && (
-            <p className="text-center text-xs text-muted-foreground">
-              Selecciona una dirección para continuar.
-            </p>
-          )}
         </aside>
+
+        {/* ── Columna 3: Notas + Términos + CTA ─────────────── */}
+        <aside className="lg:sticky lg:top-20 lg:self-start">
+          <Card className="border-[var(--color-brand-rose)]/20">
+            <CardHeader className="border-b border-[var(--color-brand-rose)]/10">
+              <div className="flex items-center gap-2">
+                <div className="size-8 rounded-full bg-[var(--color-brand-mustard)]/15 flex items-center justify-center shrink-0">
+                  <Lock className="size-4 text-[var(--color-brand-mustard-dark)]" />
+                </div>
+                <CardTitle className="font-heading text-sm text-brand-mustard">Confirmar pedido</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-4">
+              <div>
+                <Label htmlFor="notas-entrega" className="text-sm text-stone-600 font-medium">
+                  Notas de entrega <span className="text-xs text-stone-400">(opcional)</span>
+                </Label>
+                <Textarea
+                  id="notas-entrega"
+                  placeholder="Ej: Llamar antes de llegar, dejar con el conserje..."
+                  value={notasEntrega}
+                  onChange={(e) => setNotasEntrega(e.target.value)}
+                  rows={3}
+                  className="mt-1 border-[var(--color-brand-rose)] focus:border-[var(--color-brand-mustard)] focus:ring-[var(--color-brand-mustard)]/20 break-words"
+                />
+              </div>
+
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="acepta-terminos"
+                  checked={aceptaTerminos}
+                  onCheckedChange={(checked) => setAceptaTerminos(checked === true)}
+                  disabled={isSubmitting}
+                  className="mt-1 shrink-0"
+                />
+                <label htmlFor="acepta-terminos" className="text-sm font-normal leading-snug cursor-pointer text-stone-600">
+                  Acepto los<span className="hidden md:inline"><br /></span>{" "}
+                  <a href="/legal/terminos" target="_blank" className="underline text-brand-mustard hover:text-brand-mustard-dark font-medium">
+                    Términos y Condiciones
+                  </a>
+                </label>
+              </div>
+
+              <Button
+                size="lg"
+                className="w-full bg-brand-rose-dark text-white hover:bg-brand-mustard hover:text-stone-900 font-extrabold"
+                disabled={isButtonDisabled}
+                onClick={handleCrearPedido}
+              >
+                {isSubmitting ? (
+                  <>
+                    <LoaderIcon className="size-4 animate-spin" />
+                    Procesando pedido...
+                  </>
+                ) : (
+                  "Confirmar y proceder al pago"
+                )}
+              </Button>
+
+              {!selectedDireccionId && (
+                <p className="text-center text-xs text-[var(--color-brand-rose-dark)]">
+                  Selecciona una dirección para continuar.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </aside>
+      </div>
       </div>
       </div>
 

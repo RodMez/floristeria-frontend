@@ -160,7 +160,7 @@ export default function ZonaExcluidaModal({
         <DialogFooter className="flex-col gap-2 sm:flex-col">
           <Button
             onClick={handleWhatsApp}
-            className="w-full bg-brand-mustard hover:bg-brand-mustard-dark text-white gap-2"
+            className="w-full bg-brand-mustard hover:bg-brand-mustard-dark text-stone-900 gap-2"
           >
             <MessageCircle className="size-4" />
             Enviar pedido por WhatsApp

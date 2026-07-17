@@ -16,7 +16,7 @@ function formatPrice(price: number): string {
 function ItemRow({ item }: { item: CartItem }) {
   return (
     <div className="flex items-center gap-3 py-2">
-      <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-muted">
+      <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-[var(--color-brand-rose)]/10">
         {item.imagen_url ? (
           <Image
             src={item.imagen_url}
@@ -26,7 +26,7 @@ function ItemRow({ item }: { item: CartItem }) {
             sizes="56px"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-muted-foreground text-xs">
+          <div className="flex h-full items-center justify-center text-[var(--color-brand-rose-dark)] text-xs">
             Sin img
           </div>
         )}
@@ -39,10 +39,10 @@ function ItemRow({ item }: { item: CartItem }) {
           {item.descuentoPorcentaje > 0 ? (
             <>
               <span className="line-through mr-1">{formatPrice(item.precio)}</span>
-              <span className="text-green-600 font-medium">{formatPrice(getPrecioFinal(item))}</span>
+              <span className="text-[var(--color-brand-mustard)] font-medium">{formatPrice(getPrecioFinal(item))}</span>
             </>
           ) : (
-            formatPrice(item.precio)
+            <span className="text-[var(--color-brand-sage)]">{formatPrice(item.precio)}</span>
           )}
         </p>
         {item.notaPersonalizacion && (
@@ -52,7 +52,7 @@ function ItemRow({ item }: { item: CartItem }) {
         )}
       </div>
 
-      <p className="text-sm font-medium shrink-0">
+      <p className={`text-sm font-medium shrink-0 ${item.descuentoPorcentaje > 0 ? "text-[var(--color-brand-mustard-dark)]" : "text-[var(--color-brand-sage)]"}`}>
         {formatPrice(getPrecioFinal(item) * item.cantidad)}
       </p>
     </div>
@@ -77,8 +77,8 @@ export default function ResumenPedido({
 
   if (items.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-6 text-center text-muted-foreground">
+      <Card className="border-[var(--color-brand-rose)]/20">
+        <CardContent className="py-6 text-center text-[var(--color-brand-rose-dark)]">
           Tu carrito está vacío.
         </CardContent>
       </Card>
@@ -86,11 +86,11 @@ export default function ResumenPedido({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Resumen del pedido</CardTitle>
+    <Card className="border-[var(--color-brand-rose)]/20">
+      <CardHeader className="border-b border-[var(--color-brand-rose)]/10">
+        <CardTitle className="font-heading text-base text-brand-mustard">Resumen del pedido</CardTitle>
         {sedeActual && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-brand-sage">
             Sede: {sedeActual.nombre} — {sedeActual.ciudad}
           </p>
         )}
@@ -101,23 +101,23 @@ export default function ResumenPedido({
           <ItemRow key={item.id} item={item} />
         ))}
 
-        <Separator className="my-3" />
+        <Separator className="my-3 bg-[var(--color-brand-rose)]/20" />
 
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <div className="flex items-center justify-between text-sm text-[var(--color-brand-sage)]">
           <span>Subtotal</span>
           <span>{formatPrice(subtotal)}</span>
         </div>
 
         {costoEnvio > 0 && (
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <div className="flex items-center justify-between text-sm text-[var(--color-brand-sage)]">
             <span>Envío</span>
             <span>{formatPrice(costoEnvio)}</span>
           </div>
         )}
 
-        <Separator className="my-3" />
+        <Separator className="my-3 bg-[var(--color-brand-rose)]/20" />
 
-        <div className="flex items-center justify-between font-medium">
+        <div className="flex items-center justify-between font-bold text-[var(--color-brand-mustard-dark)]">
           <span>Total a Pagar</span>
           <span className="text-lg">{formatPrice(total)}</span>
         </div>
