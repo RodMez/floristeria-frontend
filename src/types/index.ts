@@ -47,6 +47,28 @@ export interface ProductoDetalleDTO {
   productosComplementarios?: ProductoCatalogo[];
 }
 
+export interface ProductoShowcase {
+  productoId: number;
+  nombre: string;
+  descripcion: string;
+  imagenUrl: string;
+  sku: string;
+  categoriasNombres: string[];
+  ratingAverage?: number;
+  ratingCount?: number;
+  variantes: ShowcaseVariante[];
+}
+
+export interface ShowcaseVariante {
+  sedeId: number;
+  sedeNombre: string;
+  ciudad: string;
+  precio: number;
+  descuentoPorcentaje: number;
+  precioFinal: number;
+  stock: number;
+}
+
 export interface DetallePedidoRequest {
   productoId: number;
   cantidad: number;
@@ -348,9 +370,12 @@ export interface ConfiguracionTiendaDTO {
   historia?: string | null;
   mision?: string | null;
   vision?: string | null;
+  showcaseBadge?: string | null;
+  showcaseTitulo?: string | null;
+  showcaseSubtitulo?: string | null;
 }
 
-export type UbicacionBanner = "SELECTOR_SEDE" | "HOME_SEDE" | "PRODUCTO_INDIVIDUAL";
+export type UbicacionBanner = "SELECTOR_SEDE" | "HOME_SEDE" | "SHOWCASE";
 
 export interface BannerDTO {
   id: number;

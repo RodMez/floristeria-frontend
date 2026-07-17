@@ -21,6 +21,7 @@ import {
   ImageIcon,
   Download,
   FileSpreadsheet,
+  Sparkles,
 } from "lucide-react";
 import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok } from "@/components/icons/SocialIcons";
 import { Card, CardContent } from "@/components/ui/card";
@@ -48,6 +49,9 @@ const configSchema = z.object({
   historia: z.string().max(10000, "Máximo 10000 caracteres").optional().or(z.literal("")),
   mision: z.string().max(10000, "Máximo 10000 caracteres").optional().or(z.literal("")),
   vision: z.string().max(10000, "Máximo 10000 caracteres").optional().or(z.literal("")),
+  showcaseBadge: z.string().max(100, "Máximo 100 caracteres").optional().or(z.literal("")),
+  showcaseTitulo: z.string().max(200, "Máximo 200 caracteres").optional().or(z.literal("")),
+  showcaseSubtitulo: z.string().max(500, "Máximo 500 caracteres").optional().or(z.literal("")),
 });
 
 type ConfigFormData = z.infer<typeof configSchema>;
@@ -126,6 +130,9 @@ export default function ConfiguracionPage() {
       historia: "",
       mision: "",
       vision: "",
+      showcaseBadge: "",
+      showcaseTitulo: "",
+      showcaseSubtitulo: "",
     },
   });
 
@@ -253,6 +260,9 @@ export default function ConfiguracionPage() {
         historia: configuracion.historia ?? "",
         mision: configuracion.mision ?? "",
         vision: configuracion.vision ?? "",
+        showcaseBadge: configuracion.showcaseBadge ?? "",
+        showcaseTitulo: configuracion.showcaseTitulo ?? "",
+        showcaseSubtitulo: configuracion.showcaseSubtitulo ?? "",
       });
     }
   }, [configuracion, reset]);
@@ -286,6 +296,9 @@ export default function ConfiguracionPage() {
       historia: data.historia || null,
       mision: data.mision || null,
       vision: data.vision || null,
+      showcaseBadge: data.showcaseBadge || null,
+      showcaseTitulo: data.showcaseTitulo || null,
+      showcaseSubtitulo: data.showcaseSubtitulo || null,
     };
 
     try {
@@ -676,6 +689,55 @@ export default function ConfiguracionPage() {
                 />
                 <CharCounter current={watch("vision")?.length || 0} max={10000} />
               </div>
+            </div>
+          </div>
+        </CardSection>
+
+        {/* Showcase / Vitrina */}
+        <CardSection title="Showcase / Vitrina" icon={Sparkles}>
+          <div className="space-y-5">
+            <p className="text-sm text-stone-500">
+              Textos que aparecen en la página de vitrina (<code>/tienda/showcase</code>).
+              Si se dejan vacíos, se usan los textos por defecto.
+            </p>
+
+            <div className="space-y-2">
+              <Label htmlFor="showcaseBadge">Badge superior</Label>
+              <Input
+                id="showcaseBadge"
+                {...register("showcaseBadge")}
+                placeholder="Todas nuestras sedes, un solo lugar"
+                disabled={isLoading}
+                maxLength={100}
+              />
+              <CharCounter current={watch("showcaseBadge")?.length || 0} max={100} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="showcaseTitulo">
+                Título resaltado <span className="text-stone-400 font-normal">(después de "Descubre la")</span>
+              </Label>
+              <Input
+                id="showcaseTitulo"
+                {...register("showcaseTitulo")}
+                placeholder="Magia Floral"
+                disabled={isLoading}
+                maxLength={200}
+              />
+              <CharCounter current={watch("showcaseTitulo")?.length || 0} max={200} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="showcaseSubtitulo">Texto descriptivo</Label>
+              <Textarea
+                id="showcaseSubtitulo"
+                {...register("showcaseSubtitulo")}
+                placeholder="Explora cada creación, elige la sede más cercana y transforma cualquier momento en un recuerdo inolvidable."
+                disabled={isLoading}
+                rows={3}
+                maxLength={500}
+              />
+              <CharCounter current={watch("showcaseSubtitulo")?.length || 0} max={500} />
             </div>
           </div>
         </CardSection>
