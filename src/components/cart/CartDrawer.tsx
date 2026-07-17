@@ -204,7 +204,7 @@ export default function CartDrawer() {
               {sedeActual ? (
                 <Button
                   onClick={handlePagar}
-                  className="flex-[2] h-10 bg-brand-rose-dark hover:bg-gradient-to-r hover:from-brand-rose hover:via-brand-rose-dark hover:to-brand-rose-dark text-stone-900 font-extrabold text-base hover:scale-105 hover:shadow-[0_0_50px_rgba(229,190,111,0.8)] transition-all duration-300"
+                  className="flex-[2] h-10 bg-brand-rose-dark hover:bg-brand-mustard text-white hover:text-stone-900 font-extrabold text-base hover:scale-105 hover:shadow-[0_0_50px_rgba(229,190,111,0.8)] transition-all duration-300"
                 >
                   Pagar
                   <ArrowRight className="ml-1.5 h-4 w-4" />

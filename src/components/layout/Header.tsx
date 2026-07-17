@@ -11,7 +11,7 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { ConfiguracionTiendaDTO } from "@/types";
 import { useEffect, useState, useRef } from "react";
-import { Menu, User, LogOut, Package } from "lucide-react";
+import { Menu, User, LogOut, Package, Home, Users, ShoppingBag } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 
@@ -146,7 +146,7 @@ export default function Header() {
               <div ref={userMenuRef} className="relative">
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-bold text-brand-mustard transition-colors hover:text-brand-rose"
+                  className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-bold text-brand-mustard transition-colors hover:text-brand-mustard-dark"
                 >
                   <User className="size-4" />
                   <span className="font-heading font-bold max-w-[240px] truncate text-base">{nombre || "Mi cuenta"}</span>
@@ -209,86 +209,109 @@ export default function Header() {
             <SheetTrigger className="inline-flex md:hidden items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
               <Menu className="size-5" />
             </SheetTrigger>
-            <SheetContent className="w-72 sm:w-80">
-              <div className="flex h-full flex-col">
-                <div className="flex items-center justify-between border-b border-border pb-4">
-                  <span className="font-heading text-base font-semibold text-foreground">
-                    {nombreBase}{nombreAcento && <span className="text-brand-mustard"> {nombreAcento}</span>}
+            <SheetContent className="w-72 sm:w-80 p-0">
+              <div className="flex h-full flex-col px-6">
+                <div className="flex items-center justify-between border-b border-[var(--color-brand-rose)]/20 pt-6 pb-4 -mx-6 px-6">
+                  <span className="font-heading text-base font-semibold text-[var(--color-brand-mustard-dark)]">
+                    {nombreBase}{nombreAcento && <span className="text-[var(--color-brand-mustard)]"> {nombreAcento}</span>}
                   </span>
                 </div>
 
-                <nav className="flex-1 space-y-1 py-6">
+                <nav className="space-y-1 pt-4 pb-2">
                   <Link
                     href="/tienda"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-semibold text-stone-700 transition-colors hover:bg-[var(--color-brand-mustard)]/15 hover:text-[var(--color-brand-mustard-dark)]"
                   >
+                    <Home className="size-5 text-[var(--color-brand-rose-dark)]" />
                     Inicio
                   </Link>
                   <Link
                     href="/tienda/nosotros"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-semibold text-stone-700 transition-colors hover:bg-[var(--color-brand-mustard)]/15 hover:text-[var(--color-brand-mustard-dark)]"
                   >
+                    <Users className="size-5 text-[var(--color-brand-rose-dark)]" />
                     Nosotros
                   </Link>
-                  <Link
-                    href="/tienda"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  <button
+                    onClick={() => {
+                      if (sedeActual) {
+                        router.push(`/tienda/sede/${sedeActual.id}`);
+                      } else {
+                        router.push("/tienda");
+                      }
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-semibold text-stone-700 transition-colors hover:bg-[var(--color-brand-mustard)]/15 hover:text-[var(--color-brand-mustard-dark)]"
                   >
+                    <ShoppingBag className="size-5 text-[var(--color-brand-rose-dark)]" />
                     Catálogo
-                  </Link>
+                  </button>
                 </nav>
 
-                <Separator className="mb-4" />
-                {isCliente ? (
-                  <div className="space-y-1">
-                    <p className="px-3 font-heading text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                      {nombre || "Mi cuenta"}
-                    </p>
-                    <Link
-                      href="/tienda/mi-cuenta"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    >
-                      <User className="size-4" />
-                      Mi cuenta
-                    </Link>
-                    <Link
-                      href="/tienda/mi-cuenta"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    >
-                      <Package className="size-4" />
-                      Mis pedidos
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
-                    >
-                      <LogOut className="size-4" />
-                      Cerrar sesión
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Link
-                      href="/tienda/auth"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border-border bg-background px-2.5 py-2.5 text-base font-bold text-muted-foreground whitespace-nowrap transition-all hover:border-brand-mustard hover:text-brand-mustard"
-                    >
-                      Iniciar sesión
-                    </Link>
-                    <Link
-                      href="/tienda/auth"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-mustard px-2.5 py-2.5 text-base font-bold text-stone-900 whitespace-nowrap transition-all hover:bg-brand-mustard-dark"
-                    >
-                      Registrarse
-                    </Link>
-                  </div>
-                )}
+                <div className="border-t border-[var(--color-brand-rose)]/20 pt-4 pb-6 -mx-6 px-6 mt-auto">
+                  {isCliente ? (
+                    <>
+                      <div className="mb-4 rounded-xl bg-[var(--color-brand-rose-light)] p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-full bg-[var(--color-brand-mustard)] flex items-center justify-center shrink-0 shadow-sm">
+                            <span className="font-heading text-base font-bold text-stone-900">
+                              {(nombre || "U").charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-heading font-semibold text-[var(--color-brand-mustard-dark)] text-sm truncate">{nombre}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <Link
+                          href="/tienda/mi-cuenta"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm text-stone-600 transition-colors hover:bg-[var(--color-brand-mustard)]/15 hover:text-[var(--color-brand-mustard-dark)]"
+                        >
+                          <User className="size-5 text-[var(--color-brand-rose-dark)]" />
+                          Mi cuenta
+                        </Link>
+                        <Link
+                          href="/tienda/mi-cuenta"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm text-stone-600 transition-colors hover:bg-[var(--color-brand-mustard)]/15 hover:text-[var(--color-brand-mustard-dark)]"
+                        >
+                          <Package className="size-5 text-[var(--color-brand-rose-dark)]" />
+                          Mis pedidos
+                        </Link>
+                        <div className="border-t border-[var(--color-brand-rose)]/10 my-2" />
+                        <button
+                          onClick={handleLogout}
+                          className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm text-stone-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                        >
+                          <LogOut className="size-5" />
+                          Cerrar sesión
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="space-y-2">
+                      <Link
+                        href="/tienda/auth"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-[var(--color-brand-rose)] bg-[var(--color-brand-rose-light)]/50 px-2.5 py-2.5 text-base font-bold text-stone-700 transition-all hover:border-[var(--color-brand-mustard)] hover:text-[var(--color-brand-mustard-dark)]"
+                      >
+                        Iniciar sesión
+                      </Link>
+                      <Link
+                        href="/tienda/auth"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-[var(--color-brand-mustard)] px-2.5 py-2.5 text-base font-bold text-stone-900 transition-all hover:bg-[var(--color-brand-mustard-dark)]"
+                      >
+                        Registrarse
+                      </Link>
+                    </div>
+                  )}
+                </div>
               </div>
             </SheetContent>
           </Sheet>

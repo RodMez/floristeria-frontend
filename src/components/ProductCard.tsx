@@ -77,20 +77,24 @@ export default function ProductCard({ producto, sede, priority = false }: Produc
   const productDetailHref = `/tienda/sede/${sede.id}/producto/${producto.productoId}`;
 
   return (
-    <Card className="overflow-hidden h-full transition-all duration-250 hover:-translate-y-1.5 hover:shadow-2xl py-0 group">
+    <Card className="h-full transition-all duration-250 hover:-translate-y-1.5 hover:shadow-2xl py-0 group">
       <Link href={productDetailHref} className="block cursor-pointer">
-        <div className="aspect-square w-full overflow-hidden relative">
-          <Image
-            src={producto.imagenUrl}
-            alt={producto.nombre}
-            fill
-            priority={priority}
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-          />
+        <div className="aspect-square w-full relative">
+          <div className="absolute inset-0 overflow-hidden rounded-t-lg">
+            <Image
+              src={producto.imagenUrl}
+              alt={producto.nombre}
+              fill
+              priority={priority}
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+            />
+          </div>
           {tieneDescuento && (
-            <div className="discount-ribbon bg-brand-mustard transform rotate-45 transition-all duration-650 group-hover:scale-115 group-hover:shadow-xl group-hover:!bg-brand-rose">
-              <span>-{producto.descuentoPorcentaje}% OFF</span>
+            <div className="discount-ribbon-wrapper">
+              <div className="discount-ribbon-inner">
+                <span>-{producto.descuentoPorcentaje}% OFF</span>
+              </div>
             </div>
           )}
         </div>

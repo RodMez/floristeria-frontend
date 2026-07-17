@@ -30,13 +30,13 @@ interface BannerCarouselProps {
 function BannerSkeleton({ maxHeight }: { maxHeight: number }) {
   return (
     <div
-      className="w-full aspect-[3/1] min-h-[200px] overflow-hidden bg-stone-100 animate-pulse"
+      className="w-full aspect-[3/1] min-h-[200px] overflow-hidden bg-[var(--color-brand-rose-light)] animate-pulse"
       style={{ maxHeight }}
     >
       <div className="flex h-full items-end p-6 md:p-10">
         <div className="space-y-3 w-full max-w-xl">
-          <div className="h-8 w-3/4 rounded bg-stone-200" />
-          <div className="h-4 w-1/2 rounded bg-stone-200" />
+          <div className="h-8 w-3/4 rounded bg-[var(--color-brand-rose)]" />
+          <div className="h-4 w-1/2 rounded bg-[var(--color-brand-rose)]" />
         </div>
       </div>
     </div>
@@ -175,7 +175,7 @@ export default function BannerCarousel({
       ) : content}
 
       {total > 1 && (
-        <div className="flex justify-center gap-2 py-3" role="tablist" aria-label="Navegacion de banners">
+        <div className="flex justify-center gap-2 py-3 bg-[var(--color-brand-rose-light)]/30 border-b border-[var(--color-brand-rose)]/20" role="tablist" aria-label="Navegacion de banners">
           {banners.map((_, i) => (
             <button
               key={i}

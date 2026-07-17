@@ -50,8 +50,8 @@ export function ProductGrid({ productos, categorias, sede }: ProductGridProps) {
           onClick={() => setSelectedCategoryId(null)}
           className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
             selectedCategoryId === null
-              ? "bg-stone-900 text-white"
-              : "bg-stone-100 text-stone-700 hover:bg-stone-200"
+              ? "bg-brand-mustard text-stone-900"
+              : "bg-[var(--color-brand-rose-light)]/50 text-stone-700 hover:bg-brand-mustard/15"
           }`}
         >
           Todas
@@ -62,8 +62,8 @@ export function ProductGrid({ productos, categorias, sede }: ProductGridProps) {
             onClick={() => setSelectedCategoryId(selectedCategoryId === cat.id ? null : cat.id)}
             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
               selectedCategoryId === cat.id
-                ? "bg-stone-900 text-white"
-                : "bg-stone-100 text-stone-700 hover:bg-stone-200"
+                ? "bg-brand-mustard text-stone-900"
+                : "bg-[var(--color-brand-rose-light)]/50 text-stone-700 hover:bg-brand-mustard/15"
             }`}
           >
             {cat.nombre}
@@ -84,7 +84,7 @@ export function ProductGrid({ productos, categorias, sede }: ProductGridProps) {
       {/* Grid de productos */}
       {filteredProductos.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-stone-500 text-lg">
+          <p className="text-[var(--color-brand-rose-dark)] text-lg">
             No hay productos disponibles{selectedCategoryId && " en esta categoría"}.
           </p>
         </div>
