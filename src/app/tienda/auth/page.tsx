@@ -30,7 +30,7 @@ const registerSchema = z.object({
   nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   email: z.string().email("Email inválido"),
   telefono: z.string().min(10, "Teléfono inválido"),
-  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
   aceptaDatos: z.literal(true, { message: "Debes aceptar la política de datos" }),
 });
 
