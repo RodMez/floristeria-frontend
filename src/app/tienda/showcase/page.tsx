@@ -109,10 +109,9 @@ export default function ShowcasePage() {
             </span>
           </div>
           <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold text-stone-800 mb-4">
-            Descubre la{" "}
-              <span className="bg-gradient-to-r from-brand-mustard to-brand-rose-dark bg-clip-text text-transparent">
-                {config?.showcaseTitulo || "Magia Floral"}
-              </span>
+            <span className="bg-gradient-to-r from-brand-mustard to-brand-rose-dark bg-clip-text text-transparent">
+              {config?.showcaseTitulo || "Descubre la Magia Floral"}
+            </span>
           </h1>
           <p className="text-base md:text-lg text-stone-500 max-w-xl mx-auto leading-relaxed">
             {config?.showcaseSubtitulo ||

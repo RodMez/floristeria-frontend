@@ -715,12 +715,12 @@ export default function ConfiguracionPage() {
 
             <div className="space-y-2">
               <Label htmlFor="showcaseTitulo">
-                Título resaltado <span className="text-stone-400 font-normal">(después de "Descubre la")</span>
+                Título principal (H1)
               </Label>
               <Input
                 id="showcaseTitulo"
                 {...register("showcaseTitulo")}
-                placeholder="Magia Floral"
+                placeholder="Descubre la Magia Floral"
                 disabled={isLoading}
                 maxLength={200}
               />
