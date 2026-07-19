@@ -693,11 +693,11 @@ export default function ConfiguracionPage() {
           </div>
         </CardSection>
 
-        {/* Showcase / Vitrina */}
-        <CardSection title="Showcase / Vitrina" icon={Sparkles}>
+        {/* Catálogo */}
+        <CardSection title="Catálogo" icon={Sparkles}>
           <div className="space-y-5">
             <p className="text-sm text-stone-500">
-              Textos que aparecen en la página de vitrina (<code>/tienda/showcase</code>).
+              Textos que aparecen en la página de catálogo cross-sede (<code>/tienda/showcase</code>).
               Si se dejan vacíos, se usan los textos por defecto.
             </p>
 
