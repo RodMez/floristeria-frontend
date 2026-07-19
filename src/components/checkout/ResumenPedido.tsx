@@ -33,7 +33,7 @@ function ItemRow({ item }: { item: CartItem }) {
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{item.nombre}</p>
+        <p className="text-sm font-medium break-words line-clamp-2">{item.nombre}</p>
         <p className="text-xs text-muted-foreground">
           Cant. {item.cantidad} ×{" "}
           {item.descuentoPorcentaje > 0 ? (
