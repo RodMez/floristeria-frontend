@@ -53,7 +53,7 @@ export default function CartDrawer() {
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-md overflow-hidden bg-[#fdf5f3]">
         <SheetHeader className="text-center py-2">
-          <SheetTitle className="text-brand-mustard">Carrito de Compras</SheetTitle>
+          <SheetTitle className="text-stone-900">Carrito de Compras</SheetTitle>
         </SheetHeader>
 
         {items.length === 0 ? (
