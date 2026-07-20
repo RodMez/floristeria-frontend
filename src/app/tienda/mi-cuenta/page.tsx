@@ -603,11 +603,11 @@ function PedidosTab() {
       {pedidosOrdenados.map((pedido) => (
         <div
           key={pedido.id}
-          className={`rounded-lg bg-white border border-stone-200 border-l-4 ${STATUS_BORDER_COLORS[pedido.estado] ?? "border-l-stone-400"} hover:shadow-md transition-shadow p-4`}
+          className={`rounded-lg bg-white border border-stone-200 border-l-4 ${STATUS_BORDER_COLORS[pedido.estado] ?? "border-l-stone-400"} hover:shadow-xl hover:scale-[1.02] transition-all duration-300 p-4 group`}
         >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <span className="font-mono text-sm font-bold text-stone-800">#{pedido.id}</span>
+              <span className="font-mono text-sm font-bold text-stone-800 group-hover:text-[var(--color-brand-mustard-dark)] transition-colors duration-300">#{pedido.id}</span>
               <div className="text-xs text-stone-500 mt-1 space-y-0.5">
                 <p>{formatDate(pedido.creadoEn)}</p>
                 <p className="text-stone-400">{pedido.sedeNombre}</p>
@@ -712,7 +712,7 @@ interface PedidoDetalleDialogProps {
 function PedidoDetalleDialog({ pedido, onOpenChange }: PedidoDetalleDialogProps) {
   return (
     <Dialog open={pedido !== null} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg border-stone-200 p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col border-stone-200 p-0">
         {/* Header branded */}
         <div className="bg-gradient-to-r from-[var(--color-brand-mustard)]/10 via-[var(--color-brand-rose)]/5 to-transparent px-6 pt-6 pb-4">
           <div className="flex items-start gap-3">
@@ -735,7 +735,7 @@ function PedidoDetalleDialog({ pedido, onOpenChange }: PedidoDetalleDialogProps)
           </div>
         </div>
 
-        <div className="px-6 pb-6 space-y-4">
+        <div className="px-6 pb-6 space-y-4 flex-1 min-h-0 overflow-y-auto">
           {/* Sección 1: Información del Pago */}
           <div className="rounded-lg border border-[var(--color-brand-rose-light)] bg-[var(--color-brand-rose-light)]/20 p-3.5">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2.5 flex items-center gap-1.5">
@@ -1318,14 +1318,14 @@ function DireccionesTab() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {data.map((dir) => (
-            <Card key={dir.id} className="border border-dashed border-[var(--color-brand-mustard)] hover:shadow-md transition-shadow hover:border-[var(--color-brand-mustard-dark)]">
+            <Card key={dir.id} className="border border-dashed border-[var(--color-brand-mustard)] hover:shadow-xl hover:scale-[1.02] transition-all duration-300 hover:border-[var(--color-brand-mustard-dark)] group">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-full bg-[var(--color-brand-rose-light)] flex items-center justify-center shrink-0">
                       <MapPinIcon className="h-4 w-4 text-[var(--color-brand-rose-dark)]" />
                     </div>
-                    <CardTitle className="font-heading text-base text-[var(--color-brand-mustard-dark)]">{dir.alias}</CardTitle>
+                    <CardTitle className="font-heading text-base text-stone-900 group-hover:text-[var(--color-brand-mustard-dark)]">{dir.alias}</CardTitle>
                   </div>
                   <div className="flex gap-1">
                     <Button
@@ -1598,11 +1598,14 @@ function DireccionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md border-[var(--color-brand-rose)]">
+      <DialogContent className="sm:max-w-md border-t-4 border-t-[var(--color-brand-mustard)]">
         <DialogHeader>
-          <DialogTitle className="font-heading text-lg">
-            {isEditing ? "Editar dirección" : "Nueva dirección"}
-          </DialogTitle>
+          <div className="flex items-center gap-2 mb-1">
+            <MapPinIcon className="size-5 text-[var(--color-brand-rose-dark)]" />
+            <DialogTitle className="text-[var(--color-brand-rose-dark)]">
+              {isEditing ? "Editar dirección" : "Nueva dirección"}
+            </DialogTitle>
+          </div>
           <DialogDescription>
             {isEditing
               ? "Actualiza los datos de tu dirección."
@@ -1612,39 +1615,39 @@ function DireccionDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="dialog-alias" className="text-stone-700 font-medium">Alias *</Label>
+            <Label htmlFor="dialog-alias" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Alias *</Label>
             <Input
               id="dialog-alias"
               placeholder="Ej: Casa, Oficina"
               value={form.alias}
               onChange={(e) => handleChange("alias", e.target.value)}
               disabled={isSubmitting}
-              className="border-[var(--color-brand-rose)] focus:border-[var(--color-brand-mustard)] focus:ring-[var(--color-brand-mustard)]/20 bg-white h-12"
+              className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dialog-direccion" className="text-stone-700 font-medium">Dirección *</Label>
+            <Label htmlFor="dialog-direccion" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Dirección *</Label>
             <Input
               id="dialog-direccion"
               placeholder="Calle 10 # 20-30, Apto 501"
               value={form.direccion}
               onChange={(e) => handleChange("direccion", e.target.value)}
               disabled={isSubmitting}
-              className="border-[var(--color-brand-rose)] focus:border-[var(--color-brand-mustard)] focus:ring-[var(--color-brand-mustard)]/20 bg-white h-12"
+              className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dialog-ciudad" className="text-stone-700 font-medium">Sede de Despacho *</Label>
+            <Label className="text-[var(--color-brand-rose-dark)]/80 font-medium">Sede de Despacho *</Label>
             <Select
               value={selectedSedeId?.toString() ?? ""}
               onValueChange={handleSedeChange}
               disabled={isSubmitting || !sedes}
             >
-              <SelectTrigger id="dialog-ciudad">
+              <SelectTrigger className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50">
                 {selectedSedeId && sedes
                   ? (() => {
                       const sede = sedes.find((s) => s.id === selectedSedeId);
@@ -1669,15 +1672,15 @@ function DireccionDialog({
 
           {/* ── Zona de Domicilio (Selects Dependientes) ─────── */}
           {loadingZonas && selectedSedeId && (
-            <div className="flex items-center gap-2 text-sm text-stone-500 py-2">
-              <LoaderIcon className="size-4 animate-spin" />
-              Cargando zonas de domicilio...
+            <div className="space-y-2">
+              <div className="h-10 animate-pulse rounded-md bg-[var(--color-brand-rose-light)]/50" />
+              <div className="h-10 animate-pulse rounded-md bg-[var(--color-brand-rose-light)]/50" />
             </div>
           )}
 
           {!loadingZonas && allZones && zonasBySede.length === 0 && selectedSedeId && (
-            <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 rounded-md p-3">
-              <MapPinIcon className="size-4 shrink-0" />
+            <div className="flex items-center gap-2 text-sm text-[var(--color-brand-rose-dark)] bg-[var(--color-brand-rose-light)]/50 border border-[var(--color-brand-rose)]/20 rounded-md p-3">
+              <MapPinIcon className="size-4 shrink-0 text-[var(--color-brand-rose-dark)]" />
               No hay zonas de domicilio configuradas para esta sede. Contacta al administrador.
             </div>
           )}
@@ -1685,13 +1688,13 @@ function DireccionDialog({
           {!loadingZonas && allZones && zonasBySede.length > 0 && selectedSedeId && (
             <>
               <div className="space-y-2">
-                <Label className="text-stone-700 font-medium">Localidad / Municipio *</Label>
+                <Label className="text-[var(--color-brand-rose-dark)]/80 font-medium">Localidad / Municipio *</Label>
                 <Select
                   value={selectedLocalidad}
                   onValueChange={handleLocalidadChange}
                   disabled={isSubmitting}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50">
                     <SelectValue placeholder="Selecciona una localidad" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1707,14 +1710,14 @@ function DireccionDialog({
 
               {selectedLocalidad && (
                 <div className="space-y-2">
-                  <Label className="text-stone-700 font-medium">Barrio</Label>
-                  <Select
-                    value={selectedBarrio}
-                    onValueChange={handleBarrioChange}
-                    disabled={isSubmitting}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un barrio" />
+                  <Label className="text-[var(--color-brand-rose-dark)]/80 font-medium">Barrio</Label>
+                <Select
+                  value={selectedBarrio}
+                  onValueChange={handleBarrioChange}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50">
+                    <SelectValue placeholder="Selecciona un barrio" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__none">Selecciona un barrio...</SelectItem>
@@ -1731,14 +1734,14 @@ function DireccionDialog({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="dialog-detalles" className="text-stone-700 font-medium">Detalles adicionales</Label>
+            <Label htmlFor="dialog-detalles" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Detalles adicionales</Label>
             <Input
               id="dialog-detalles"
               placeholder="Casa azul, portería, etc."
               value={form.detalles}
               onChange={(e) => handleChange("detalles", e.target.value)}
               disabled={isSubmitting}
-              className="border-[var(--color-brand-rose)] focus:border-[var(--color-brand-mustard)] focus:ring-[var(--color-brand-mustard)]/20 bg-white h-12"
+              className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
             />
           </div>
 
@@ -1748,14 +1751,14 @@ function DireccionDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
-              className="border-stone-200 text-stone-600 hover:border-[var(--color-brand-mustard)] hover:text-[var(--color-brand-mustard-dark)]"
+              className="border-[var(--color-brand-rose)]/40 text-[var(--color-brand-rose-dark)] hover:bg-[var(--color-brand-mustard)]/10 hover:border-[var(--color-brand-mustard)]"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)] font-bold"
+              className="bg-[var(--color-brand-rose-dark)] hover:bg-[var(--color-brand-mustard)] text-white hover:text-stone-900 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>

@@ -162,9 +162,14 @@ export default function NuevaDireccionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md border-t-4 border-t-[var(--color-brand-mustard)]">
         <DialogHeader>
-          <DialogTitle>Nueva dirección</DialogTitle>
+          <div className="flex items-center gap-2 mb-1">
+            <MapPin className="size-5 text-[var(--color-brand-rose-dark)]" />
+            <DialogTitle className="text-[var(--color-brand-rose-dark)]">
+              Nueva dirección
+            </DialogTitle>
+          </div>
           <DialogDescription>
             Dirección de entrega para {sedeActual?.ciudad ?? "tu sede"}.
           </DialogDescription>
@@ -172,7 +177,7 @@ export default function NuevaDireccionDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="alias">Alias *</Label>
+            <Label htmlFor="alias" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Alias *</Label>
             <Input
               id="alias"
               placeholder="Ej: Casa, Oficina"
@@ -180,11 +185,12 @@ export default function NuevaDireccionDialog({
               onChange={(e) => handleChange("alias", e.target.value)}
               disabled={isSubmitting}
               required
+              className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="direccion">Dirección *</Label>
+            <Label htmlFor="direccion" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Dirección *</Label>
             <Input
               id="direccion"
               placeholder="Calle 10 # 20-30, Apto 501"
@@ -192,30 +198,31 @@ export default function NuevaDireccionDialog({
               onChange={(e) => handleChange("direccion", e.target.value)}
               disabled={isSubmitting}
               required
+              className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="ciudad">Sede de Despacho *</Label>
+            <Label htmlFor="ciudad" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Sede de Despacho *</Label>
             <Input
               id="ciudad"
               value={sedeActual?.ciudad ?? ""}
               disabled
-              className="bg-muted text-muted-foreground"
+              className="bg-[var(--color-brand-rose-light)]/20 text-muted-foreground focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
             />
           </div>
 
           {/* ── Zona de Domicilio (Selects Dependientes) ─────── */}
           {loadingZonas && sedeActual && (
-            <div className="flex items-center gap-2 text-sm text-stone-500 py-2">
-              <LoaderIcon className="size-4 animate-spin" />
-              Cargando zonas de domicilio...
+            <div className="space-y-2">
+              <div className="h-10 animate-pulse rounded-md bg-[var(--color-brand-rose-light)]/50" />
+              <div className="h-10 animate-pulse rounded-md bg-[var(--color-brand-rose-light)]/50" />
             </div>
           )}
 
           {!loadingZonas && zonas && zonas.length === 0 && (
-            <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 rounded-md p-3">
-              <MapPin className="size-4 shrink-0" />
+            <div className="flex items-center gap-2 text-sm text-[var(--color-brand-rose-dark)] bg-[var(--color-brand-rose-light)]/50 border border-[var(--color-brand-rose)]/20 rounded-md p-3">
+              <MapPin className="size-4 shrink-0 text-[var(--color-brand-rose-dark)]" />
               No hay zonas de domicilio configuradas para esta sede. Contacta al administrador.
             </div>
           )}
@@ -223,13 +230,13 @@ export default function NuevaDireccionDialog({
           {!loadingZonas && zonas && zonas.length > 0 && (
             <>
               <div className="space-y-2">
-                <Label>Localidad / Municipio *</Label>
+                <Label className="text-[var(--color-brand-rose-dark)]/80 font-medium">Localidad / Municipio *</Label>
                 <Select
                   value={selectedLocalidad}
                   onValueChange={handleLocalidadChange}
                   disabled={isSubmitting}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50">
                     <SelectValue placeholder="Selecciona una localidad" />
                   </SelectTrigger>
                   <SelectContent>
@@ -245,15 +252,15 @@ export default function NuevaDireccionDialog({
 
               {selectedLocalidad && (
                 <div className="space-y-2">
-                  <Label>Barrio</Label>
-                  <Select
-                    value={selectedBarrio}
-                    onValueChange={handleBarrioChange}
-                    disabled={isSubmitting}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un barrio" />
-                    </SelectTrigger>
+                <Label className="text-[var(--color-brand-rose-dark)]/80 font-medium">Barrio</Label>
+                <Select
+                  value={selectedBarrio}
+                  onValueChange={handleBarrioChange}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50">
+                    <SelectValue placeholder="Selecciona un barrio" />
+                  </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__none">Selecciona un barrio...</SelectItem>
                       {barrios.map((b) => (
@@ -269,7 +276,7 @@ export default function NuevaDireccionDialog({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="detalles">Detalles adicionales</Label>
+            <Label htmlFor="detalles" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Detalles adicionales</Label>
             <Textarea
               id="detalles"
               placeholder="Casa azul, portería, etc."
@@ -277,6 +284,7 @@ export default function NuevaDireccionDialog({
               onChange={(e) => handleChange("detalles", e.target.value)}
               disabled={isSubmitting}
               rows={2}
+              className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
             />
           </div>
 
@@ -286,10 +294,11 @@ export default function NuevaDireccionDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
+              className="border-[var(--color-brand-rose)]/40 text-[var(--color-brand-rose-dark)] hover:bg-[var(--color-brand-mustard)]/10 hover:border-[var(--color-brand-mustard)]"
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="bg-[var(--color-brand-rose-dark)] hover:bg-[var(--color-brand-mustard)] text-white hover:text-stone-900 disabled:opacity-50">
               {isSubmitting ? (
                 <>
                   <LoaderIcon className="size-4 animate-spin" />

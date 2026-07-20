@@ -240,7 +240,7 @@ export default function CheckoutPage() {
     <>
       <Script src="https://checkout.wompi.co/widget.js" strategy="lazyOnload" />
       <div className="min-h-screen bg-[var(--color-brand-rose-light)]/30 overflow-x-hidden">
-      <div className="container mx-auto max-w-5xl px-4 py-10 overflow-hidden">
+      <div className="container mx-auto max-w-6xl px-4 py-10">
       <div className="flex items-center gap-3 mb-8">
         <div className="h-10 w-10 rounded-full bg-[var(--color-brand-mustard)]/15 flex items-center justify-center shrink-0">
           <ShoppingBag className="h-5 w-5 text-[var(--color-brand-mustard-dark)]" />
@@ -248,7 +248,7 @@ export default function CheckoutPage() {
         <h1 className="font-heading text-2xl font-bold text-brand-mustard">Checkout</h1>
       </div>
 
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1.5fr_1fr_1.25fr]">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1fr_1.5fr_1fr]">
         {/* ── Columna 1: Direcciones ────────────────────────── */}
         <section>
           <div className="flex items-center gap-2 mb-4">
@@ -286,7 +286,7 @@ export default function CheckoutPage() {
                 </Label>
                 <Textarea
                   id="notas-entrega"
-                  placeholder="Ej: Llamar antes de llegar, dejar con el conserje..."
+                  placeholder="Ej: Llamar antes de llegar, dejar con el portero..."
                   value={notasEntrega}
                   onChange={(e) => setNotasEntrega(e.target.value)}
                   rows={3}

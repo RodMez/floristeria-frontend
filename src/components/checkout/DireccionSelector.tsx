@@ -52,7 +52,7 @@ export default function DireccionSelector({
   // ── Esperando habilitación ────────────────────────────────────
   if (!enabled) {
     return (
-      <Card>
+      <Card className="border-t-4 border-t-[var(--color-brand-mustard)]">
         <CardContent className="py-6 text-center text-muted-foreground">
           Cargando...
         </CardContent>
@@ -63,7 +63,7 @@ export default function DireccionSelector({
   // ── Error de carga ───────────────────────────────────────────
   if (error) {
     return (
-      <Card>
+      <Card className="border-t-4 border-t-[var(--color-brand-rose-dark)]">
         <CardContent className="py-6 text-center text-muted-foreground">
           Error al cargar direcciones. Intenta de nuevo.
         </CardContent>
