@@ -6,7 +6,9 @@ export type AdminStatusVariant =
   | "success"
   | "danger"
   | "muted"
-  | "rose";
+  | "rose"
+  | "mustard"
+  | "sage";
 
 type StatusBadgeProps = {
   variant: AdminStatusVariant;
@@ -49,6 +51,16 @@ const VARIANT_STYLES: Record<
     container:
       "bg-[var(--color-brand-rose-light)] text-[var(--color-brand-rose-dark)] border-[var(--color-brand-rose-dark)]/30",
     dot: "bg-[var(--color-brand-rose-dark)]",
+  },
+  mustard: {
+    container:
+      "bg-[var(--color-brand-mustard)]/15 text-[var(--color-brand-mustard-dark)] border-[var(--color-brand-mustard)]/30",
+    dot: "bg-[var(--color-brand-mustard)]",
+  },
+  sage: {
+    container:
+      "bg-[var(--admin-preparation-light)] text-[var(--admin-preparation-foreground)] border-[var(--admin-preparation)]/40",
+    dot: "bg-[var(--admin-preparation)]",
   },
 };
 
