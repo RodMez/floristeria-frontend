@@ -88,6 +88,38 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* ── Admin semantic tokens — boutique floral warm palette ── */
+  --admin-sidebar: oklch(0.235 0.018 50);
+  --admin-sidebar-hover: oklch(0.295 0.022 50);
+  --admin-sidebar-border: oklch(0.34 0.02 50);
+  --admin-sidebar-foreground: oklch(0.96 0.012 70);
+  --admin-sidebar-muted: oklch(0.72 0.015 60);
+
+  --admin-canvas: oklch(0.985 0.014 75);
+  --admin-card: oklch(0.995 0.008 70);
+  --admin-border: oklch(0.91 0.018 70);
+  --admin-foreground: oklch(0.22 0.02 50);
+  --admin-muted-foreground: oklch(0.52 0.02 60);
+
+  --admin-accent: var(--color-brand-mustard);
+  --admin-accent-hover: var(--color-brand-mustard-dark);
+
+  --admin-success: #15803d;
+  --admin-success-soft: #dcfce7;
+  --admin-success-foreground: #15803d;
+
+  --admin-warning: oklch(0.78 0.13 80);
+  --admin-warning-soft: oklch(0.96 0.04 85);
+  --admin-warning-foreground: oklch(0.5 0.12 75);
+
+  --admin-danger: oklch(0.58 0.16 25);
+  --admin-danger-soft: oklch(0.96 0.03 30);
+  --admin-danger-foreground: oklch(0.48 0.16 25);
+
+  --admin-info: oklch(0.62 0.14 25);
+  --admin-info-soft: oklch(0.95 0.045 25);
+  --admin-info-foreground: oklch(0.45 0.12 25);
 }
 
 .dark {
