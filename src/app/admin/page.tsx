@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import {
@@ -48,12 +49,12 @@ function getOpcionesPermitidas(estadoActual: string): string[] {
 }
 
 const STATUS_BORDER_COLORS: Record<string, string> = {
-  PENDIENTE_PAGO: "border-l-stone-400",
-  PAGADO: "border-l-amber-500",
-  EN_PREPARACION: "border-l-blue-500 animate-pulse",
-  EN_CAMINO: "border-l-purple-500 animate-pulse",
-  ENTREGADO: "border-l-emerald-500",
-  CANCELADO: "border-l-red-500",
+  PENDIENTE_PAGO: "border-l-[var(--admin-muted-foreground)]/40",
+  PAGADO: "border-l-[var(--admin-warning)]",
+  EN_PREPARACION: "border-l-[var(--admin-info)]",
+  EN_CAMINO: "border-l-[var(--admin-success)]",
+  ENTREGADO: "border-l-[var(--admin-success)]",
+  CANCELADO: "border-l-[var(--admin-danger)]",
 };
 
 const formatCurrency = (value: number) => {
@@ -65,6 +66,8 @@ const formatCurrency = (value: number) => {
 };
 
 export default function AdminPage() {
+  const [filtroEstado, setFiltroEstado] = useState<string>("");
+
   const { data, error, mutate } = useSWR<PedidoAdminResponse[]>(
     `${API_URL}/api/admin/pedidos`,
     fetcher,
@@ -80,6 +83,14 @@ export default function AdminPage() {
     EN_PREPARACION: pedidosActivos.filter((p) => p.estado === "EN_PREPARACION")
       .length,
     EN_CAMINO: pedidosActivos.filter((p) => p.estado === "EN_CAMINO").length,
+  };
+
+  const pedidosMostrados = filtroEstado
+    ? pedidosActivos.filter((p) => p.estado === filtroEstado)
+    : pedidosActivos;
+
+  const toggleFilter = (estado: string) => {
+    setFiltroEstado((prev) => (prev === estado ? "" : estado));
   };
 
   const handleStatusChange = async (pedidoId: string, nuevoEstado: string) => {
@@ -119,7 +130,7 @@ export default function AdminPage() {
   if (error) {
     return (
       <div className="p-6">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <div className="bg-[var(--admin-danger-soft)] border border-[var(--admin-danger)]/40 text-[var(--admin-danger-foreground)] px-4 py-3 rounded-lg">
           <p>Error al cargar los pedidos: {error.message}</p>
         </div>
       </div>
@@ -130,8 +141,10 @@ export default function AdminPage() {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <Package className="h-12 w-12 mx-auto mb-4 text-stone-400 animate-pulse" />
-          <p className="text-stone-500">Cargando pedidos...</p>
+          <Package className="h-12 w-12 mx-auto mb-4 text-[var(--admin-accent)] animate-pulse" />
+          <p className="font-heading italic text-[var(--admin-muted-foreground)]">
+            Cargando pedidos...
+          </p>
         </div>
       </div>
     );
@@ -141,60 +154,78 @@ export default function AdminPage() {
     <div className="p-6">
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-stone-900">
+          <h1 className="text-2xl font-bold text-[var(--admin-foreground)]">
             Pedidos en Curso
           </h1>
-          <p className="text-stone-500 text-sm mt-1">
+          <p className="text-[var(--admin-muted-foreground)] text-sm mt-1 font-heading italic">
             Centro de comando: gestiona los pedidos activos en tiempo real
           </p>
         </div>
         <Link
           href="/admin/pedidos"
-          className="inline-flex items-center gap-1.5 text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+          className="inline-flex items-center gap-1.5 text-sm font-heading font-semibold text-[var(--admin-success)] hover:text-[var(--admin-success-foreground)] transition-colors"
         >
           Ver todos los pedidos
           <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
 
-      <div className="mb-6 grid grid-cols-3 gap-4 max-w-md">
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
-          <p className="text-2xl font-bold text-amber-700">
-            {conteoPorEstado.PAGADO}
-          </p>
-          <p className="text-xs text-amber-600">Por preparar</p>
-        </div>
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
-          <p className="text-2xl font-bold text-blue-700">
-            {conteoPorEstado.EN_PREPARACION}
-          </p>
-          <p className="text-xs text-blue-600">En preparación</p>
-        </div>
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-center">
-          <p className="text-2xl font-bold text-purple-700">
-            {conteoPorEstado.EN_CAMINO}
-          </p>
-          <p className="text-xs text-purple-600">En camino</p>
-        </div>
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <button
+          onClick={() => setFiltroEstado("")}
+          className={`rounded-xl p-3 text-center shadow-sm border transition-all duration-200 ${filtroEstado === "" ? "bg-[var(--admin-canvas)] border-[var(--admin-accent)] ring-2 ring-[var(--admin-accent)]/30 scale-105" : "bg-[var(--admin-canvas)] border-[var(--admin-border)] hover:border-[var(--admin-accent)]/50 hover:scale-[1.02]"} cursor-pointer`}
+        >
+          <p className="text-2xl font-bold text-[var(--admin-foreground)] font-heading">{pedidosActivos.length}</p>
+          <p className="text-xs text-[var(--admin-muted-foreground)] font-heading">Todos</p>
+        </button>
+        <button
+          onClick={() => toggleFilter("PAGADO")}
+          className={`rounded-xl p-3 text-center shadow-sm border transition-all duration-200 ${filtroEstado === "PAGADO" ? "bg-[var(--admin-warning-soft)] border-[var(--admin-warning)] ring-2 ring-[var(--admin-warning)]/30 scale-105" : "bg-[var(--admin-warning-soft)] border-[var(--admin-border)] hover:border-[var(--admin-warning)]/50 hover:scale-[1.02]"} cursor-pointer`}
+        >
+          <p className="text-2xl font-bold text-[var(--admin-warning-foreground)] font-heading">{conteoPorEstado.PAGADO}</p>
+          <p className="text-xs text-[var(--admin-warning-foreground)]/80 font-heading">Por preparar</p>
+        </button>
+        <button
+          onClick={() => toggleFilter("EN_PREPARACION")}
+          className={`rounded-xl p-3 text-center shadow-sm border transition-all duration-200 ${filtroEstado === "EN_PREPARACION" ? "bg-[var(--admin-info-soft)] border-[var(--admin-info)] ring-2 ring-[var(--admin-info)]/30 scale-105" : "bg-[var(--admin-info-soft)] border-[var(--admin-border)] hover:border-[var(--admin-info)]/50 hover:scale-[1.02]"} cursor-pointer`}
+        >
+          <p className="text-2xl font-bold text-[var(--admin-info-foreground)] font-heading">{conteoPorEstado.EN_PREPARACION}</p>
+          <p className="text-xs text-[var(--admin-info-foreground)]/80 font-heading">En preparación</p>
+        </button>
+        <button
+          onClick={() => toggleFilter("EN_CAMINO")}
+          className={`rounded-xl p-3 text-center shadow-sm border transition-all duration-200 ${filtroEstado === "EN_CAMINO" ? "bg-[var(--admin-success-soft)] border-[var(--admin-success)] ring-2 ring-[var(--admin-success)]/30 scale-105" : "bg-[var(--admin-success-soft)] border-[var(--admin-border)] hover:border-[var(--admin-success)]/50 hover:scale-[1.02]"} cursor-pointer`}
+        >
+          <p className="text-2xl font-bold text-[var(--admin-success-foreground)] font-heading">{conteoPorEstado.EN_CAMINO}</p>
+          <p className="text-xs text-[var(--admin-success-foreground)]/80 font-heading">En camino</p>
+        </button>
       </div>
 
-      {pedidosActivos.length === 0 ? (
-        <div className="text-center py-12 text-stone-400">
-          <Package className="h-12 w-12 mx-auto mb-3" />
-          <p>No hay pedidos activos por el momento</p>
+      {pedidosMostrados.length === 0 ? (
+        <div className="text-center py-16 text-[var(--admin-muted-foreground)]">
+          <div className="inline-flex size-16 items-center justify-center rounded-full bg-[var(--admin-warning-soft)] mb-4">
+            <Package className="h-7 w-7 text-[var(--admin-accent)]" />
+          </div>
+            <p className="font-heading italic text-base">
+              {filtroEstado
+                ? `No hay pedidos en "${
+                    ORDER_STATUS_LABELS[filtroEstado as keyof typeof ORDER_STATUS_LABELS]
+                  }"`
+                : "No hay pedidos activos por el momento"}
+            </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {pedidosActivos.map((pedido) => (
+          {pedidosMostrados.map((pedido) => (
             <Card
               key={pedido.id}
-              className={`flex flex-col border-l-4 ${STATUS_BORDER_COLORS[pedido.estado] ?? "border-l-stone-400"}`}
+              className={`group flex flex-col border-l-4 bg-[var(--admin-card)] border-[var(--admin-border)] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 ${STATUS_BORDER_COLORS[pedido.estado] ?? "border-l-[var(--admin-muted-foreground)]/40"}`}
             >
               <CardHeader>
-                <CardTitle className="flex items-center justify-between gap-2">
-                  <span>Pedido {pedido.id}</span>
+                <CardTitle className="flex items-center justify-between gap-2 text-[var(--admin-foreground)]">
+                  <span>#{pedido.id}</span>
                   <Badge
-                    className={`${ORDER_STATUS_COLORS[pedido.estado as keyof typeof ORDER_STATUS_COLORS] ?? "bg-stone-100 text-stone-700 border-stone-200"} text-xs px-3 py-1.5 font-semibold flex items-center gap-1.5 shrink-0`}
+                    className={`${ORDER_STATUS_COLORS[pedido.estado as keyof typeof ORDER_STATUS_COLORS] ?? "bg-[var(--admin-canvas)] text-[var(--admin-foreground)] border-[var(--admin-border)]"} text-xs px-3 py-1.5 font-semibold flex items-center gap-1.5 shrink-0 transition-all duration-300 group-hover:ring-2 group-hover:ring-current/30`}
                   >
                     <span className="size-2 rounded-full bg-current" />
                     {ORDER_STATUS_LABELS[
@@ -205,52 +236,52 @@ export default function AdminPage() {
               </CardHeader>
 
               <CardContent className="flex-1 space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-stone-500">Cliente</span>
-                  <span className="font-medium">
+                <div className="flex justify-between gap-2">
+                  <span className="text-[var(--admin-muted-foreground)]">Cliente</span>
+                  <span className="font-medium text-[var(--admin-foreground)]">
                     {pedido.clienteNombre ?? "—"}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-stone-500">Sede</span>
-                  <span>{pedido.sedeNombre ?? "—"}</span>
+                <div className="flex justify-between gap-2">
+                  <span className="text-[var(--admin-muted-foreground)]">Sede</span>
+                  <span className="text-[var(--admin-foreground)]">{pedido.sedeNombre ?? "—"}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-stone-500">Total</span>
-                  <span className="font-bold">
+                <div className="flex justify-between gap-2">
+                  <span className="text-[var(--admin-muted-foreground)]">Total</span>
+                  <span className="font-bold text-[var(--admin-foreground)]">
                     {formatCurrency(pedido.total)}
                   </span>
                 </div>
-                <div className="border-t pt-2 mt-2">
-                  <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wider mb-1">
+                <div className="border-t border-[var(--admin-border)] pt-2 mt-2">
+                  <p className="text-[11px] font-semibold text-[var(--admin-muted-foreground)] uppercase tracking-wider mb-1 font-heading">
                     Productos
                   </p>
                   <div className="max-h-[108px] overflow-y-auto space-y-1.5">
                     {pedido.detalles?.map((d, i) => (
                       <div key={i}>
-                        <p className="text-xs text-stone-700 flex items-baseline gap-1">
+                        <p className="text-xs text-[var(--admin-foreground)] flex items-baseline gap-1">
                           <span className="font-medium shrink-0">{d.cantidad}x</span>
                           <span className="truncate">{d.productoNombre}</span>
                         </p>
                         {d.notaPersonalizacion && (
                           <div className="flex items-baseline gap-1 ml-4 mt-0.5">
-                            <StickyNote className="h-2.5 w-2.5 text-stone-400 shrink-0" />
-                            <p className="text-[11px] text-stone-500 italic leading-tight">
+                            <StickyNote className="h-2.5 w-2.5 text-[var(--admin-muted-foreground)] shrink-0" />
+                            <p className="text-[11px] text-[var(--admin-muted-foreground)] italic leading-tight">
                               {d.notaPersonalizacion}
                             </p>
                           </div>
                         )}
                       </div>
-                    )) ?? <p className="text-xs text-stone-400">Sin productos</p>}
+                    )) ?? <p className="text-xs text-[var(--admin-muted-foreground)] italic">Sin productos</p>}
                   </div>
                 </div>
                 {pedido.direccionEntrega && (
                   <div className="flex items-start gap-1.5 mt-1">
-                    <MapPin className="h-3 w-3 text-stone-400 mt-0.5 shrink-0" />
-                    <p className="text-xs text-stone-500 break-words">
+                    <MapPin className="h-3 w-3 text-[var(--admin-muted-foreground)] mt-0.5 shrink-0" />
+                    <p className="text-xs text-[var(--admin-muted-foreground)] break-words">
                       {pedido.direccionEntrega.direccion}
                       {pedido.zonaDomicilioNombre && (
-                        <span className="text-stone-400 ml-1">· {pedido.zonaDomicilioNombre}</span>
+                        <span className="text-[var(--admin-muted-foreground)]/70 ml-1">· {pedido.zonaDomicilioNombre}</span>
                       )}
                     </p>
                   </div>
