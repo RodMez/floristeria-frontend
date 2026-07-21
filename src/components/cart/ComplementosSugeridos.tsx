@@ -40,8 +40,15 @@ export default function ComplementosSugeridos({
     { dedupingInterval: 60000 }
   );
 
+  const seen = new Set<number>();
   const complementos = (catalogo ?? [])
-    .filter((p) => !excludeIds.has(String(p.productoId)) && p.disponible && p.stock > 0);
+    .filter((p) => {
+      if (!p.disponible || p.stock <= 0) return false;
+      if (excludeIds.has(String(p.productoId))) return false;
+      if (seen.has(p.productoId)) return false;
+      seen.add(p.productoId);
+      return true;
+    });
 
   if (complementos.length === 0) return null;
 

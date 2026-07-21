@@ -51,11 +51,11 @@ export const useCartStore = create<CartState>()(
             };
           }
 
-          const existing = state.items.find((i) => i.id === item.id);
+          const existing = state.items.find((i) => String(i.id) === String(item.id));
           if (existing) {
             return {
               items: state.items.map((i) =>
-                i.id === item.id ? { ...i, cantidad: i.cantidad + item.cantidad } : i
+                String(i.id) === String(item.id) ? { ...i, cantidad: i.cantidad + item.cantidad } : i
               ),
               sedeActual: sede,
             };
@@ -77,11 +77,27 @@ export const useCartStore = create<CartState>()(
       clearCart: () => set({ items: [], sedeActual: null }),
     }),
     {
-      name: "floristeria-cart",
+      name: "floristeria-cart-v2",
       partialize: (state) => ({
         items: state.items,
         sedeActual: state.sedeActual,
       }),
+      merge: (persisted, current) => {
+        const typedPersisted = persisted as Partial<CartState> | undefined;
+        const rawItems = typedPersisted?.items ?? [];
+        const seen = new Map<string, number>();
+        const deduped = rawItems.filter((item) => {
+          const key = String(item.id);
+          const idx = seen.get(key) ?? 0;
+          seen.set(key, idx + 1);
+          return idx === 0;
+        });
+        return {
+          ...current,
+          ...typedPersisted,
+          items: deduped,
+        };
+      },
     }
   )
 );
