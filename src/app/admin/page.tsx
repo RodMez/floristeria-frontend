@@ -52,7 +52,7 @@ const STATUS_BORDER_COLORS: Record<string, string> = {
   PENDIENTE_PAGO: "border-l-[var(--admin-muted-foreground)]/40",
   PAGADO: "border-l-[var(--admin-warning)]",
   EN_PREPARACION: "border-l-[var(--admin-info)]",
-  EN_CAMINO: "border-l-[var(--admin-success)]",
+  EN_CAMINO: "border-l-[var(--color-brand-rose-dark)]",
   ENTREGADO: "border-l-[var(--admin-success)]",
   CANCELADO: "border-l-[var(--admin-danger)]",
 };
@@ -194,10 +194,10 @@ export default function AdminPage() {
         </button>
         <button
           onClick={() => toggleFilter("EN_CAMINO")}
-          className={`rounded-xl p-3 text-center shadow-sm border transition-all duration-200 ${filtroEstado === "EN_CAMINO" ? "bg-[var(--admin-success-soft)] border-[var(--admin-success)] ring-2 ring-[var(--admin-success)]/30 scale-105" : "bg-[var(--admin-success-soft)] border-[var(--admin-border)] hover:border-[var(--admin-success)]/50 hover:scale-[1.02]"} cursor-pointer`}
+          className={`rounded-xl p-3 text-center shadow-sm border transition-all duration-200 ${filtroEstado === "EN_CAMINO" ? "bg-[var(--color-brand-rose-light)] border-[var(--color-brand-rose-dark)] ring-2 ring-[var(--color-brand-rose-dark)]/30 scale-105" : "bg-[var(--color-brand-rose-light)] border-[var(--admin-border)] hover:border-[var(--color-brand-rose-dark)]/50 hover:scale-[1.02]"} cursor-pointer`}
         >
-          <p className="text-2xl font-bold text-[var(--admin-success-foreground)] font-heading">{conteoPorEstado.EN_CAMINO}</p>
-          <p className="text-xs text-[var(--admin-success-foreground)]/80 font-heading">En camino</p>
+          <p className="text-2xl font-bold text-[var(--color-brand-rose-dark)] font-heading">{conteoPorEstado.EN_CAMINO}</p>
+          <p className="text-xs text-[var(--color-brand-rose-dark)]/80 font-heading">En camino</p>
         </button>
       </div>
 
