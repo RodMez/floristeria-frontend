@@ -530,7 +530,7 @@ export default function PedidosPage() {
             variant="outline"
             onClick={handleExportExcel}
             disabled={exportandoExcel}
-            className="border-[var(--admin-border)] text-[var(--admin-muted-foreground)] hover:border-[var(--admin-accent)] hover:text-stone-900 hover:bg-[var(--admin-warning-soft)]"
+            className="border-[var(--admin-accent)] text-[var(--admin-muted-foreground)] hover:border-[var(--admin-accent)] hover:text-stone-900 hover:bg-[var(--admin-warning-soft)]"
           >
             <FileSpreadsheet className="h-4 w-4 mr-1.5" />
             {exportandoExcel ? "Exportando..." : "Exportar Excel"}
