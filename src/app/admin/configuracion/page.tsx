@@ -58,7 +58,7 @@ type ConfigFormData = z.infer<typeof configSchema>;
 
 function CharCounter({ current, max }: { current: number; max: number }) {
   const pct = (current / max) * 100;
-  const color = pct > 90 ? "text-red-500" : pct > 70 ? "text-amber-500" : "text-stone-400";
+  const color = pct > 90 ? "text-[var(--admin-danger-foreground)]" : pct > 70 ? "text-[var(--admin-warning-foreground)]" : "text-[var(--admin-muted-foreground)]";
   return (
     <p className={`text-xs text-right ${color}`}>
       {current}/{max}
@@ -76,11 +76,11 @@ function CardSection({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="border-t-4 border-t-[var(--color-brand-mustard)]">
+    <Card className="border-t-4 border-t-[var(--color-brand-rose)] hover:border-t-[var(--color-brand-mustard)] transition-colors duration-300 group">
       {Icon && (
         <div className="flex items-center gap-2 px-6 pt-5 pb-0">
-          <Icon className="h-5 w-5 text-[var(--color-brand-mustard)]" />
-          <h2 className="text-lg font-semibold text-stone-800">{title}</h2>
+          <Icon className="h-5 w-5 text-[var(--color-brand-rose)] group-hover:text-[var(--color-brand-mustard)] transition-colors duration-300" />
+          <h2 className="text-lg font-semibold text-[var(--admin-foreground)]">{title}</h2>
         </div>
       )}
       <CardContent className="pt-4">{children}</CardContent>
@@ -326,7 +326,7 @@ export default function ConfiguracionPage() {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <p className="text-stone-500">Verificando permisos...</p>
+          <p className="text-[var(--admin-muted-foreground)]">Verificando permisos...</p>
         </div>
       </div>
     );
@@ -336,7 +336,7 @@ export default function ConfiguracionPage() {
     return (
       <div className="p-6">
         <div
-          className="border border-red-400 bg-red-50 px-4 py-3 text-red-700 rounded-lg"
+          className="border border-[var(--admin-danger)]/40 bg-[var(--admin-danger-soft)] px-4 py-3 text-[var(--admin-danger-foreground)] rounded-lg"
           role="alert"
         >
           <p>Error al cargar la configuración: {error.message}</p>
@@ -349,8 +349,8 @@ export default function ConfiguracionPage() {
     return (
       <div className="flex min-h-[400px] items-center justify-center p-6">
         <div className="text-center">
-          <Settings className="mx-auto mb-4 h-12 w-12 animate-pulse text-stone-400" />
-          <p className="text-stone-500">Cargando configuración...</p>
+          <Settings className="mx-auto mb-4 h-12 w-12 animate-pulse text-[var(--admin-muted-foreground)]" />
+          <p className="text-[var(--admin-muted-foreground)]">Cargando configuración...</p>
         </div>
       </div>
     );
@@ -362,7 +362,7 @@ export default function ConfiguracionPage() {
         <h1 className="text-2xl font-bold text-stone-900">
           Configuración de Tienda
         </h1>
-        <p className="mt-1 text-sm text-stone-500">
+        <p className="mt-1 text-sm text-[var(--admin-muted-foreground)]">
           Gestiona la configuración general de la tienda
         </p>
       </div>
@@ -394,14 +394,14 @@ export default function ConfiguracionPage() {
                     {...register("correoMaestro")}
                     placeholder="correo@ejemplo.com"
                     disabled={isLoading}
-                    className={errors.correoMaestro ? "border-red-400" : ""}
+                    className={errors.correoMaestro ? "border-[var(--admin-danger)]/40" : ""}
                   />
                   {errors.correoMaestro && (
-                    <p className="text-xs text-red-500" role="alert">
+                    <p className="text-xs text-[var(--admin-danger-foreground)]" role="alert">
                       {errors.correoMaestro.message}
                     </p>
                   )}
-                  <p className="text-xs text-stone-500">
+                  <p className="text-xs text-[var(--admin-muted-foreground)]">
                     {watchedEnviarCopia
                       ? "Se enviarán copias de todas las ventas a este correo."
                       : "Activa la opción anterior para recibir copias de ventas."}
@@ -412,13 +412,13 @@ export default function ConfiguracionPage() {
           </div>
 
           <div className="lg:col-span-1">
-            <Card className="border-t-4 border-t-[var(--color-brand-sage)] h-full">
+            <Card className="border-t-4 border-t-[var(--color-brand-rose)] hover:border-t-[var(--color-brand-mustard)] transition-colors duration-300 group h-full">
               <div className="flex items-center gap-2 px-6 pt-5 pb-0">
-                <Download className="h-5 w-5 text-[var(--color-brand-sage)]" />
-                <h2 className="text-lg font-semibold text-stone-800">Exportar Datos</h2>
+                <Download className="h-5 w-5 text-[var(--color-brand-rose)] group-hover:text-[var(--color-brand-mustard)] transition-colors duration-300" />
+                  <h2 className="text-lg font-semibold text-[var(--admin-foreground)]">Exportar Datos</h2>
               </div>
               <CardContent className="pt-4">
-                <p className="text-sm text-stone-500 mb-4">
+                <p className="text-sm text-[var(--admin-muted-foreground)] mb-4">
                   Descarga reportes de tu negocio en formato Excel.
                 </p>
                 <div className="space-y-3">
@@ -463,7 +463,7 @@ export default function ConfiguracionPage() {
                 maxLength={20}
               />
               {errors.whatsappGeneral && (
-                <p className="text-xs text-red-500" role="alert">
+                <p className="text-xs text-[var(--admin-danger-foreground)]" role="alert">
                   {errors.whatsappGeneral.message}
                 </p>
               )}
@@ -480,10 +480,10 @@ export default function ConfiguracionPage() {
                 {...register("instagramUrl")}
                 placeholder="https://instagram.com/tao.floral"
                 disabled={isLoading}
-                className={errors.instagramUrl ? "border-red-400" : ""}
+                className={errors.instagramUrl ? "border-[var(--admin-danger)]/40" : ""}
               />
               {errors.instagramUrl && (
-                <p className="text-xs text-red-500" role="alert">
+                <p className="text-xs text-[var(--admin-danger-foreground)]" role="alert">
                   {errors.instagramUrl.message}
                 </p>
               )}
@@ -500,10 +500,10 @@ export default function ConfiguracionPage() {
                 {...register("facebookUrl")}
                 placeholder="https://facebook.com/taofloral"
                 disabled={isLoading}
-                className={errors.facebookUrl ? "border-red-400" : ""}
+                className={errors.facebookUrl ? "border-[var(--admin-danger)]/40" : ""}
               />
               {errors.facebookUrl && (
-                <p className="text-xs text-red-500" role="alert">
+                <p className="text-xs text-[var(--admin-danger-foreground)]" role="alert">
                   {errors.facebookUrl.message}
                 </p>
               )}
@@ -511,7 +511,7 @@ export default function ConfiguracionPage() {
 
             <div className="space-y-2">
               <Label htmlFor="tiktokUrl" className="flex items-center gap-1.5">
-                <FaTiktok className="h-4 w-4 text-stone-800" />
+                <FaTiktok className="h-4 w-4 text-[var(--admin-foreground)]" />
                 TikTok
               </Label>
               <Input
@@ -520,10 +520,10 @@ export default function ConfiguracionPage() {
                 {...register("tiktokUrl")}
                 placeholder="https://tiktok.com/@tao.floral"
                 disabled={isLoading}
-                className={errors.tiktokUrl ? "border-red-400" : ""}
+                className={errors.tiktokUrl ? "border-[var(--admin-danger)]/40" : ""}
               />
               {errors.tiktokUrl && (
-                <p className="text-xs text-red-500" role="alert">
+                <p className="text-xs text-[var(--admin-danger-foreground)]" role="alert">
                   {errors.tiktokUrl.message}
                 </p>
               )}
@@ -696,8 +696,8 @@ export default function ConfiguracionPage() {
         {/* Catálogo */}
         <CardSection title="Catálogo" icon={Sparkles}>
           <div className="space-y-5">
-            <p className="text-sm text-stone-500">
-              Textos que aparecen en la página de catálogo cross-sede (<code>/tienda/showcase</code>).
+            <p className="text-sm text-[var(--admin-muted-foreground)]">
+              Textos que aparecen en la página de catálogo multi-sede (<code>/tienda/showcase</code>).
               Si se dejan vacíos, se usan los textos por defecto.
             </p>
 
@@ -758,9 +758,9 @@ export default function ConfiguracionPage() {
       </form>
 
       {/* Integración Meta */}
-      <Card className="border-t-4 border-t-[var(--color-brand-sage)]">
+      <Card className="border-t-4 border-t-[var(--color-brand-rose)] hover:border-t-[var(--color-brand-mustard)] transition-colors duration-300 group">
         <div className="flex items-center gap-2 px-6 pt-5 pb-0">
-          <Globe className="h-5 w-5 text-[var(--color-brand-sage)]" />
+          <Globe className="h-5 w-5 text-[var(--color-brand-rose)] group-hover:text-[var(--color-brand-mustard)] transition-colors duration-300" />
           <h2 className="text-lg font-semibold text-stone-800">
             Integración Meta Business
           </h2>

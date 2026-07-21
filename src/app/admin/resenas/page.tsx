@@ -22,6 +22,9 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRequireSuperAdmin } from "@/lib/auth";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
+import { StatusBadge } from "@/components/admin/StatusBadge";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
@@ -94,43 +97,52 @@ export default function AdminReseñasPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {isLoading && (
-        <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <p className="text-stone-500">Verificando permisos...</p>
+            <MessageSquare className="h-12 w-12 mx-auto mb-4 text-[var(--admin-accent)] animate-pulse" />
+            <p className="font-heading italic text-[var(--admin-muted-foreground)]">
+              Verificando permisos...
+            </p>
           </div>
         </div>
       )}
 
       {!isLoading && (
       <>
-      <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-bold text-stone-800">Reseñas</h1>
-        {reseñas && reseñas.length > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-brand-mustard)]/10 px-2.5 py-0.5 text-xs font-semibold text-[var(--color-brand-mustard-dark)]">
-            {reseñas.length}
-          </span>
-        )}
-      </div>
+      <AdminPageHeader
+        title="Reseñas"
+        subtitle="Valida las reseñas de los clientes"
+        icon={MessageSquare}
+        actions={
+          reseñas && reseñas.length > 0 ? (
+            <StatusBadge
+              variant={tab === "pendientes" ? "warning" : "muted"}
+              label={`${reseñas.length} ${tab === "pendientes" ? "pendientes" : "totales"}`}
+              pulse={tab === "pendientes" && reseñas.length > 0}
+            />
+          ) : undefined
+        }
+      />
 
-      <div className="flex gap-1 bg-stone-100 rounded-lg p-1 w-fit">
+      <div className="flex gap-1 bg-[var(--admin-canvas)] border border-[var(--admin-border)] rounded-lg p-1 w-fit">
         <button
           onClick={() => setTab("pendientes")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+          className={`px-4 py-2 rounded-md text-sm font-heading font-semibold transition-all duration-200 ${
             tab === "pendientes"
-              ? "bg-[var(--color-brand-mustard)] text-stone-900 shadow-sm"
-              : "text-stone-500 hover:text-stone-700"
+              ? "bg-[var(--admin-accent)] text-[var(--admin-sidebar)] shadow-sm"
+              : "text-[var(--admin-muted-foreground)] hover:text-[var(--admin-foreground)]"
           }`}
         >
           Pendientes
         </button>
         <button
           onClick={() => setTab("todas")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+          className={`px-4 py-2 rounded-md text-sm font-heading font-semibold transition-all duration-200 ${
             tab === "todas"
-              ? "bg-[var(--color-brand-mustard)] text-stone-900 shadow-sm"
-              : "text-stone-500 hover:text-stone-700"
+              ? "bg-[var(--admin-accent)] text-[var(--admin-sidebar)] shadow-sm"
+              : "text-[var(--admin-muted-foreground)] hover:text-[var(--admin-foreground)]"
           }`}
         >
           Todas
@@ -140,67 +152,52 @@ export default function AdminReseñasPage() {
       {isLoadingResenas && (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-16 rounded-xl bg-stone-100 animate-pulse" />
+            <div key={i} className="h-16 rounded-xl bg-[var(--admin-canvas)] animate-pulse" />
           ))}
         </div>
       )}
 
       {!isLoadingResenas && reseñas && reseñas.length === 0 && (
-        <div className="flex flex-col items-center gap-3 py-16 text-center">
-          <div className="h-14 w-14 rounded-full bg-[var(--color-brand-mustard)]/10 flex items-center justify-center">
-            <MessageSquare className="h-7 w-7 text-[var(--color-brand-mustard)]/40" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-stone-600">
-              {tab === "pendientes"
-                ? "No hay reseñas pendientes de aprobación"
-                : "No hay reseñas registradas"}
-            </p>
-            <p className="text-xs text-stone-400 mt-1">
-              Las reseñas de los clientes aparecerán aquí
-            </p>
-          </div>
-        </div>
+        <AdminEmptyState
+          icon={MessageSquare}
+          title={tab === "pendientes" ? "No hay reseñas pendientes de aprobación" : "No hay reseñas registradas"}
+          description="Las reseñas de los clientes aparecerán aquí."
+        />
       )}
 
       {!isLoadingResenas && reseñas && reseñas.length > 0 && (
-        <div className="overflow-x-auto rounded-xl border border-stone-100 bg-white">
+        <div className="overflow-x-auto rounded-xl border border-[var(--admin-border)] bg-[var(--admin-card)] shadow-sm">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-stone-100 bg-stone-50/80 text-left text-stone-500">
-                <th className="p-4 font-medium">Producto</th>
-                <th className="p-4 font-medium">Cliente</th>
-                <th className="p-4 font-medium">Calificación</th>
-                <th className="p-4 font-medium">Comentario</th>
-                <th className="p-4 font-medium">Fecha</th>
-                <th className="p-4 font-medium">Estado</th>
-                <th className="p-4 font-medium">Acciones</th>
+              <tr className="border-b border-[var(--admin-border)] bg-[var(--admin-canvas)]/60 text-left text-[var(--admin-muted-foreground)]">
+                <th className="p-4 font-heading uppercase tracking-wider text-[11px]">Producto</th>
+                <th className="p-4 font-heading uppercase tracking-wider text-[11px]">Cliente</th>
+                <th className="p-4 font-heading uppercase tracking-wider text-[11px]">Calificación</th>
+                <th className="p-4 font-heading uppercase tracking-wider text-[11px]">Comentario</th>
+                <th className="p-4 font-heading uppercase tracking-wider text-[11px]">Fecha</th>
+                <th className="p-4 font-heading uppercase tracking-wider text-[11px]">Estado</th>
+                <th className="p-4 font-heading uppercase tracking-wider text-[11px]">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {reseñas.map((r) => {
                 const loading = actionLoading[r.id];
                 return (
-                  <tr key={r.id} className="border-b border-stone-50 last:border-0 transition-colors duration-150 hover:bg-[var(--color-brand-mustard)]/5">
-                    <td className="p-4 text-stone-700 font-medium">{r.productoNombre ?? `#${r.productoId}`}</td>
-                    <td className="p-4 text-stone-700">{r.clienteNombre}</td>
+                  <tr key={r.id} className="border-b border-[var(--admin-border)] last:border-0 transition-colors duration-150 hover:bg-[var(--admin-warning-soft)]/40">
+                    <td className="p-4 text-[var(--admin-foreground)] font-medium">{r.productoNombre ?? `#${r.productoId}`}</td>
+                    <td className="p-4 text-[var(--admin-foreground)]">{r.clienteNombre}</td>
                     <td className="p-4">
                       <StarDisplay calificacion={r.calificacion} size="sm" />
                     </td>
-                    <td className="p-4 text-stone-600 max-w-[200px] truncate">
+                    <td className="p-4 text-[var(--admin-muted-foreground)] max-w-[200px] truncate">
                       {r.comentario ? truncate(r.comentario, 60) : "—"}
                     </td>
-                    <td className="p-4 text-stone-500 whitespace-nowrap">{formatDate(r.creadoEn)}</td>
+                    <td className="p-4 text-[var(--admin-muted-foreground)] whitespace-nowrap">{formatDate(r.creadoEn)}</td>
                     <td className="p-4">
                       {r.aprobada ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-brand-sage)]/15 px-2.5 py-0.5 text-xs font-medium text-[var(--color-brand-sage)]">
-                          <CheckCircle2 className="h-3 w-3" />
-                          Aprobada
-                        </span>
+                        <StatusBadge variant="success" icon={CheckCircle2} label="Aprobada" />
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-brand-mustard)]/15 px-2.5 py-0.5 text-xs font-medium text-[var(--color-brand-mustard-dark)]">
-                          Pendiente
-                        </span>
+                        <StatusBadge variant="warning" label="Pendiente" pulse />
                       )}
                     </td>
                     <td className="p-4">
@@ -211,7 +208,7 @@ export default function AdminReseñasPage() {
                             size="sm"
                             onClick={() => handleApprove(r.id)}
                             disabled={!!loading}
-                            className="text-[var(--color-brand-sage)] border-[var(--color-brand-sage)]/20 hover:bg-[var(--color-brand-sage)]/10 hover:text-[var(--color-brand-sage)]"
+                            className="text-[var(--admin-success-foreground)] border-[var(--admin-success)]/30 hover:bg-[var(--admin-success-soft)] hover:text-[var(--admin-success-foreground)]"
                           >
                             {loading === "approve" ? (
                               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -222,11 +219,10 @@ export default function AdminReseñasPage() {
                           </Button>
                         )}
                         <Button
-                          variant="outline"
+                          variant="destructive"
                           size="sm"
                           onClick={() => handleDelete(r)}
                           disabled={!!loading}
-                          className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
                         >
                           {loading === "delete" ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -246,21 +242,21 @@ export default function AdminReseñasPage() {
       )}
 
       <Dialog open={reviewToDelete !== null} onOpenChange={(open) => { if (!open) setReviewToDelete(null); }}>
-        <DialogContent className="sm:max-w-md border-red-100">
-          <DialogHeader className="items-center text-center">
-            <div className="mx-auto h-12 w-12 rounded-full bg-red-50 flex items-center justify-center mb-2">
-              <Trash2 className="h-5 w-5 text-red-400" />
+        <DialogContent className="sm:max-w-md border-t-4 border-t-[var(--admin-danger)]">
+          <DialogHeader className="items-center text-center border-b border-[var(--admin-border)] pb-4">
+            <div className="mx-auto h-12 w-12 rounded-full bg-[var(--admin-danger-soft)] flex items-center justify-center mb-2">
+              <Trash2 className="h-5 w-5 text-[var(--admin-danger-foreground)]" />
             </div>
-            <DialogTitle className="text-stone-800">Eliminar reseña</DialogTitle>
-            <DialogDescription className="text-stone-500 text-center">
-              ¿Estás seguro de eliminar la reseña de <span className="font-medium text-stone-700">&ldquo;{reviewToDelete?.clienteNombre}&rdquo;</span> para el producto <span className="font-medium text-stone-700">&ldquo;{reviewToDelete?.productoNombre ?? `#${reviewToDelete?.productoId}`}&rdquo;</span>? Esta acción no se puede deshacer.
+            <DialogTitle className="text-[var(--admin-foreground)] font-heading text-lg">Eliminar reseña</DialogTitle>
+            <DialogDescription className="text-[var(--admin-muted-foreground)] text-center font-heading italic">
+              ¿Estás seguro de eliminar la reseña de <span className="font-medium text-[var(--admin-foreground)] not-italic">&ldquo;{reviewToDelete?.clienteNombre}&rdquo;</span> para el producto <span className="font-medium text-[var(--admin-foreground)] not-italic">&ldquo;{reviewToDelete?.productoNombre ?? `#${reviewToDelete?.productoId}`}&rdquo;</span>? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex-row gap-3 sm:justify-center pt-2 border-t border-stone-100">
+          <DialogFooter className="flex-row gap-3 sm:justify-center pt-2 border-t border-[var(--admin-border)]">
             <Button
               variant="outline"
               onClick={() => setReviewToDelete(null)}
-              className="border-stone-200 text-stone-600 hover:border-[var(--color-brand-mustard)] hover:text-[var(--color-brand-mustard-dark)]"
+              className="border-[var(--admin-border)] text-[var(--admin-muted-foreground)] hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)]"
             >
               No, volver
             </Button>
@@ -268,7 +264,6 @@ export default function AdminReseñasPage() {
               variant="destructive"
               onClick={confirmDelete}
               disabled={!!actionLoading[reviewToDelete?.id ?? 0]}
-              className="bg-red-500 hover:bg-red-600 text-white"
             >
               {actionLoading[reviewToDelete?.id ?? 0] === "delete" ? (
                 <>

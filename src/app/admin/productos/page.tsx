@@ -29,6 +29,9 @@ import { Flower2, Plus, Pencil, Trash2, Search, FileSpreadsheet, PackagePlus } f
 import Cookies from "js-cookie";
 import Image from "next/image";
 import { useRequireSuperAdmin } from "@/lib/auth";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminTableShell } from "@/components/admin/AdminTableShell";
+import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -130,7 +133,7 @@ export default function ProductosPage() {
   if (error) {
     return (
       <div className="p-6">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <div className="bg-[var(--admin-danger-soft)] border border-[var(--admin-danger)]/40 text-[var(--admin-danger-foreground)] px-4 py-3 rounded-lg">
           <p>Error al cargar los productos: {error.message}</p>
         </div>
       </div>
@@ -141,8 +144,10 @@ export default function ProductosPage() {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <Flower2 className="h-12 w-12 mx-auto mb-4 text-stone-400 animate-pulse" />
-          <p className="text-stone-500">Cargando productos...</p>
+          <Flower2 className="h-12 w-12 mx-auto mb-4 text-[var(--admin-accent)] animate-pulse" />
+          <p className="font-heading italic text-[var(--admin-muted-foreground)]">
+            Cargando productos...
+          </p>
         </div>
       </div>
     );
@@ -152,8 +157,10 @@ export default function ProductosPage() {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <Flower2 className="h-12 w-12 mx-auto mb-4 text-stone-400 animate-pulse" />
-          <p className="text-stone-500">Verificando permisos...</p>
+          <Flower2 className="h-12 w-12 mx-auto mb-4 text-[var(--admin-accent)] animate-pulse" />
+          <p className="font-heading italic text-[var(--admin-muted-foreground)]">
+            Verificando permisos...
+          </p>
         </div>
       </div>
     );
@@ -172,63 +179,65 @@ export default function ProductosPage() {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-stone-900">Catálogo Maestro</h1>
-          <p className="text-stone-500 text-sm mt-1">
-            Gestiona los productos base del sistema
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport} disabled={exportando}>
-            <FileSpreadsheet className="mr-2 h-4 w-4" />
-            {exportando ? "Exportando..." : "Exportar Excel"}
-          </Button>
-          <Button onClick={handleNew}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo Producto
-          </Button>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Catálogo Maestro"
+        subtitle="Gestiona los productos base del sistema"
+        icon={Flower2}
+        actions={
+          <>
+            <Button variant="outline" onClick={handleExport} disabled={exportando} className="border-[var(--admin-border)] text-[var(--admin-muted-foreground)] hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] hover:bg-[var(--admin-warning-soft)]">
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              {exportando ? "Exportando..." : "Exportar Excel"}
+            </Button>
+            <Button onClick={handleNew} className="bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]">
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo Producto
+            </Button>
+          </>
+        }
+      />
 
-      {/* Search Bar */}
-      <div className="mb-4">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
-          <Input
-            type="text"
-            placeholder="Buscar por nombre, descripción, categoría o SKU..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow">
+      <AdminTableShell
+        toolbar={
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--admin-muted-foreground)]" />
+            <Input
+              type="text"
+              placeholder="Buscar por nombre, descripción, categoría o SKU..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        }
+      >
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-[100px]">SKU</TableHead>
-              <TableHead>Imagen</TableHead>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Categoría</TableHead>
-              <TableHead>Descripción</TableHead>
-                <TableHead>Complementos</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
+            <TableRow className="bg-[var(--admin-canvas)]/60 hover:bg-[var(--admin-canvas)]/60">
+              <TableHead className="w-[100px] font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">SKU</TableHead>
+              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Imagen</TableHead>
+              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Nombre</TableHead>
+              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Categoría</TableHead>
+              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Descripción</TableHead>
+              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Complementos</TableHead>
+              <TableHead className="text-right font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {productosFiltrados.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center text-stone-500 py-8">
-                  No hay productos registrados
+              <TableRow className="hover:bg-transparent">
+                <TableCell colSpan={7} className="p-0">
+                  <AdminEmptyState
+                    icon={Flower2}
+                    title="No hay productos registrados"
+                    description="Crea tu primer producto para empezar a poblar el catálogo."
+                  />
                 </TableCell>
               </TableRow>
             )}
             {productosFiltrados.map((producto) => (
-              <TableRow key={producto.id}>
-                <TableCell className="font-mono text-sm">{producto.sku || "Sin SKU"}</TableCell>
+              <TableRow key={producto.id} className="border-[var(--admin-border)] hover:bg-[var(--admin-warning-soft)]/40 transition-colors">
+                <TableCell className="font-mono text-sm text-[var(--admin-foreground)]">{producto.sku || "Sin SKU"}</TableCell>
                 <TableCell>
                   <Image
                     src={producto.imagenUrl}
@@ -236,23 +245,23 @@ export default function ProductosPage() {
                     width={48}
                     height={48}
                     style={{ width: "auto", height: "auto" }}
-                    className="object-cover rounded"
+                    className="object-cover rounded-lg ring-1 ring-[var(--admin-border)]"
                   />
                 </TableCell>
-                <TableCell className="font-medium">{producto.nombre}</TableCell>
+                <TableCell className="font-medium text-[var(--admin-foreground)]">{producto.nombre}</TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {producto.categorias.map((cat) => (
                       <span
                         key={cat.id}
-                        className="inline-flex items-center rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-800"
+                        className="inline-flex items-center rounded-full bg-[var(--admin-info-soft)] border border-[var(--admin-info)]/30 px-2.5 py-0.5 text-xs font-semibold font-heading text-[var(--admin-info-foreground)]"
                       >
                         {cat.nombre}
                       </span>
                     ))}
                   </div>
                 </TableCell>
-                <TableCell className="max-w-[200px] truncate">
+                <TableCell className="max-w-[200px] truncate text-[var(--admin-muted-foreground)]">
                   {producto.descripcion}
                 </TableCell>
                 <TableCell>
@@ -260,6 +269,7 @@ export default function ProductosPage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setComplementosProducto(producto)}
+                    className="text-[var(--admin-success)] hover:text-[var(--admin-success-foreground)] hover:bg-[var(--admin-success-soft)]"
                   >
                     <PackagePlus className="h-4 w-4 mr-1" />
                     Complementos
@@ -271,6 +281,7 @@ export default function ProductosPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleEdit(producto)}
+                      className="border-[var(--admin-border)] text-[var(--admin-muted-foreground)] hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] hover:bg-[var(--admin-warning-soft)]"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -287,7 +298,7 @@ export default function ProductosPage() {
             ))}
           </TableBody>
         </Table>
-      </div>
+      </AdminTableShell>
 
       <ProductDialog
         isOpen={dialogOpen}
@@ -305,7 +316,7 @@ export default function ProductosPage() {
       />
 
       <Dialog open={productoToDelete !== null} onOpenChange={(open) => { if (!open) setProductoToDelete(null); }}>
-        <DialogContent>
+        <DialogContent className="border-t-4 border-t-[var(--admin-danger)]">
           <DialogHeader>
             <DialogTitle>Eliminar producto</DialogTitle>
             <DialogDescription>

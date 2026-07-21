@@ -3,7 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
-import { PedidoAdminResponse, ORDER_STATUSES, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from "@/types";
+import { PedidoAdminResponse, ORDER_STATUSES, ORDER_STATUS_LABELS } from "@/types";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import {
@@ -31,11 +31,38 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Eye, Package, Search, Download, ShoppingBag, CreditCard, Truck, MessageSquare, FileSpreadsheet } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Eye, Package, Search, Download, ShoppingBag, CreditCard, Truck, MessageSquare, FileSpreadsheet, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
 import { loadCinzelFonts } from "@/lib/pdfFonts";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminTableShell } from "@/components/admin/AdminTableShell";
+import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
+import { StatusBadge, type AdminStatusVariant } from "@/components/admin/StatusBadge";
+import type { OrderStatus } from "@/types";
+
+const ORDER_ADMIN_VARIANT: Record<OrderStatus, AdminStatusVariant> = {
+  PENDIENTE_PAGO: "muted",
+  PAGADO: "warning",
+  EN_PREPARACION: "info",
+  EN_CAMINO: "success",
+  ENTREGADO: "success",
+  CANCELADO: "danger",
+};
+
+const ORDER_BORDER_L: Record<OrderStatus, string> = {
+  PENDIENTE_PAGO: "border-l-[var(--admin-muted-foreground)]/40",
+  PAGADO: "border-l-[var(--admin-warning)]",
+  EN_PREPARACION: "border-l-[var(--admin-info)]",
+  EN_CAMINO: "border-l-[var(--admin-success)]",
+  ENTREGADO: "border-l-[var(--admin-success)]",
+  CANCELADO: "border-l-[var(--admin-danger)]",
+};
+
+const ORDER_STATUS_PULSE: Partial<Record<OrderStatus, boolean>> = {
+  EN_PREPARACION: true,
+  EN_CAMINO: true,
+};
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -154,7 +181,7 @@ export default function PedidosPage() {
   if (error) {
     return (
       <div className="p-6">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <div className="bg-[var(--admin-danger-soft)] border border-[var(--admin-danger)]/40 text-[var(--admin-danger-foreground)] px-4 py-3 rounded-lg">
           <p>Error al cargar los pedidos: {error.message}</p>
         </div>
       </div>
@@ -165,8 +192,10 @@ export default function PedidosPage() {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <Package className="h-12 w-12 mx-auto mb-4 text-stone-400 animate-pulse" />
-          <p className="text-stone-500">Cargando pedidos...</p>
+          <Package className="h-12 w-12 mx-auto mb-4 text-[var(--admin-accent)] animate-pulse" />
+          <p className="font-heading italic text-[var(--admin-muted-foreground)]">
+            Cargando pedidos...
+          </p>
         </div>
       </div>
     );
@@ -482,91 +511,101 @@ export default function PedidosPage() {
   );
 
   return (
-    <div>
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-stone-900">Pedidos</h1>
-          <p className="text-stone-500 text-sm mt-1">
-            Administra y da seguimiento a los pedidos de tus clientes
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Select value={filtroEstado} onValueChange={(v) => { if (v !== null) setFiltroEstado(v); }}>
-            <SelectTrigger className="w-[160px] border-stone-300">
-              <SelectValue placeholder="Filtrar estado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Todos los estados</SelectItem>
-              {ORDER_STATUSES.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {ORDER_STATUS_LABELS[status]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filtroSede} onValueChange={(v) => { if (v !== null) setFiltroSede(v); }}>
-            <SelectTrigger className="w-[180px] border-emerald-300">
-              <SelectValue placeholder="Filtrar sede" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Todas las sedes</SelectItem>
-              {sedesUnicas.map((sede) => (
-                <SelectItem key={sede} value={sede}>
-                  {sede}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <div className="p-6">
+      <AdminPageHeader
+        title="Pedidos"
+        subtitle="Administra y da seguimiento a los pedidos de tus clientes"
+        icon={ClipboardList}
+        actions={
           <Button
             variant="outline"
             onClick={handleExportExcel}
             disabled={exportandoExcel}
-            className="border-stone-300 hover:border-[var(--color-brand-mustard)] hover:text-[var(--color-brand-mustard-dark)]"
+            className="border-[var(--admin-border)] text-[var(--admin-muted-foreground)] hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] hover:bg-[var(--admin-warning-soft)]"
           >
             <FileSpreadsheet className="h-4 w-4 mr-1.5" />
             {exportandoExcel ? "Exportando..." : "Exportar Excel"}
           </Button>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Search Bar */}
-      <div className="mb-4">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
-          <Input
-            type="text"
-            placeholder="Buscar por cliente, teléfono o método de pago..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow">
+      <AdminTableShell
+        toolbar={
+          <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+            <div className="relative max-w-md flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--admin-muted-foreground)]" />
+              <Input
+                type="text"
+                placeholder="Buscar por cliente, teléfono o método de pago..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <Select value={filtroEstado} onValueChange={(v) => { if (v !== null) setFiltroEstado(v); }}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Filtrar estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos los estados</SelectItem>
+                  {ORDER_STATUSES.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {ORDER_STATUS_LABELS[status]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filtroSede} onValueChange={(v) => { if (v !== null) setFiltroSede(v); }}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filtrar sede" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todas las sedes</SelectItem>
+                  {sedesUnicas.map((sede) => (
+                    <SelectItem key={sede} value={sede}>
+                      {sede}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        }
+      >
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Pedido</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Teléfono</TableHead>
-              <TableHead>Sede</TableHead>
-              <TableHead>Método Pago</TableHead>
-              <TableHead className="text-right">Total</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Fecha</TableHead>
-              <TableHead>Detalles</TableHead>
+            <TableRow className="bg-[var(--admin-canvas)]/60 hover:bg-[var(--admin-canvas)]/60">
+              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Pedido</TableHead>
+              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Cliente</TableHead>
+              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Teléfono</TableHead>
+              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Sede</TableHead>
+              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Método Pago</TableHead>
+              <TableHead className="text-right font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Total</TableHead>
+              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Estado</TableHead>
+              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Fecha</TableHead>
+              <TableHead className="text-right font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Ver</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-                      {pedidosConBusqueda.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell className="font-mono text-sm">{item.id}</TableCell>
-                <TableCell className="font-medium">{item.clienteNombre ?? "—"}</TableCell>
-                <TableCell>{item.clienteTelefono ?? "—"}</TableCell>
-                <TableCell>{item.sedeNombre ?? "—"}</TableCell>
-                <TableCell>{item.metodoPago || "—"}</TableCell>
-                <TableCell className="text-right font-medium">
+            {pedidosConBusqueda.length === 0 ? (
+              <TableRow className="hover:bg-transparent">
+                <TableCell colSpan={9} className="p-0">
+                  <AdminEmptyState
+                    icon={Package}
+                    title="No hay pedidos que coincidan con los filtros"
+                    description="Ajusta el buscador o los filtros de estado y sede."
+                  />
+                </TableCell>
+              </TableRow>
+            ) : pedidosConBusqueda.map((item) => (
+              <TableRow key={item.id} className={`border-[var(--admin-border)] hover:bg-[var(--admin-warning-soft)]/40 transition-colors border-l-4 ${ORDER_BORDER_L[item.estado as OrderStatus] ?? "border-l-transparent"}`}>
+                <TableCell className="font-mono text-sm text-[var(--admin-foreground)]">#{item.id}</TableCell>
+                <TableCell className="font-medium text-[var(--admin-foreground)]">{item.clienteNombre ?? "—"}</TableCell>
+                <TableCell className="text-[var(--admin-foreground)]">{item.clienteTelefono ?? "—"}</TableCell>
+                <TableCell className="text-[var(--admin-foreground)]">{item.sedeNombre ?? "—"}</TableCell>
+                <TableCell className="text-[var(--admin-muted-foreground)]">{item.metodoPago || "—"}</TableCell>
+                <TableCell className="text-right font-semibold text-[var(--admin-foreground)]">
                   {formatCurrency(item.total)}
                 </TableCell>
                 <TableCell>
@@ -585,10 +624,9 @@ export default function PedidosPage() {
                     <SelectTrigger
                       className={cn(
                         "h-7 rounded-full border px-3 text-xs font-medium",
-                        ORDER_STATUS_COLORS[item.estado as keyof typeof ORDER_STATUS_COLORS] ?? "bg-stone-100 text-stone-700 border-stone-200",
                         getOpcionesPermitidas(item.estado).length > 0
                           ? "cursor-pointer hover:opacity-80"
-                          : "cursor-default"
+                          : "cursor-default opacity-100"
                       )}
                     >
                       <SelectValue />
@@ -605,15 +643,16 @@ export default function PedidosPage() {
                     </SelectContent>
                   </Select>
                 </TableCell>
-                <TableCell className="text-sm text-stone-600">
+                <TableCell className="text-sm text-[var(--admin-muted-foreground)]">
                   {formatDateSolo(item.creadoEn)}
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-right">
                   <Button
                     variant="ghost"
                     size="icon-sm"
                     onClick={() => setPedidoSeleccionado(item)}
                     title="Ver detalles"
+                    className="text-[var(--admin-muted-foreground)] hover:text-[var(--admin-accent-hover)] hover:bg-[var(--admin-warning-soft)]"
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
@@ -622,7 +661,7 @@ export default function PedidosPage() {
             ))}
           </TableBody>
         </Table>
-      </div>
+      </AdminTableShell>
 
       <Dialog
         open={pedidoSeleccionado !== null}
@@ -630,115 +669,112 @@ export default function PedidosPage() {
           if (!open) setPedidoSeleccionado(null);
         }}
       >
-        <DialogContent className="sm:max-w-lg border-stone-200 p-0 overflow-hidden">
-          {/* Header branded */}
-          <div className="bg-gradient-to-r from-[var(--color-brand-mustard)]/10 via-[var(--color-brand-rose)]/5 to-transparent px-6 pt-6 pb-4">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col border-[var(--admin-border)] rounded-lg p-0">
+          <DialogHeader className="border-b border-[var(--admin-border)] px-6 pt-6 pb-4">
             <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-full bg-[var(--color-brand-mustard)]/15 flex items-center justify-center shrink-0">
-                <ShoppingBag className="h-5 w-5 text-[var(--color-brand-mustard-dark)]" />
+              <div className="h-10 w-10 rounded-xl bg-[var(--admin-warning-soft)] border border-[var(--admin-border)] flex items-center justify-center shrink-0">
+                <ShoppingBag className="h-5 w-5 text-[var(--admin-accent)]" />
               </div>
               <div className="flex-1 min-w-0">
-                <DialogTitle className="text-stone-800 text-lg">
+                <DialogTitle className="text-[var(--admin-foreground)] text-lg font-heading">
                   Pedido #{pedidoSeleccionado?.id}
                 </DialogTitle>
-                <DialogDescription className="text-stone-500 mt-0.5">
+                <DialogDescription className="text-[var(--admin-muted-foreground)] mt-0.5 font-heading italic">
                   {pedidoSeleccionado?.clienteNombre} &middot; {formatDate(pedidoSeleccionado?.creadoEn ?? "")}
                 </DialogDescription>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge
-                    className={`text-xs ${ORDER_STATUS_COLORS[pedidoSeleccionado?.estado as keyof typeof ORDER_STATUS_COLORS] ?? "bg-stone-100 text-stone-700"}`}
-                  >
-                    {ORDER_STATUS_LABELS[pedidoSeleccionado?.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedidoSeleccionado?.estado}
-                  </Badge>
-                  <span className="text-xs text-stone-400">{pedidoSeleccionado?.clienteTelefono}</span>
-                  <span className="text-xs text-stone-400">{pedidoSeleccionado?.clienteEmail}</span>
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <StatusBadge
+                    variant={pedidoSeleccionado ? ORDER_ADMIN_VARIANT[pedidoSeleccionado.estado as OrderStatus] : "muted"}
+                    label={pedidoSeleccionado ? (ORDER_STATUS_LABELS[pedidoSeleccionado.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedidoSeleccionado.estado) : ""}
+                    pulse={pedidoSeleccionado ? ORDER_STATUS_PULSE[pedidoSeleccionado.estado as OrderStatus] : false}
+                  />
+                  <span className="text-xs text-[var(--admin-muted-foreground)]">{pedidoSeleccionado?.clienteTelefono}</span>
+                  <span className="text-xs text-[var(--admin-muted-foreground)]">{pedidoSeleccionado?.clienteEmail}</span>
                 </div>
               </div>
             </div>
-          </div>
+          </DialogHeader>
 
-          <div className="px-6 pb-6 space-y-4">
-            {/* Sección 1: Información del Pago */}
-            <div className="rounded-lg border border-stone-100 bg-stone-50/50 p-3.5">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2.5 flex items-center gap-1.5">
-                <CreditCard className="size-3.5 text-[var(--color-brand-mustard-dark)]" />
+          <div className="px-6 py-5 space-y-4 flex-1 min-h-0 overflow-y-auto">
+            <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-4">
+              <p className="text-xs font-heading font-semibold uppercase tracking-wider text-[var(--admin-muted-foreground)] mb-3 flex items-center gap-1.5">
+                <CreditCard className="size-3.5 text-[var(--admin-accent)]" />
                 Información del Pago
-              </h4>
+              </p>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-stone-400">Referencia</span>
-                  <span className="font-mono text-xs text-stone-600 break-all">
+                <div className="flex justify-between gap-3">
+                  <span className="text-[var(--admin-muted-foreground)]">Referencia</span>
+                  <span className="font-mono text-xs text-[var(--admin-foreground)] break-all text-right">
                     {pedidoSeleccionado?.referenciaPago || "—"}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-stone-400">Método</span>
-                  <span className="font-medium capitalize text-stone-700">
+                <div className="flex justify-between gap-3">
+                  <span className="text-[var(--admin-muted-foreground)]">Método</span>
+                  <span className="font-medium capitalize text-[var(--admin-foreground)]">
                     {pedidoSeleccionado?.metodoPago || "—"}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-stone-400">Transacción</span>
-                  <span className="font-mono text-xs text-stone-600 break-all">
+                <div className="flex justify-between gap-3">
+                  <span className="text-[var(--admin-muted-foreground)]">Transacción</span>
+                  <span className="font-mono text-xs text-[var(--admin-foreground)] break-all text-right">
                     {pedidoSeleccionado?.transaccionId || "—"}
                   </span>
                 </div>
-                <div className="flex justify-between border-t border-stone-200 pt-2">
-                  <span className="text-stone-500 font-medium">Total</span>
-                  <span className="font-bold text-[var(--color-brand-mustard-dark)]">
+                <div className="flex justify-between gap-3 border-t border-[var(--admin-border)] pt-2">
+                  <span className="text-[var(--admin-foreground)] font-semibold font-heading">Total</span>
+                  <span className="font-bold text-[var(--admin-accent-hover)]">
                     {formatCurrency(pedidoSeleccionado?.total ?? 0)}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Sección 2: Información de Entrega */}
-            <div className="rounded-lg border border-stone-100 bg-stone-50/50 p-3.5">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2.5 flex items-center gap-1.5">
-                <Truck className="size-3.5 text-[var(--color-brand-mustard-dark)]" />
+            <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-4">
+              <p className="text-xs font-heading font-semibold uppercase tracking-wider text-[var(--admin-muted-foreground)] mb-3 flex items-center gap-1.5">
+                <Truck className="size-3.5 text-[var(--admin-accent)]" />
                 Información de Entrega
-              </h4>
+              </p>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-stone-400">Alias</span>
-                  <span className="font-medium text-stone-700">
+                <div className="flex justify-between gap-3">
+                  <span className="text-[var(--admin-muted-foreground)]">Alias</span>
+                  <span className="font-medium text-[var(--admin-foreground)]">
                     {pedidoSeleccionado?.direccionEntrega?.alias || "—"}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-stone-400">Dirección</span>
-                  <span className="text-right max-w-[60%] break-words text-stone-600">
+                <div className="flex justify-between gap-3">
+                  <span className="text-[var(--admin-muted-foreground)]">Dirección</span>
+                  <span className="text-right max-w-[60%] break-words text-[var(--admin-foreground)]">
                     {pedidoSeleccionado?.direccionEntrega?.direccion || "—"}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-stone-400">Ciudad</span>
-                  <span className="text-stone-600">{pedidoSeleccionado?.direccionEntrega?.ciudad || "—"}</span>
+                <div className="flex justify-between gap-3">
+                  <span className="text-[var(--admin-muted-foreground)]">Ciudad</span>
+                  <span className="text-[var(--admin-foreground)]">{pedidoSeleccionado?.direccionEntrega?.ciudad || "—"}</span>
                 </div>
                 {pedidoSeleccionado?.direccionEntrega?.detalles && (
-                  <div className="flex justify-between">
-                    <span className="text-stone-400">Detalles</span>
-                    <span className="text-right max-w-[60%] break-words text-stone-600">
+                  <div className="flex justify-between gap-3">
+                    <span className="text-[var(--admin-muted-foreground)]">Detalles</span>
+                    <span className="text-right max-w-[60%] break-words text-[var(--admin-foreground)]">
                       {pedidoSeleccionado.direccionEntrega.detalles}
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between border-t border-stone-200 pt-2">
-                  <span className="text-stone-400">Zona de Envío</span>
-                  <span className="font-medium text-stone-700">
+                <div className="flex justify-between gap-3 border-t border-[var(--admin-border)] pt-2">
+                  <span className="text-[var(--admin-muted-foreground)]">Zona de Envío</span>
+                  <span className="font-medium text-[var(--admin-foreground)]">
                     {pedidoSeleccionado?.zonaDomicilioNombre || "—"}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-stone-400">Costo de Envío</span>
-                  <span className="font-medium text-stone-700">
+                <div className="flex justify-between gap-3">
+                  <span className="text-[var(--admin-muted-foreground)]">Costo de Envío</span>
+                  <span className="font-medium text-[var(--admin-foreground)]">
                     {formatCurrency(pedidoSeleccionado?.costoEnvio ?? 0)}
                   </span>
                 </div>
                 {pedidoSeleccionado?.notasEntrega && (
-                  <div className="flex justify-between border-t border-stone-200 pt-2">
-                    <span className="text-stone-400">Notas de Entrega</span>
-                    <span className="text-right max-w-[60%] break-words text-stone-600">
+                  <div className="flex justify-between gap-3 border-t border-[var(--admin-border)] pt-2">
+                    <span className="text-[var(--admin-muted-foreground)]">Notas de Entrega</span>
+                    <span className="text-right max-w-[60%] break-words text-[var(--admin-foreground)]">
                       {pedidoSeleccionado.notasEntrega}
                     </span>
                   </div>
@@ -746,46 +782,45 @@ export default function PedidosPage() {
               </div>
             </div>
 
-            {/* Sección 3: Productos */}
-            <div className="rounded-lg border border-stone-100 bg-stone-50/50 p-3.5">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2.5 flex items-center gap-1.5">
-                <Package className="size-3.5 text-[var(--color-brand-mustard-dark)]" />
+            <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-4">
+              <p className="text-xs font-heading font-semibold uppercase tracking-wider text-[var(--admin-muted-foreground)] mb-3 flex items-center gap-1.5">
+                <Package className="size-3.5 text-[var(--admin-accent)]" />
                 Productos
-              </h4>
+              </p>
               <div className="max-h-[220px] overflow-y-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-stone-200 hover:bg-transparent">
-                      <TableHead className="text-xs text-stone-400">Producto</TableHead>
-                      <TableHead className="text-xs text-right text-stone-400">Cant</TableHead>
-                      <TableHead className="text-xs text-right text-stone-400">Precio</TableHead>
+                    <TableRow className="border-[var(--admin-border)] hover:bg-transparent bg-[var(--admin-canvas)]/60">
+                      <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Producto</TableHead>
+                      <TableHead className="text-right font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Cant</TableHead>
+                      <TableHead className="text-right font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Precio</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {pedidoSeleccionado?.detalles?.map((d, i) => (
-                      <TableRow key={i} className={`border-stone-100 ${i % 2 === 0 ? "bg-white/50" : "bg-stone-50/30"}`}>
-                        <TableCell className="text-sm font-medium text-stone-700 py-2 whitespace-normal">
+                      <TableRow key={i} className={`border-[var(--admin-border)] ${i % 2 === 0 ? "bg-[var(--admin-card)]" : "bg-[var(--admin-canvas)]/30"}`}>
+                        <TableCell className="text-sm font-medium text-[var(--admin-foreground)] py-2 whitespace-normal">
                           {d.productoNombre}
-                          <span className="block text-xs text-stone-400 font-normal">
+                          <span className="block text-xs text-[var(--admin-muted-foreground)] font-normal">
                             {d.productoSku}
                           </span>
                           {d.notaPersonalizacion && (
-                            <span className="flex items-center gap-1 text-xs text-[var(--color-brand-rose)] italic font-normal mt-0.5 break-words">
+                            <span className="flex items-center gap-1 text-xs text-[var(--admin-info)] italic font-normal mt-0.5 break-words">
                               <MessageSquare className="size-3 shrink-0" />
                               {d.notaPersonalizacion}
                             </span>
                           )}
                         </TableCell>
-                        <TableCell className="text-sm text-right text-stone-600 py-2">
+                        <TableCell className="text-sm text-right text-[var(--admin-foreground)] py-2">
                           {d.cantidad}
                         </TableCell>
-                        <TableCell className="text-sm text-right font-medium text-stone-700 py-2">
+                        <TableCell className="text-sm text-right font-semibold text-[var(--admin-foreground)] py-2">
                           {formatCurrency(d.precioUnitario)}
                         </TableCell>
                       </TableRow>
                     )) ?? (
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-sm text-stone-400 text-center py-4">
+                      <TableRow className="hover:bg-transparent">
+                        <TableCell colSpan={3} className="text-sm text-[var(--admin-muted-foreground)] text-center py-4 font-heading italic">
                           Sin productos
                         </TableCell>
                       </TableRow>
@@ -796,19 +831,18 @@ export default function PedidosPage() {
             </div>
           </div>
 
-          <DialogFooter className="px-6 pb-5 border-t border-stone-100 pt-4">
+          <DialogFooter className="px-6 pb-5 border-t border-[var(--admin-border)] pt-4 gap-2 mx-0 mb-0 bg-transparent rounded-none">
             <Button
               variant="outline"
               onClick={() => setPedidoSeleccionado(null)}
-              className="border-stone-200 text-stone-600 hover:border-[var(--color-brand-mustard)] hover:text-[var(--color-brand-mustard-dark)]"
+              className="border-[var(--admin-border)] text-[var(--admin-muted-foreground)] hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)]"
             >
               Cerrar
             </Button>
             <Button
               onClick={() => pedidoSeleccionado && generarPDF(pedidoSeleccionado)}
-              className="gap-1.5 bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]"
             >
-              <Download className="size-4" />
+              <Download className="size-4 mr-1.5" />
               Descargar Comprobante
             </Button>
           </DialogFooter>
@@ -821,15 +855,19 @@ export default function PedidosPage() {
           if (!open) setPedidoACancelar(null);
         }}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cancelar pedido</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="border-t-4 border-t-[var(--admin-danger)] sm:max-w-md">
+          <DialogHeader className="border-b border-[var(--admin-border)] pb-4">
+            <DialogTitle className="font-heading text-[var(--admin-foreground)]">Cancelar pedido</DialogTitle>
+            <DialogDescription className="font-heading italic text-[var(--admin-muted-foreground)]">
               ¿Estás seguro de cancelar el pedido #{pedidoACancelar}? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPedidoACancelar(null)}>
+          <DialogFooter className="border-t border-[var(--admin-border)] pt-4 gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setPedidoACancelar(null)}
+              className="border-[var(--admin-border)] text-[var(--admin-muted-foreground)] hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)]"
+            >
               No, volver
             </Button>
             <Button
