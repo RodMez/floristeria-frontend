@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import {
@@ -35,7 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Trash2, GripVertical } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Cookies from "js-cookie";
 
@@ -180,9 +180,9 @@ export function ComplementosDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[650px]">
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className="sm:max-w-[650px] border-t-4 border-t-[var(--admin-accent)] max-h-[90vh] overflow-y-auto overflow-x-hidden">
+        <DialogHeader className="border-b border-[var(--admin-border)] pb-4">
+          <DialogTitle className="font-heading text-[var(--admin-foreground)]">
             Complementos de: {productoNombre}
           </DialogTitle>
         </DialogHeader>
@@ -191,17 +191,17 @@ export function ComplementosDialog({
           {complementos && complementos.length > 0 ? (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Producto</TableHead>
-                  <TableHead>Sede</TableHead>
-                  <TableHead>Orden</TableHead>
-                  <TableHead className="text-right">Acción</TableHead>
+                <TableRow className="bg-[var(--admin-canvas)]/60 hover:bg-[var(--admin-canvas)]/60">
+                  <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Producto</TableHead>
+                  <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Sede</TableHead>
+                  <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Orden</TableHead>
+                  <TableHead className="text-right font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Acción</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {complementos.map((comp) => (
-                  <TableRow key={comp.id}>
-                    <TableCell className="font-medium">
+                  <TableRow key={comp.id} className="border-[var(--admin-border)] hover:bg-[var(--admin-warning-soft)]/40 transition-colors">
+                    <TableCell className="font-medium text-[var(--admin-foreground)]">
                       <div className="flex items-center gap-2">
                         {comp.complementarioImagenUrl && (
                           <Image
@@ -209,23 +209,24 @@ export function ComplementosDialog({
                             alt={comp.complementarioNombre}
                             width={32}
                             height={32}
-                            className="rounded object-cover w-8 h-8"
+                            className="rounded-lg object-cover w-8 h-8 ring-1 ring-[var(--admin-border)]"
                           />
                         )}
                         <span>{comp.complementarioNombre}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-stone-500">
+                    <TableCell className="text-[var(--admin-muted-foreground)]">
                       {comp.sedeNombre || "Todas"}
                     </TableCell>
-                    <TableCell className="text-stone-500">{comp.orden}</TableCell>
+                    <TableCell className="text-[var(--admin-muted-foreground)]">{comp.orden}</TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDelete(comp.id)}
+                        className="text-[var(--admin-danger-foreground)] hover:bg-[var(--admin-danger-soft)]"
                       >
-                        <Trash2 className="h-4 w-4 text-red-500" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -233,14 +234,14 @@ export function ComplementosDialog({
               </TableBody>
             </Table>
           ) : (
-            <p className="text-sm text-stone-500 text-center py-4">
+            <p className="text-sm text-[var(--admin-muted-foreground)] text-center py-4 font-heading italic">
               No hay complementos curados para este producto.
             </p>
           )}
 
           {showAddForm ? (
-            <div className="rounded-lg border p-4 space-y-4 bg-stone-50">
-              <h4 className="font-medium text-sm">Agregar complemento</h4>
+            <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-4 space-y-4">
+              <p className="font-heading font-semibold text-sm text-[var(--admin-foreground)]">Agregar complemento</p>
 
               <div className="space-y-2">
                 <Label>Producto complementario</Label>
@@ -301,6 +302,7 @@ export function ComplementosDialog({
                   variant="outline"
                   size="sm"
                   onClick={() => setShowAddForm(false)}
+                  className="border-[var(--admin-border)] text-[var(--admin-muted-foreground)] hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)]"
                 >
                   Cancelar
                 </Button>
@@ -312,7 +314,7 @@ export function ComplementosDialog({
           ) : (
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full border-[var(--admin-border)] text-[var(--admin-muted-foreground)] hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] hover:bg-[var(--admin-warning-soft)]"
               onClick={() => setShowAddForm(true)}
             >
               <Plus className="mr-2 h-4 w-4" />

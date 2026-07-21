@@ -8,14 +8,6 @@ import { z } from "zod";
 import { fetcher } from "@/lib/fetcher";
 import { UsuarioAdminResponse, UsuarioAdminRequest, Sede } from "@/types";
 import { toast } from "sonner";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,9 +26,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Users, Plus, Pencil, Trash2, Search } from "lucide-react";
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card";
+import { Plus, Pencil, Trash2, Search, Users, ShieldAlert, Store, LoaderCircle } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
 import Cookies from "js-cookie";
 import { useRequireSuperAdmin } from "@/lib/auth";
+
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -64,6 +71,7 @@ export default function UsuariosPage() {
   const { isLoading: isAuthLoading } = useRequireSuperAdmin();
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [filtroRol, setFiltroRol] = useState<string>("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUsuario, setEditingUsuario] =
     useState<UsuarioAdminResponse | null>(null);
@@ -245,7 +253,7 @@ export default function UsuariosPage() {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <p className="text-stone-500">Verificando permisos...</p>
+          <p className="text-[var(--admin-muted-foreground)]">Verificando permisos...</p>
         </div>
       </div>
     );
@@ -254,7 +262,7 @@ export default function UsuariosPage() {
   if (usuariosError) {
     return (
       <div className="p-6">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <div className="bg-[var(--admin-danger-soft)] border border-[var(--admin-danger)]/40 text-[var(--admin-danger-foreground)] px-4 py-3 rounded">
           <p>Error al cargar los usuarios: {usuariosError.message}</p>
         </div>
       </div>
@@ -265,44 +273,72 @@ export default function UsuariosPage() {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <Users className="h-12 w-12 mx-auto mb-4 text-stone-400 animate-pulse" />
-          <p className="text-stone-500">Cargando usuarios...</p>
+          <Users className="h-12 w-12 mx-auto mb-4 text-[var(--admin-muted-foreground)] animate-pulse" />
+          <p className="text-[var(--admin-muted-foreground)]">Cargando usuarios...</p>
         </div>
       </div>
     );
   }
 
-  const sortedUsuarios = usuarios
-    ? [...usuarios].sort((a, b) => b.id - a.id)
-    : [];
+  const sortedUsuarios = [...usuarios].sort((a, b) => b.id - a.id);
 
-  const usuariosFiltrados = sortedUsuarios.filter(
-    (u) =>
-      u.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.rol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.sedeNombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.id.toString().includes(searchTerm)
-  );
+  const conteoRoles = {
+    SUPERADMIN: sortedUsuarios.filter((u) => u.rol === "SUPERADMIN").length,
+    ADMIN: sortedUsuarios.filter((u) => u.rol === "ADMIN").length,
+  };
+
+  const usuariosFiltrados = sortedUsuarios
+    .filter((u) => filtroRol === "" || u.rol === filtroRol)
+    .filter(
+      (u) =>
+        u.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.rol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.sedeNombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.id.toString().includes(searchTerm)
+    );
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-stone-900">Usuarios</h1>
-          <p className="text-stone-500 text-sm mt-1">
-            Gestiona los usuarios del sistema
-          </p>
-        </div>
-        <Button onClick={handleNew}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nuevo Usuario
-        </Button>
+      <AdminPageHeader
+        title="Usuarios"
+        subtitle="Gestiona los usuarios del sistema"
+        icon={Users}
+        actions={
+          <Button onClick={handleNew} className="bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]">
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo Usuario
+          </Button>
+        }
+      />
+
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <button
+          onClick={() => setFiltroRol("")}
+          className={`rounded-xl px-4 py-2.5 text-center shadow-sm border transition-all duration-200 font-heading text-sm font-semibold ${filtroRol === "" ? "bg-[var(--admin-card)] border-[var(--admin-accent)] ring-2 ring-[var(--admin-accent)]/30" : "bg-[var(--admin-canvas)] border-[var(--admin-border)] hover:border-[var(--admin-accent)]/50 hover:shadow-md hover:-translate-y-0.5"} cursor-pointer`}
+        >
+          <span className="text-[var(--admin-foreground)] font-bold">{sortedUsuarios.length}</span>
+          <span className="text-[var(--admin-muted-foreground)] ml-1.5 font-bold">Todos</span>
+        </button>
+        <button
+          onClick={() => setFiltroRol((prev) => (prev === "SUPERADMIN" ? "" : "SUPERADMIN"))}
+          className={`rounded-xl px-4 py-2.5 text-center shadow-sm border transition-all duration-200 font-heading text-sm font-semibold ${filtroRol === "SUPERADMIN" ? "bg-[var(--color-brand-mustard)]/15 border-[var(--color-brand-mustard)] ring-2 ring-[var(--color-brand-mustard)]/30" : "bg-[var(--admin-canvas)] border-[var(--admin-border)] hover:border-[var(--color-brand-mustard)]/50 hover:shadow-md hover:-translate-y-0.5"} cursor-pointer`}
+        >
+          <span className="text-[var(--color-brand-mustard-dark)] font-bold">{conteoRoles.SUPERADMIN}</span>
+          <span className="text-[var(--color-brand-mustard-dark)]/70 ml-1.5 font-bold">SUPERADMIN</span>
+        </button>
+        <button
+          onClick={() => setFiltroRol((prev) => (prev === "ADMIN" ? "" : "ADMIN"))}
+          className={`rounded-xl px-4 py-2.5 text-center shadow-sm border transition-all duration-200 font-heading text-sm font-semibold ${filtroRol === "ADMIN" ? "bg-[var(--color-brand-rose)]/20 border-[var(--color-brand-rose-dark)] ring-2 ring-[var(--color-brand-rose-dark)]/30" : "bg-[var(--admin-canvas)] border-[var(--admin-border)] hover:border-[var(--color-brand-rose-dark)]/50 hover:shadow-md hover:-translate-y-0.5"} cursor-pointer`}
+        >
+          <span className="text-[var(--color-brand-rose-dark)] font-bold">{conteoRoles.ADMIN}</span>
+          <span className="text-[var(--color-brand-rose-dark)]/70 ml-1.5 font-bold">ADMIN</span>
+        </button>
       </div>
 
-      <div className="mb-4">
+      <div className="mb-6">
         <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--admin-muted-foreground)]" />
           <Input
             type="text"
             placeholder="Buscar por nombre, email, rol, sede o ID..."
@@ -313,102 +349,141 @@ export default function UsuariosPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[60px]">ID</TableHead>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Rol</TableHead>
-              <TableHead>Sede</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {usuariosFiltrados.length === 0 && (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="text-center text-stone-500 py-8"
-                >
-                  No hay usuarios registrados
-                </TableCell>
-              </TableRow>
-            )}
-            {usuariosFiltrados.map((usuario) => (
-              <TableRow key={usuario.id}>
-                <TableCell className="font-mono text-sm">
-                  {usuario.id}
-                </TableCell>
-                <TableCell className="font-medium">
-                  {usuario.nombre}
-                </TableCell>
-                <TableCell>{usuario.email}</TableCell>
-                <TableCell>
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-medium ${
-                      usuario.rol === "SUPERADMIN"
-                        ? "bg-purple-100 text-purple-700"
-                        : "bg-blue-100 text-blue-700"
-                    }`}
-                  >
-                    {usuario.rol}
-                  </span>
-                </TableCell>
-                <TableCell>{usuario.sedeNombre ?? "—"}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(usuario)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(usuario)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+      {usuariosFiltrados.length === 0 ? (
+        <AdminEmptyState
+          icon={Users}
+          title="No hay usuarios registrados"
+          description={searchTerm || filtroRol ? "Intenta con otros términos de búsqueda" : "Crea el primer usuario para empezar"}
+        />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {usuariosFiltrados.map((usuario, index) => {
+            const esSuperAdmin = usuario.rol === "SUPERADMIN";
+            const avatarBg = esSuperAdmin
+              ? "bg-[var(--color-brand-mustard)]"
+              : "bg-[var(--color-brand-rose)]";
+
+            return (
+              <Card
+                key={usuario.id}
+                className={`border-l-4 border-l-[var(--color-brand-rose)] hover:border-l-[var(--admin-accent)] bg-[var(--admin-card)] border-[var(--admin-border)] shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300`}
+                style={{ animation: `fadeInUp 0.3s ease-out ${index * 0.05}s both` }}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-4">
+                    <div className={`flex size-12 shrink-0 items-center justify-center rounded-full ${avatarBg} text-white text-sm font-bold font-heading shadow-sm`}>
+                      {getInitials(usuario.nombre)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <h3 className="font-heading font-semibold text-base text-[var(--admin-foreground)] truncate">
+                            {usuario.nombre}
+                          </h3>
+                          <p className="text-sm text-[var(--admin-muted-foreground)] truncate mt-0.5">
+                            {usuario.email}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 mt-3">
+                        {esSuperAdmin ? (
+                          <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-heading font-bold bg-[var(--color-brand-mustard)]/20 text-[var(--color-brand-mustard-dark)]">
+                            <ShieldAlert className="h-3 w-3" />
+                            SUPERADMIN
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-heading font-medium bg-[var(--color-brand-rose)]/20 text-[var(--color-brand-rose-dark)]">
+                            <ShieldAlert className="h-3 w-3" />
+                            ADMIN
+                          </span>
+                        )}
+                        {usuario.sedeNombre && (
+                          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-heading text-[var(--admin-muted-foreground)] bg-[var(--admin-canvas)] border border-[var(--admin-border)]">
+                            <Store className="h-3 w-3" />
+                            {usuario.sedeNombre}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="h-8 w-8 bg-white/90 hover:bg-white shadow-sm"
+                        onClick={() => handleEdit(usuario)}
+                        title="Editar"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="h-8 w-8 bg-white/90 hover:bg-white shadow-sm"
+                        onClick={() => handleDelete(usuario)}
+                        title="Eliminar"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-[var(--admin-danger-foreground)]" />
+                      </Button>
+                    </div>
                   </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md border-t-4 border-t-[var(--color-brand-rose)] border-b-4 border-b-[var(--color-brand-rose)]">
           <DialogHeader>
-            <DialogTitle>
-              {isEditing ? "Editar Usuario" : "Nuevo Usuario"}
-            </DialogTitle>
+            <div className="flex items-center gap-2 mb-1">
+              <Users className="size-5 text-[var(--color-brand-mustard)]" />
+              <DialogTitle className="text-[var(--color-brand-mustard)]">
+                {isEditing ? "Editar Usuario" : "Nuevo Usuario"}
+              </DialogTitle>
+            </div>
+            <DialogDescription>
+              {isEditing
+                ? "Actualiza los datos del usuario."
+                : "Crea un nuevo usuario para el sistema."}
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="nombre">
-                Nombre <span className="text-red-500">*</span>
+              <Label htmlFor="nombre" className="text-[var(--color-brand-rose-dark)]/80 font-medium">
+                Nombre <span className="text-[var(--admin-danger-foreground)]">*</span>
               </Label>
               <Input
                 id="nombre"
                 placeholder="Nombre completo"
                 disabled={isLoading}
                 {...register("nombre")}
+                className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
+                aria-invalid={errors.nombre ? "true" : undefined}
               />
               {errors.nombre && (
-                <p className="text-xs text-red-500">
+                <p className="text-xs text-[var(--admin-danger-foreground)]">
                   {errors.nombre.message}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">
-                Email <span className="text-red-500">*</span>
+              <Label htmlFor="email" className="text-[var(--color-brand-rose-dark)]/80 font-medium">
+                Email <span className="text-[var(--admin-danger-foreground)]">*</span>
               </Label>
               <Input
                 id="email"
@@ -416,21 +491,23 @@ export default function UsuariosPage() {
                 placeholder="correo@ejemplo.com"
                 disabled={isLoading}
                 {...register("email")}
+                className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
+                aria-invalid={errors.email ? "true" : undefined}
               />
               {errors.email && (
-                <p className="text-xs text-red-500">{errors.email.message}</p>
+                <p className="text-xs text-[var(--admin-danger-foreground)]">{errors.email.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">
+              <Label htmlFor="password" className="text-[var(--color-brand-rose-dark)]/80 font-medium">
                 Contraseña{" "}
                 {isEditing && (
-                  <span className="text-stone-400 text-xs">
+                  <span className="text-[var(--admin-muted-foreground)] text-xs font-normal">
                     (dejar vacío para no cambiar)
                   </span>
                 )}
-                {!isEditing && <span className="text-red-500"> *</span>}
+                {!isEditing && <span> *</span>}
               </Label>
               <Input
                 id="password"
@@ -438,17 +515,19 @@ export default function UsuariosPage() {
                 placeholder={isEditing ? "••••••••" : "Mínimo 8 caracteres"}
                 disabled={isLoading}
                 {...register("password")}
+                className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
+                aria-invalid={errors.password ? "true" : undefined}
               />
               {errors.password && (
-                <p className="text-xs text-red-500">
+                <p className="text-xs text-[var(--admin-danger-foreground)]">
                   {errors.password.message}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label>
-                Rol <span className="text-red-500">*</span>
+              <Label className="text-[var(--color-brand-rose-dark)]/80 font-medium">
+                Rol <span className="text-[var(--admin-danger-foreground)]">*</span>
               </Label>
               <Controller
                 name="rol"
@@ -458,7 +537,7 @@ export default function UsuariosPage() {
                     value={field.value}
                     onValueChange={field.onChange}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50">
                       <SelectValue placeholder="Selecciona un rol" />
                     </SelectTrigger>
                     <SelectContent>
@@ -469,14 +548,14 @@ export default function UsuariosPage() {
                 )}
               />
               {errors.rol && (
-                <p className="text-xs text-red-500">{errors.rol.message}</p>
+                <p className="text-xs text-[var(--admin-danger-foreground)]">{errors.rol.message}</p>
               )}
             </div>
 
             {rolValue === "ADMIN" && (
               <div className="space-y-2">
-                <Label>
-                  Sede <span className="text-red-500">*</span>
+                <Label className="text-[var(--color-brand-rose-dark)]/80 font-medium">
+                  Sede <span className="text-[var(--admin-danger-foreground)]">*</span>
                 </Label>
                 <Controller
                   name="sedeId"
@@ -486,7 +565,7 @@ export default function UsuariosPage() {
                       value={field.value?.toString() ?? ""}
                       onValueChange={(val) => field.onChange(Number(val))}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50">
                         <SelectValue placeholder="Selecciona una sede" />
                       </SelectTrigger>
                       <SelectContent>
@@ -503,7 +582,7 @@ export default function UsuariosPage() {
                   )}
                 />
                 {errors.sedeId && (
-                  <p className="text-xs text-red-500">
+                  <p className="text-xs text-[var(--admin-danger-foreground)]">
                     {errors.sedeId.message}
                   </p>
                 )}
@@ -516,11 +595,21 @@ export default function UsuariosPage() {
                 variant="outline"
                 onClick={() => setDialogOpen(false)}
                 disabled={isLoading}
+                className="border-[var(--color-brand-mustard)]/40 text-[var(--color-brand-mustard)] hover:bg-[var(--color-brand-mustard)]/10 hover:border-[var(--color-brand-mustard)]"
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Guardando..." : "Guardar"}
+              <Button type="submit" className="bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)] disabled:opacity-50" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <LoaderCircle className="size-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : isEditing ? (
+                  "Guardar cambios"
+                ) : (
+                  "Guardar"
+                )}
               </Button>
             </div>
           </form>
@@ -528,7 +617,7 @@ export default function UsuariosPage() {
       </Dialog>
 
       <Dialog open={usuarioToDelete !== null} onOpenChange={(open) => { if (!open) setUsuarioToDelete(null); }}>
-        <DialogContent>
+        <DialogContent className="border-t-4 border-t-[var(--admin-danger)]">
           <DialogHeader>
             <DialogTitle>Eliminar usuario</DialogTitle>
             <DialogDescription>

@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Pencil } from "lucide-react";
 import { InventarioResponse } from "@/types";
 
 interface EditInventarioDialogProps {
@@ -94,13 +95,16 @@ export function EditInventarioDialog({ item, mutate }: EditInventarioDialogProps
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
-        className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-stone-200 bg-white hover:bg-stone-100 hover:text-stone-900 h-8 px-3"
+        className="inline-flex shrink-0 items-center justify-center rounded-lg border border-[var(--admin-border)] bg-[var(--admin-card)] text-[var(--admin-muted-foreground)] hover:border-[var(--admin-accent)] hover:bg-[var(--admin-warning-soft)] hover:text-[var(--admin-accent-hover)] h-7 px-2.5 text-[0.8rem] font-medium transition-colors gap-1"
       >
+        <Pencil className="h-3.5 w-3.5" />
         Editar
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Editar Inventario - {item.productoNombre}</DialogTitle>
+      <DialogContent className="border-t-4 border-t-[var(--admin-accent)] max-h-[90vh] overflow-y-auto overflow-x-hidden">
+        <DialogHeader className="border-b border-[var(--admin-border)] pb-4">
+          <DialogTitle className="font-heading text-[var(--admin-foreground)]">
+            Editar Inventario — {item.productoNombre}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -155,12 +159,13 @@ export function EditInventarioDialog({ item, mutate }: EditInventarioDialogProps
             />
             <Label htmlFor="disponible">Disponible para venta</Label>
           </div>
-          <div className="flex justify-end gap-2 pt-4">
+          <div className="flex justify-end gap-2 pt-4 border-t border-[var(--admin-border)]">
             <Button
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
               disabled={isLoading}
+              className="border-[var(--admin-border)] text-[var(--admin-muted-foreground)] hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)]"
             >
               Cancelar
             </Button>
