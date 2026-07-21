@@ -5,17 +5,13 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { Sede } from "@/types";
 import { toast } from "sonner";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -24,12 +20,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Building2, Plus, Pencil, Trash2, Search, ArrowUpDown } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Search, LoaderCircle } from "lucide-react";
 import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok, MdEmail } from "@/components/icons/SocialIcons";
 import Cookies from "js-cookie";
 import { z } from "zod";
 import { useRequireSuperAdmin } from "@/lib/auth";
 import { sanitizeUrl } from "@/lib/validation";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -86,8 +84,6 @@ export default function SedesPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sedeToDelete, setSedeToDelete] = useState<Sede | null>(null);
-  const [sortField, setSortField] = useState<string | null>("id");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const { data: sedes, error, mutate } = useSWR<Sede[]>(
     `${API_URL}/api/superadmin/sedes`,
@@ -237,16 +233,14 @@ export default function SedesPage() {
     }
   };
 
-  const handleSort = (field: string) => {
-    setSortDir(prev => (sortField === field ? (prev === "asc" ? "desc" : "asc") : "desc"))
-    setSortField(field)
-  }
-
   if (isLoading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <p className="text-stone-500">Verificando permisos...</p>
+          <Building2 className="h-12 w-12 mx-auto mb-4 text-[var(--admin-accent)] animate-pulse" />
+          <p className="font-heading italic text-[var(--admin-muted-foreground)]">
+            Verificando permisos...
+          </p>
         </div>
       </div>
     );
@@ -255,7 +249,7 @@ export default function SedesPage() {
   if (error) {
     return (
       <div className="p-6">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <div className="bg-[var(--admin-danger-soft)] border border-[var(--admin-danger)]/40 text-[var(--admin-danger-foreground)] px-4 py-3 rounded-lg">
           <p>Error al cargar las sedes: {error.message}</p>
         </div>
       </div>
@@ -266,25 +260,17 @@ export default function SedesPage() {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <Building2 className="h-12 w-12 mx-auto mb-4 text-stone-400 animate-pulse" />
-          <p className="text-stone-500">Cargando sedes...</p>
+          <Building2 className="h-12 w-12 mx-auto mb-4 text-[var(--admin-accent)] animate-pulse" />
+          <p className="font-heading italic text-[var(--admin-muted-foreground)]">
+            Cargando sedes...
+          </p>
         </div>
       </div>
     );
   }
 
-  // Ordenamiento por columna
-  const sortedSedes = [...(sedes ?? [])].sort((a, b) => {
-    let cmp = 0
-    if (sortField === "id") cmp = a.id - b.id
-    else if (sortField === "nombre") cmp = a.nombre.localeCompare(b.nombre)
-    else if (sortField === "ciudad") cmp = a.ciudad.localeCompare(b.ciudad)
-    else cmp = a.id - b.id
-    return sortDir === "asc" ? cmp : -cmp
-  });
-
-  // Filtro de búsqueda local (usando deferred value)
-  const sedesFiltradas = sortedSedes.filter((s) =>
+  // Filtro de búsqueda local
+  const sedesFiltradas = (sedes ?? []).filter((s) =>
     s.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.ciudad.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.telefonoWhatsapp.includes(searchTerm) ||
@@ -294,309 +280,346 @@ export default function SedesPage() {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-stone-900">Sedes</h1>
-          <p className="text-stone-500 text-sm mt-1">
-            Gestiona las sedes de la floristería
-          </p>
-        </div>
-        <Button onClick={handleNew}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nueva Sede
-        </Button>
+      <AdminPageHeader
+        title="Sedes"
+        subtitle="Gestiona las sedes de la floristería"
+        icon={Building2}
+        actions={
+          <Button onClick={handleNew} className="bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]">
+            <Plus className="mr-2 h-4 w-4" />
+            Nueva Sede
+          </Button>
+        }
+      />
+
+      {/* Buscador */}
+      <div className="relative max-w-md mb-5">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--admin-muted-foreground)]" />
+        <Input
+          type="text"
+          placeholder="Buscar (nombre, ciudad, WhatsApp, correo o ID)"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          className="pl-10"
+        />
       </div>
 
-      {/* Search Bar */}
-      <div className="mb-4">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
-          <Input
-            type="text"
-            placeholder="Buscar (nombre, ciudad, WhatsApp, correo o ID)"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead
-                className="cursor-pointer select-none"
-                onClick={() => handleSort("id")}
-                aria-sort={sortField === "id" ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
-              >
-                ID {sortField === "id" && <ArrowUpDown className="inline h-3 w-3 ml-1" />}
-              </TableHead>
-              <TableHead
-                className="cursor-pointer select-none"
-                onClick={() => handleSort("nombre")}
-                aria-sort={sortField === "nombre" ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
-              >
-                Nombre {sortField === "nombre" && <ArrowUpDown className="inline h-3 w-3 ml-1" />}
-              </TableHead>
-              <TableHead
-                className="cursor-pointer select-none"
-                onClick={() => handleSort("ciudad")}
-                aria-sort={sortField === "ciudad" ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
-              >
-                Ciudad {sortField === "ciudad" && <ArrowUpDown className="inline h-3 w-3 ml-1" />}
-              </TableHead>
-              <TableHead>Contacto</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sedesFiltradas.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center text-stone-500 py-8">
-                  No hay sedes registradas
-                </TableCell>
-              </TableRow>
-            )}
-            {sedesFiltradas.map((sede) => (
-              <TableRow key={sede.id}>
-                <TableCell>{sede.id}</TableCell>
-                <TableCell className="font-medium">{sede.nombre}</TableCell>
-                <TableCell>{sede.ciudad}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    {sede.telefonoWhatsapp && (
-                      <a
-                        href={`https://wa.me/${sede.telefonoWhatsapp.replace(/[^0-9]/g, "")}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
-                        title={`WhatsApp: ${sede.telefonoWhatsapp}`}
-                      >
-                        <FaWhatsapp className="h-4 w-4" />
-                      </a>
-                    )}
-                    {sede.instagramUrl && (
-                      <a
-                        href={sanitizeUrl(sede.instagramUrl ?? "")}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-pink-100 text-pink-700 hover:bg-pink-200 transition-colors"
-                        title="Instagram"
-                      >
-                        <FaInstagram className="h-4 w-4" />
-                      </a>
-                    )}
-                    {sede.facebookUrl && (
-                      <a
-                        href={sanitizeUrl(sede.facebookUrl ?? "")}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
-                        title="Facebook"
-                      >
-                        <FaFacebook className="h-4 w-4" />
-                      </a>
-                    )}
-                    {sede.tiktokUrl && (
-                      <a
-                        href={sanitizeUrl(sede.tiktokUrl ?? "")}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-stone-900 text-white hover:bg-stone-700 transition-colors"
-                        title="TikTok"
-                      >
-                        <FaTiktok className="h-4 w-4" />
-                      </a>
-                    )}
-                    {sede.email && (
-                      <a
-                        href={`mailto:${sede.email}`}
-                        className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-stone-100 text-stone-700 hover:bg-stone-200 transition-colors"
-                        title={`Correo: ${sede.email}`}
-                      >
-                        <MdEmail className="h-4 w-4" />
-                      </a>
-                    )}
-                    {!sede.telefonoWhatsapp && !sede.instagramUrl && !sede.facebookUrl && !sede.tiktokUrl && !sede.email && (
-                      <span className="text-stone-400 text-sm">Sin contacto</span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(sede)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(sede)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
+      {/* Grid de sedes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {!sedes ? (
+          <>
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="animate-pulse border-[var(--admin-border)] bg-[var(--admin-card)]">
+                <div className="h-1.5 bg-[var(--admin-accent)] rounded-t-lg" />
+                <CardContent className="p-4 space-y-3">
+                  <div className="h-5 bg-[var(--admin-canvas)] rounded w-3/4" />
+                  <div className="h-4 bg-[var(--admin-canvas)] rounded w-1/2" />
+                  <div className="h-8 bg-[var(--admin-canvas)] rounded w-full" />
+                </CardContent>
+              </Card>
             ))}
-          </TableBody>
-        </Table>
+          </>
+        ) : sedesFiltradas.length === 0 ? (
+          <div className="col-span-full">
+            <AdminEmptyState
+              icon={Building2}
+              title={sedes.length === 0 ? "No hay sedes registradas" : "No se encontraron sedes"}
+              description={sedes.length === 0 ? "Crea tu primera sede para empezar a vender." : "Ajusta los filtros de búsqueda."}
+              action={
+                sedes.length === 0 ? (
+                  <Button onClick={handleNew}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Crear primera sede
+                  </Button>
+                ) : undefined
+              }
+            />
+          </div>
+        ) : (
+          sedesFiltradas.map((sede) => (
+            <Card key={sede.id} className="overflow-hidden group bg-[var(--admin-card)] border-[var(--admin-border)] border-t-4 border-t-[var(--color-brand-rose)] hover:border-t-[var(--admin-accent)] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-heading font-semibold text-base text-[var(--admin-foreground)] group-hover:text-[var(--admin-accent)] truncate transition-colors duration-300">
+                      {sede.nombre}
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-heading font-medium bg-[var(--color-brand-rose)]/20 text-[var(--color-brand-rose-dark)]">
+                        {sede.ciudad}
+                      </span>
+                      {sede.email && (
+                        <a href={`mailto:${sede.email}`} className="inline-flex items-center gap-1 text-xs text-[var(--admin-muted-foreground)] hover:text-[var(--color-brand-rose-dark)] transition-colors">
+                          <MdEmail className="h-3 w-3" />
+                          {sede.email}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0">
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="h-7 w-7 bg-white/90 hover:bg-white shadow-sm"
+                      onClick={() => handleEdit(sede)}
+                      title="Editar"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="h-7 w-7 bg-white/90 hover:bg-white shadow-sm"
+                      onClick={() => handleDelete(sede)}
+                      title="Eliminar"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-[var(--admin-danger-foreground)]" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 pt-3 border-t border-dashed border-[var(--admin-border)]">
+                  {sede.telefonoWhatsapp && (
+                    <a
+                      href={`https://wa.me/${sede.telefonoWhatsapp.replace(/[^0-9]/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex flex-col items-center gap-0.5 group/icon"
+                      title={`WhatsApp: ${sede.telefonoWhatsapp}`}
+                    >
+                      <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-[#25D366] text-white hover:brightness-110 transition-all">
+                        <FaWhatsapp className="h-4 w-4" />
+                      </span>
+                      <span className="text-[10px] font-heading text-[var(--admin-muted-foreground)] group-hover/icon:text-[#25D366] transition-colors">WhatsApp</span>
+                    </a>
+                  )}
+                  {sede.instagramUrl && (
+                    <a
+                      href={sanitizeUrl(sede.instagramUrl ?? "")}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex flex-col items-center gap-0.5 group/icon"
+                      title="Instagram"
+                    >
+                      <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-[#E4405F] text-white hover:brightness-110 transition-all">
+                        <FaInstagram className="h-4 w-4" />
+                      </span>
+                      <span className="text-[10px] font-heading text-[var(--admin-muted-foreground)] group-hover/icon:text-[#E4405F] transition-colors">Instagram</span>
+                    </a>
+                  )}
+                  {sede.facebookUrl && (
+                    <a
+                      href={sanitizeUrl(sede.facebookUrl ?? "")}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex flex-col items-center gap-0.5 group/icon"
+                      title="Facebook"
+                    >
+                      <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-[#1877F2] text-white hover:brightness-110 transition-all">
+                        <FaFacebook className="h-4 w-4" />
+                      </span>
+                      <span className="text-[10px] font-heading text-[var(--admin-muted-foreground)] group-hover/icon:text-[#1877F2] transition-colors">Facebook</span>
+                    </a>
+                  )}
+                  {sede.tiktokUrl && (
+                    <a
+                      href={sanitizeUrl(sede.tiktokUrl ?? "")}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex flex-col items-center gap-0.5 group/icon"
+                      title="TikTok"
+                    >
+                      <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-[#000000] text-white hover:brightness-110 transition-all">
+                        <FaTiktok className="h-4 w-4" />
+                      </span>
+                      <span className="text-[10px] font-heading text-[var(--admin-muted-foreground)] group-hover/icon:text-[#000000] transition-colors">TikTok</span>
+                    </a>
+                  )}
+                  {!sede.telefonoWhatsapp && !sede.instagramUrl && !sede.facebookUrl && !sede.tiktokUrl && (
+                    <span className="text-[var(--admin-muted-foreground)] text-xs italic">Sin contacto</span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {editingSede ? "Editar Sede" : "Nueva Sede"}
-            </DialogTitle>
+        <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col border-t-4 border-t-[var(--color-brand-rose)] border-b-4 border-b-[var(--color-brand-rose)] p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Building2 className="size-5 text-[var(--color-brand-mustard)]" />
+              <DialogTitle className="text-[var(--color-brand-mustard)]">
+                {editingSede ? "Editar Sede" : "Nueva Sede"}
+              </DialogTitle>
+            </div>
+            <DialogDescription>
+              {editingSede ? "Actualiza los datos de la sede." : "Registra una nueva sede."}
+            </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="nombre">Nombre</Label>
-              <Input
-                id="nombre"
-                value={form.nombre}
-                onChange={(e) => {
-                  setForm({ ...form, nombre: e.target.value })
-                  validateField("nombre", e.target.value)
-                }}
-                placeholder="Nombre de la sede"
-                disabled={isSubmitting}
-                required
-                aria-invalid={!!errors.nombre}
-                aria-describedby={errors.nombre ? "error-nombre" : undefined}
-              />
-              {errors.nombre && (
-                <span id="error-nombre" className="text-xs text-red-500" role="alert">{errors.nombre}</span>
-              )}
+          <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col">
+            <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="nombre" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Nombre</Label>
+                <Input
+                  id="nombre"
+                  value={form.nombre}
+                  onChange={(e) => {
+                    setForm({ ...form, nombre: e.target.value })
+                    validateField("nombre", e.target.value)
+                  }}
+                  placeholder="Nombre de la sede"
+                  disabled={isSubmitting}
+                  required
+                  className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
+                  aria-invalid={!!errors.nombre}
+                  aria-describedby={errors.nombre ? "error-nombre" : undefined}
+                />
+                {errors.nombre && (
+                  <span id="error-nombre" className="text-xs text-[var(--admin-danger-foreground)]" role="alert">{errors.nombre}</span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ciudad" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Ciudad</Label>
+                <Input
+                  id="ciudad"
+                  value={form.ciudad}
+                  onChange={(e) => {
+                    setForm({ ...form, ciudad: e.target.value })
+                    validateField("ciudad", e.target.value)
+                  }}
+                  placeholder="Ciudad"
+                  disabled={isSubmitting}
+                  required
+                  className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
+                  aria-invalid={!!errors.ciudad}
+                  aria-describedby={errors.ciudad ? "error-ciudad" : undefined}
+                />
+                {errors.ciudad && (
+                  <span id="error-ciudad" className="text-xs text-[var(--admin-danger-foreground)]" role="alert">{errors.ciudad}</span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="telefonoWhatsapp" className="text-[var(--color-brand-rose-dark)]/80 font-medium">WhatsApp</Label>
+                <Input
+                  id="telefonoWhatsapp"
+                  value={form.telefonoWhatsapp}
+                  onChange={(e) => {
+                    const formatted = formatWhatsApp(e.target.value)
+                    setForm({ ...form, telefonoWhatsapp: formatted })
+                    validateField("telefonoWhatsapp", formatted)
+                  }}
+                  placeholder="+57 300 123 4567"
+                  disabled={isSubmitting}
+                  required
+                  className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
+                  aria-invalid={!!errors.telefonoWhatsapp}
+                  aria-describedby={errors.telefonoWhatsapp ? "error-telefonoWhatsapp" : undefined}
+                />
+                {errors.telefonoWhatsapp && (
+                  <span id="error-telefonoWhatsapp" className="text-xs text-[var(--admin-danger-foreground)]" role="alert">{errors.telefonoWhatsapp}</span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="instagramUrl" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Instagram URL (opcional)</Label>
+                <Input
+                  id="instagramUrl"
+                  value={form.instagramUrl}
+                  onChange={(e) => {
+                    setForm({ ...form, instagramUrl: e.target.value })
+                    validateField("instagramUrl", e.target.value)
+                  }}
+                  placeholder="https://instagram.com/tu-sede"
+                  disabled={isSubmitting}
+                  className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
+                  aria-invalid={!!errors.instagramUrl}
+                  aria-describedby={errors.instagramUrl ? "error-instagramUrl" : undefined}
+                />
+                {errors.instagramUrl && (
+                  <span id="error-instagramUrl" className="text-xs text-[var(--admin-danger-foreground)]" role="alert">{errors.instagramUrl}</span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="facebookUrl" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Facebook URL (opcional)</Label>
+                <Input
+                  id="facebookUrl"
+                  value={form.facebookUrl}
+                  onChange={(e) => {
+                    setForm({ ...form, facebookUrl: e.target.value })
+                    validateField("facebookUrl", e.target.value)
+                  }}
+                  placeholder="https://facebook.com/tu-sede"
+                  disabled={isSubmitting}
+                  className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
+                  aria-invalid={!!errors.facebookUrl}
+                  aria-describedby={errors.facebookUrl ? "error-facebookUrl" : undefined}
+                />
+                {errors.facebookUrl && (
+                  <span id="error-facebookUrl" className="text-xs text-[var(--admin-danger-foreground)]" role="alert">{errors.facebookUrl}</span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tiktokUrl" className="text-[var(--color-brand-rose-dark)]/80 font-medium">TikTok URL (opcional)</Label>
+                <Input
+                  id="tiktokUrl"
+                  value={form.tiktokUrl}
+                  onChange={(e) => {
+                    setForm({ ...form, tiktokUrl: e.target.value })
+                    validateField("tiktokUrl", e.target.value)
+                  }}
+                  placeholder="https://tiktok.com/@tu-sede"
+                  disabled={isSubmitting}
+                  className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
+                  aria-invalid={!!errors.tiktokUrl}
+                  aria-describedby={errors.tiktokUrl ? "error-tiktokUrl" : undefined}
+                />
+                {errors.tiktokUrl && (
+                  <span id="error-tiktokUrl" className="text-xs text-[var(--admin-danger-foreground)]" role="alert">{errors.tiktokUrl}</span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Correo electrónico (opcional)</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => {
+                    setForm({ ...form, email: e.target.value })
+                    validateField("email", e.target.value)
+                  }}
+                  placeholder="sede@floristeria.com"
+                  disabled={isSubmitting}
+                  className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
+                  aria-invalid={!!errors.email}
+                  aria-describedby={errors.email ? "error-email" : undefined}
+                />
+                {errors.email && (
+                  <span id="error-email" className="text-xs text-[var(--admin-danger-foreground)]" role="alert">{errors.email}</span>
+                )}
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="ciudad">Ciudad</Label>
-              <Input
-                id="ciudad"
-                value={form.ciudad}
-                onChange={(e) => {
-                  setForm({ ...form, ciudad: e.target.value })
-                  validateField("ciudad", e.target.value)
-                }}
-                placeholder="Ciudad"
-                disabled={isSubmitting}
-                required
-                aria-invalid={!!errors.ciudad}
-                aria-describedby={errors.ciudad ? "error-ciudad" : undefined}
-              />
-              {errors.ciudad && (
-                <span id="error-ciudad" className="text-xs text-red-500" role="alert">{errors.ciudad}</span>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="telefonoWhatsapp">WhatsApp</Label>
-              <Input
-                id="telefonoWhatsapp"
-                value={form.telefonoWhatsapp}
-                onChange={(e) => {
-                  const formatted = formatWhatsApp(e.target.value)
-                  setForm({ ...form, telefonoWhatsapp: formatted })
-                  validateField("telefonoWhatsapp", formatted)
-                }}
-                placeholder="+57 300 123 4567"
-                disabled={isSubmitting}
-                required
-                aria-invalid={!!errors.telefonoWhatsapp}
-                aria-describedby={errors.telefonoWhatsapp ? "error-telefonoWhatsapp" : undefined}
-              />
-              {errors.telefonoWhatsapp && (
-                <span id="error-telefonoWhatsapp" className="text-xs text-red-500" role="alert">{errors.telefonoWhatsapp}</span>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="instagramUrl">Instagram URL (opcional)</Label>
-              <Input
-                id="instagramUrl"
-                value={form.instagramUrl}
-                onChange={(e) => {
-                  setForm({ ...form, instagramUrl: e.target.value })
-                  validateField("instagramUrl", e.target.value)
-                }}
-                placeholder="https://instagram.com/tu-sede"
-                disabled={isSubmitting}
-                aria-invalid={!!errors.instagramUrl}
-                aria-describedby={errors.instagramUrl ? "error-instagramUrl" : undefined}
-              />
-              {errors.instagramUrl && (
-                <span id="error-instagramUrl" className="text-xs text-red-500" role="alert">{errors.instagramUrl}</span>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="facebookUrl">Facebook URL (opcional)</Label>
-              <Input
-                id="facebookUrl"
-                value={form.facebookUrl}
-                onChange={(e) => {
-                  setForm({ ...form, facebookUrl: e.target.value })
-                  validateField("facebookUrl", e.target.value)
-                }}
-                placeholder="https://facebook.com/tu-sede"
-                disabled={isSubmitting}
-                aria-invalid={!!errors.facebookUrl}
-                aria-describedby={errors.facebookUrl ? "error-facebookUrl" : undefined}
-              />
-              {errors.facebookUrl && (
-                <span id="error-facebookUrl" className="text-xs text-red-500" role="alert">{errors.facebookUrl}</span>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="tiktokUrl">TikTok URL (opcional)</Label>
-              <Input
-                id="tiktokUrl"
-                value={form.tiktokUrl}
-                onChange={(e) => {
-                  setForm({ ...form, tiktokUrl: e.target.value })
-                  validateField("tiktokUrl", e.target.value)
-                }}
-                placeholder="https://tiktok.com/@tu-sede"
-                disabled={isSubmitting}
-                aria-invalid={!!errors.tiktokUrl}
-                aria-describedby={errors.tiktokUrl ? "error-tiktokUrl" : undefined}
-              />
-              {errors.tiktokUrl && (
-                <span id="error-tiktokUrl" className="text-xs text-red-500" role="alert">{errors.tiktokUrl}</span>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Correo electrónico (opcional)</Label>
-              <Input
-                id="email"
-                type="email"
-                value={form.email}
-                onChange={(e) => {
-                  setForm({ ...form, email: e.target.value })
-                  validateField("email", e.target.value)
-                }}
-                placeholder="sede@floristeria.com"
-                disabled={isSubmitting}
-                aria-invalid={!!errors.email}
-                aria-describedby={errors.email ? "error-email" : undefined}
-              />
-              {errors.email && (
-                <span id="error-email" className="text-xs text-red-500" role="alert">{errors.email}</span>
-              )}
-            </div>
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="flex justify-end gap-2 px-6 py-4 border-t border-[var(--admin-border)] shrink-0 bg-[var(--admin-card)] rounded-b-xl">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setDialogOpen(false)}
                 disabled={isSubmitting}
+                className="border-[var(--color-brand-mustard)]/40 text-[var(--color-brand-mustard)] hover:bg-[var(--color-brand-mustard)]/10 hover:border-[var(--color-brand-mustard)]"
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Guardando..." : "Guardar"}
+              <Button type="submit" disabled={isSubmitting} className="bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)] disabled:opacity-50">
+                {isSubmitting ? (
+                  <>
+                    <LoaderCircle className="size-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : editingSede ? (
+                  "Guardar cambios"
+                ) : (
+                  "Guardar"
+                )}
               </Button>
             </div>
           </form>
@@ -604,7 +627,7 @@ export default function SedesPage() {
       </Dialog>
 
       <Dialog open={sedeToDelete !== null} onOpenChange={(open) => { if (!open) setSedeToDelete(null); }}>
-        <DialogContent>
+        <DialogContent className="border-t-4 border-t-[var(--admin-danger)]">
           <DialogHeader>
             <DialogTitle>Eliminar sede</DialogTitle>
             <DialogDescription>

@@ -31,14 +31,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MapPin, Plus, Pencil, Trash2, Search } from "lucide-react";
+import { MapPin, Plus, Pencil, Trash2, Search, LoaderCircle } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Cookies from "js-cookie";
 import { useAuthStore } from "@/store/useAuthStore";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminTableShell } from "@/components/admin/AdminTableShell";
+import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
+import { StatusBadge } from "@/components/admin/StatusBadge";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -299,7 +302,7 @@ export default function ZonasDomicilioPage() {
   if (error) {
     return (
       <div className="p-6">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <div className="bg-[var(--admin-danger-soft)] border border-[var(--admin-danger)]/40 text-[var(--admin-danger-foreground)] px-4 py-3 rounded-lg">
           <p>Error al cargar las zonas de domicilio: {error.message}</p>
         </div>
       </div>
@@ -310,8 +313,10 @@ export default function ZonasDomicilioPage() {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <MapPin className="h-12 w-12 mx-auto mb-4 text-stone-400 animate-pulse" />
-          <p className="text-stone-500">Cargando zonas de domicilio...</p>
+          <MapPin className="h-12 w-12 mx-auto mb-4 text-[var(--admin-accent)] animate-pulse" />
+          <p className="font-heading italic text-[var(--admin-muted-foreground)]">
+            Cargando zonas de domicilio...
+          </p>
         </div>
       </div>
     );
@@ -336,105 +341,108 @@ export default function ZonasDomicilioPage() {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-stone-900">Domicilios</h1>
-          <p className="text-brand-sage text-sm mt-1">
-            Gestiona las zonas y precios de domicilio
-          </p>
-        </div>
-        <Button onClick={handleNew} className="bg-brand-mustard hover:bg-brand-mustard-dark text-white">
-          <Plus className="mr-2 h-4 w-4" />
-          Agregar Zona
-        </Button>
-      </div>
+      <AdminPageHeader
+        title="Domicilios"
+        subtitle="Gestiona las zonas y precios de domicilio"
+        icon={MapPin}
+        actions={
+          <Button onClick={handleNew} className="bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]">
+            <Plus className="mr-2 h-4 w-4" />
+            Agregar Zona
+          </Button>
+        }
+      />
 
-      <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-3">
-        <div className="relative max-w-md flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
-          <Input
-            type="text"
-            placeholder="Buscar por localidad, barrio o ID..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <div className="flex gap-1 bg-stone-100 rounded-lg p-1 w-fit">
-          <button
-            onClick={() => setEstadoFilter("todas")}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-              estadoFilter === "todas"
-                ? "bg-[var(--color-brand-mustard)] text-stone-900 shadow-sm"
-                : "text-stone-500 hover:text-stone-700"
-            }`}
-          >
-            Todas <span className="ml-1 text-xs opacity-70">({sortedZonas.length})</span>
-          </button>
-          <button
-            onClick={() => setEstadoFilter("activas")}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-              estadoFilter === "activas"
-                ? "bg-[var(--color-brand-mustard)] text-stone-900 shadow-sm"
-                : "text-stone-500 hover:text-stone-700"
-            }`}
-          >
-            Activas <span className="ml-1 text-xs opacity-70">({countActivas})</span>
-          </button>
-          <button
-            onClick={() => setEstadoFilter("excluidas")}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-              estadoFilter === "excluidas"
-                ? "bg-[var(--color-brand-mustard)] text-stone-900 shadow-sm"
-                : "text-stone-500 hover:text-stone-700"
-            }`}
-          >
-            Excluidas <span className="ml-1 text-xs opacity-70">({countExcluidas})</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow">
+      <AdminTableShell
+        toolbar={
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="relative max-w-md flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--admin-muted-foreground)]" />
+              <Input
+                type="text"
+                placeholder="Buscar por localidad, barrio o ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex gap-1 bg-[var(--admin-canvas)] border border-[var(--admin-border)] rounded-lg p-1 w-fit">
+              <button
+                onClick={() => setEstadoFilter("todas")}
+                className={`px-4 py-2 rounded-md text-sm font-heading font-semibold transition-all duration-200 ${
+                  estadoFilter === "todas"
+                    ? "bg-[var(--admin-accent)] text-[var(--admin-sidebar)] shadow-sm"
+                    : "text-[var(--admin-muted-foreground)] hover:text-[var(--admin-foreground)]"
+                }`}
+              >
+                Todas <span className="ml-1 text-xs opacity-70">({sortedZonas.length})</span>
+              </button>
+              <button
+                onClick={() => setEstadoFilter("activas")}
+                className={`px-4 py-2 rounded-md text-sm font-heading font-semibold transition-all duration-200 ${
+                  estadoFilter === "activas"
+                    ? "bg-[var(--admin-accent)] text-[var(--admin-sidebar)] shadow-sm"
+                    : "text-[var(--admin-muted-foreground)] hover:text-[var(--admin-foreground)]"
+                }`}
+              >
+                Activas <span className="ml-1 text-xs opacity-70">({countActivas})</span>
+              </button>
+              <button
+                onClick={() => setEstadoFilter("excluidas")}
+                className={`px-4 py-2 rounded-md text-sm font-heading font-semibold transition-all duration-200 ${
+                  estadoFilter === "excluidas"
+                    ? "bg-[var(--admin-accent)] text-[var(--admin-sidebar)] shadow-sm"
+                    : "text-[var(--admin-muted-foreground)] hover:text-[var(--admin-foreground)]"
+                }`}
+              >
+                Excluidas <span className="ml-1 text-xs opacity-70">({countExcluidas})</span>
+              </button>
+            </div>
+          </div>
+        }
+      >
         <Table>
           <TableHeader>
-            <TableRow>
-              {rol === "SUPERADMIN" && <TableHead>Sede</TableHead>}
-              <TableHead>Localidad / Municipio</TableHead>
-              <TableHead>Barrio</TableHead>
-              <TableHead>Precio</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
+            <TableRow className="bg-[var(--admin-canvas)]/60 hover:bg-[var(--admin-canvas)]/60">
+              {rol === "SUPERADMIN" && <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Sede</TableHead>}
+              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Localidad / Municipio</TableHead>
+              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Barrio</TableHead>
+              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Precio</TableHead>
+              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Estado</TableHead>
+              <TableHead className="text-right font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {zonasFiltradas.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={rol === "SUPERADMIN" ? 6 : 5} className="text-center text-stone-500 py-8">
-                  {estadoFilter === "activas"
-                    ? "No hay zonas activas"
-                    : estadoFilter === "excluidas"
-                      ? "No hay zonas excluidas"
-                      : "No hay zonas de domicilio registradas"}
+              <TableRow className="hover:bg-transparent">
+                <TableCell colSpan={rol === "SUPERADMIN" ? 6 : 5} className="p-0">
+                  <AdminEmptyState
+                    icon={MapPin}
+                    title={
+                      estadoFilter === "activas"
+                        ? "No hay zonas activas"
+                        : estadoFilter === "excluidas"
+                          ? "No hay zonas excluidas"
+                          : "No hay zonas de domicilio registradas"
+                    }
+                    description="Agrega zonas para definir la cobertura de envíos."
+                  />
                 </TableCell>
               </TableRow>
             )}
             {zonasFiltradas.map((zona) => (
-              <TableRow key={zona.id}>
+              <TableRow key={zona.id} className="border-[var(--admin-border)] hover:bg-[var(--admin-warning-soft)]/40 transition-colors">
                 {rol === "SUPERADMIN" && (
-                  <TableCell>{sedes?.find(s => s.id === zona.sedeId)?.nombre || `Sede #${zona.sedeId}`}</TableCell>
+                  <TableCell className="text-[var(--admin-foreground)]">{sedes?.find(s => s.id === zona.sedeId)?.nombre || `Sede #${zona.sedeId}`}</TableCell>
                 )}
-                <TableCell className="font-medium">{zona.localidad}</TableCell>
-                <TableCell>{zona.barrio || "-"}</TableCell>
-                <TableCell>{formatCurrency(zona.precio)}</TableCell>
+                <TableCell className="font-medium text-[var(--admin-foreground)]">{zona.localidad}</TableCell>
+                <TableCell className="text-[var(--admin-foreground)]">{zona.barrio || "-"}</TableCell>
+                <TableCell className="text-[var(--admin-foreground)] font-semibold">{formatCurrency(zona.precio)}</TableCell>
                 <TableCell>
                   {zona.excluido ? (
-                    <Badge variant="outline" className="bg-brand-rose/20 text-brand-rose-dark border-brand-rose-dark/30 font-medium">
-                      Excluida
-                    </Badge>
+                    <StatusBadge variant="danger" label="Excluida" />
                   ) : (
-                    <Badge variant="outline" className="bg-brand-sage/20 text-brand-sage border-brand-sage/30 font-medium">
-                      Activa
-                    </Badge>
+                    <StatusBadge variant="success" label="Activa" />
                   )}
                 </TableCell>
                 <TableCell className="text-right">
@@ -443,6 +451,7 @@ export default function ZonasDomicilioPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleEdit(zona)}
+                      className="border-[var(--admin-border)] text-[var(--admin-muted-foreground)] hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] hover:bg-[var(--admin-warning-soft)]"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -459,164 +468,186 @@ export default function ZonasDomicilioPage() {
             ))}
           </TableBody>
         </Table>
-      </div>
+      </AdminTableShell>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingZona ? "Editar Zona" : "Nueva Zona"}
-            </DialogTitle>
+        <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col border-t-4 border-t-[var(--color-brand-rose)] border-b-4 border-b-[var(--color-brand-rose)] p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
+            <div className="flex items-center gap-2 mb-1">
+              <MapPin className="size-5 text-[var(--color-brand-mustard)]" />
+              <DialogTitle className="text-[var(--color-brand-mustard)]">
+                {editingZona ? "Editar Zona" : "Nueva Zona"}
+              </DialogTitle>
+            </div>
+            <DialogDescription>
+              {editingZona ? "Actualiza los datos de la zona." : "Registra una nueva zona de domicilio."}
+            </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {rol === "SUPERADMIN" && (
+          <form onSubmit={handleSubmit(onSubmit)} className="flex-1 min-h-0 flex flex-col">
+            <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5">
+              {rol === "SUPERADMIN" && (
+                <div className="space-y-2">
+                  <Label className="text-[var(--color-brand-rose-dark)]/80 font-medium">Sede *</Label>
+                  <Controller
+                    name="sedeId"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value && field.value !== 0 ? field.value.toString() : ""}
+                        onValueChange={(val) => { if (val && val !== "__none") field.onChange(Number(val)); }}
+                      >
+                        <SelectTrigger className="w-full focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50">
+                          {field.value && field.value !== 0 && sedes
+                            ? (() => {
+                                const sede = sedes.find((s) => s.id === field.value);
+                                return sede ? `${sede.nombre} — ${sede.ciudad}` : null;
+                              })()
+                            : (
+                              <SelectValue placeholder="Selecciona una sede" />
+                            )}
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none">Selecciona una sede...</SelectItem>
+                          {sedes?.map((sede) => (
+                            <SelectItem key={sede.id} value={sede.id.toString()}>
+                              {sede.nombre} — {sede.ciudad}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+              )}
               <div className="space-y-2">
-                <Label>Sede *</Label>
+                <Label htmlFor="localidad" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Localidad / Municipio *</Label>
+                <div className="relative">
+                  <Input
+                    id="localidad"
+                    value={watchedLocalidad ?? ""}
+                    placeholder="Ej: Chía, Cundinamarca"
+                    disabled={isLoading}
+                    className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
+                    onFocus={() => setLocalidadFocused(true)}
+                    onBlur={() => setTimeout(() => setLocalidadFocused(false), 200)}
+                    onChange={(e) => {
+                      setValue("localidad", e.target.value, { shouldValidate: true });
+                      setLocalidadSearch(e.target.value);
+                    }}
+                  />
+                  {localidadFocused && filteredLocalidades.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-[var(--admin-card)] border border-[var(--admin-border)] rounded-lg shadow-md max-h-60 overflow-auto">
+                      {filteredLocalidades.map((loc) => (
+                        <div
+                          key={loc}
+                          className="px-3 py-2 text-sm cursor-pointer hover:bg-[var(--admin-warning-soft)] text-[var(--admin-foreground)]"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            setValue("localidad", loc);
+                            setLocalidadSearch("");
+                            setLocalidadFocused(false);
+                          }}
+                        >
+                          {loc}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="barrio" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Barrio (opcional)</Label>
+                <div className="relative">
+                  <Input
+                    id="barrio"
+                    value={watch("barrio") ?? ""}
+                    placeholder="Dejar vacío para tarifa general"
+                    disabled={isLoading}
+                    className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
+                    onFocus={() => setBarrioFocused(true)}
+                    onBlur={() => setTimeout(() => setBarrioFocused(false), 200)}
+                    onChange={(e) => {
+                      setValue("barrio", e.target.value, { shouldValidate: true });
+                      setBarrioSearch(e.target.value);
+                    }}
+                  />
+                  {barrioFocused && filteredBarrios.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-[var(--admin-card)] border border-[var(--admin-border)] rounded-lg shadow-md max-h-60 overflow-auto">
+                      {filteredBarrios.map((bar) => (
+                        <div
+                          key={bar}
+                          className="px-3 py-2 text-sm cursor-pointer hover:bg-[var(--admin-warning-soft)] text-[var(--admin-foreground)]"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            setValue("barrio", bar);
+                            setBarrioSearch("");
+                            setBarrioFocused(false);
+                          }}
+                        >
+                          {bar}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="precio" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Precio (COP) *</Label>
+                <Input
+                  id="precio"
+                  type="number"
+                  step="100"
+                  {...register("precio", { valueAsNumber: true })}
+                  placeholder="0"
+                  disabled={isLoading}
+                  className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-3 bg-[var(--color-brand-rose)]/5 border-[var(--color-brand-rose)]/20">
+                <div className="space-y-0.5">
+                  <Label htmlFor="excluido" className="text-[var(--color-brand-rose-dark)]/80 font-medium cursor-pointer">
+                    Zona excluida de domicilio
+                  </Label>
+                  <p className="text-xs text-[var(--admin-muted-foreground)]">
+                    Si está activa, los clientes no podrán pagar con domicilio para esta zona
+                  </p>
+                </div>
                 <Controller
-                  name="sedeId"
+                  name="excluido"
                   control={control}
                   render={({ field }) => (
-                    <Select
-                      value={field.value && field.value !== 0 ? field.value.toString() : ""}
-                      onValueChange={(val) => { if (val && val !== "__none") field.onChange(Number(val)); }}
-                    >
-                      <SelectTrigger className="w-full">
-                        {field.value && field.value !== 0 && sedes
-                          ? (() => {
-                              const sede = sedes.find((s) => s.id === field.value);
-                              return sede ? `${sede.nombre} — ${sede.ciudad}` : null;
-                            })()
-                          : (
-                            <SelectValue placeholder="Selecciona una sede" />
-                          )}
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none">Selecciona una sede...</SelectItem>
-                        {sedes?.map((sede) => (
-                          <SelectItem key={sede.id} value={sede.id.toString()}>
-                            {sede.nombre} — {sede.ciudad}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Switch
+                      id="excluido"
+                      checked={field.value ?? false}
+                      onCheckedChange={field.onChange}
+                      disabled={isLoading}
+                    />
                   )}
                 />
               </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="localidad">Localidad / Municipio *</Label>
-              <div className="relative">
-                <Input
-                  id="localidad"
-                  value={watchedLocalidad ?? ""}
-                  placeholder="Ej: Chía, Cundinamarca"
-                  disabled={isLoading}
-                  onFocus={() => setLocalidadFocused(true)}
-                  onBlur={() => setTimeout(() => setLocalidadFocused(false), 200)}
-                  onChange={(e) => {
-                    setValue("localidad", e.target.value, { shouldValidate: true });
-                    setLocalidadSearch(e.target.value);
-                  }}
-                />
-                {localidadFocused && filteredLocalidades.length > 0 && (
-                  <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-md max-h-60 overflow-auto">
-                    {filteredLocalidades.map((loc) => (
-                      <div
-                        key={loc}
-                        className="px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          setValue("localidad", loc);
-                          setLocalidadSearch("");
-                          setLocalidadFocused(false);
-                        }}
-                      >
-                        {loc}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="barrio">Barrio (opcional)</Label>
-              <div className="relative">
-                <Input
-                  id="barrio"
-                  value={watch("barrio") ?? ""}
-                  placeholder="Dejar vacío para tarifa general"
-                  disabled={isLoading}
-                  onFocus={() => setBarrioFocused(true)}
-                  onBlur={() => setTimeout(() => setBarrioFocused(false), 200)}
-                  onChange={(e) => {
-                    setValue("barrio", e.target.value, { shouldValidate: true });
-                    setBarrioSearch(e.target.value);
-                  }}
-                />
-                {barrioFocused && filteredBarrios.length > 0 && (
-                  <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-md max-h-60 overflow-auto">
-                    {filteredBarrios.map((bar) => (
-                      <div
-                        key={bar}
-                        className="px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          setValue("barrio", bar);
-                          setBarrioSearch("");
-                          setBarrioFocused(false);
-                        }}
-                      >
-                        {bar}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="precio">Precio (COP) *</Label>
-              <Input
-                id="precio"
-                type="number"
-                step="100"
-                {...register("precio", { valueAsNumber: true })}
-                placeholder="0"
-                disabled={isLoading}
-              />
-            </div>
-            <div className="flex items-center justify-between rounded-lg border p-3 bg-brand-rose/5 border-brand-rose/20">
-              <div className="space-y-0.5">
-                <Label htmlFor="excluido" className="text-sm font-medium cursor-pointer">
-                  Zona excluida de domicilio
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Si está activa, los clientes no podrán pagar con domicilio para esta zona
-                </p>
-              </div>
-              <Controller
-                name="excluido"
-                control={control}
-                render={({ field }) => (
-                  <Switch
-                    id="excluido"
-                    checked={field.value ?? false}
-                    onCheckedChange={field.onChange}
-                    disabled={isLoading}
-                  />
-                )}
-              />
-            </div>
-            <div className="flex justify-end gap-2 pt-4">
+
+            <div className="flex justify-end gap-2 px-6 py-4 border-t border-[var(--admin-border)] shrink-0 bg-[var(--admin-card)] rounded-b-xl">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setDialogOpen(false)}
                 disabled={isLoading}
+                className="border-[var(--color-brand-mustard)]/40 text-[var(--color-brand-mustard)] hover:bg-[var(--color-brand-mustard)]/10 hover:border-[var(--color-brand-mustard)]"
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Guardando..." : "Guardar"}
+              <Button type="submit" disabled={isLoading} className="bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)] disabled:opacity-50">
+                {isLoading ? (
+                  <>
+                    <LoaderCircle className="size-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : editingZona ? (
+                  "Guardar cambios"
+                ) : (
+                  "Guardar"
+                )}
               </Button>
             </div>
           </form>
@@ -624,7 +655,7 @@ export default function ZonasDomicilioPage() {
       </Dialog>
 
       <Dialog open={zonaToDelete !== null} onOpenChange={(open) => { if (!open) setZonaToDelete(null); }}>
-        <DialogContent>
+        <DialogContent className="border-t-4 border-t-[var(--admin-danger)]">
           <DialogHeader>
             <DialogTitle>Eliminar zona de domicilio</DialogTitle>
             <DialogDescription>

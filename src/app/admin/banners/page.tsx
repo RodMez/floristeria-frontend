@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -35,25 +34,29 @@ import {
   Trash2,
   Search,
   SlidersHorizontal,
+  ImageIcon,
+  LoaderCircle,
 } from "lucide-react";
 import Image from "next/image";
 import Cookies from "js-cookie";
 import { validateImageFile } from "@/lib/validation";
 import { useRequireSuperAdmin } from "@/lib/auth";
 import { Textarea } from "@/components/ui/textarea";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
+import { StatusBadge } from "@/components/admin/StatusBadge";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 const UBICACIONES: { value: UbicacionBanner; label: string }[] = [
   { value: "SELECTOR_SEDE", label: "Página de inicio" },
   { value: "HOME_SEDE", label: "Inicio de sede" },
-  { value: "SHOWCASE", label: "Showcase / Catálogo" },
+  { value: "SHOWCASE", label: "Catálogo" },
 ];
 
 const ORDINALES = ["Primero", "Segundo", "Tercero", "Cuarto", "Quinto", "Sexto", "Séptimo", "Octavo", "Noveno", "Décimo"];
 const ORDEN_OPTIONS = ORDINALES.map((label, i) => ({ value: String(i), label }));
 function ordenLabel(n: number) {
-  if (n === 0) return "0°";
-  return ORDINALES[n - 1] ?? `${n}°`;
+  return ORDINALES[n] ?? `${n}°`;
 }
 
 interface FormData {
@@ -80,7 +83,7 @@ const emptyForm: FormData = {
 
 function CharCounter({ current, max }: { current: number; max: number }) {
   const pct = (current / max) * 100;
-  const color = pct > 90 ? "text-red-500" : pct > 70 ? "text-amber-500" : "text-stone-400";
+  const color = pct > 90 ? "text-[var(--admin-danger-foreground)]" : pct > 70 ? "text-[var(--admin-warning-foreground)]" : "text-[var(--admin-muted-foreground)]";
   return (
     <p className={`text-xs text-right ${color}`}>
       {current}/{max}
@@ -233,7 +236,7 @@ export default function BannersPage() {
     setIsLoading(true);
     try {
       const payload: BannerRequest = {
-        sedeId: form.ubicacion === "SELECTOR_SEDE" ? null : form.sedeId,
+        sedeId: form.ubicacion === "SELECTOR_SEDE" || form.ubicacion === "SHOWCASE" ? null : form.sedeId,
         ubicacion: form.ubicacion,
         titulo: form.titulo || undefined,
         texto: form.texto || undefined,
@@ -272,30 +275,32 @@ export default function BannersPage() {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <p className="text-stone-500">Verificando permisos...</p>
+          <ImageIcon className="h-12 w-12 mx-auto mb-4 text-[var(--admin-accent)] animate-pulse" />
+          <p className="font-heading italic text-[var(--admin-muted-foreground)]">
+            Verificando permisos...
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-stone-900">Banners Publicitarios</h1>
-          <p className="mt-1 text-sm text-stone-500">
-            Administra los banners y carruseles del sitio
-          </p>
-        </div>
-        <Button onClick={handleNew}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nuevo Banner
-        </Button>
-      </div>
+      <AdminPageHeader
+        title="Banners Publicitarios"
+        subtitle="Administra los banners y carruseles del sitio"
+        icon={ImageIcon}
+        actions={
+          <Button onClick={handleNew} className="bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]">
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo Banner
+          </Button>
+        }
+      />
 
       {error && (
-        <div className="border border-red-400 bg-red-50 px-4 py-3 text-red-700 rounded-lg" role="alert">
+        <div className="border border-[var(--admin-danger)]/40 bg-[var(--admin-danger-soft)] text-[var(--admin-danger-foreground)] px-4 py-3 rounded-lg" role="alert">
           <p>Error al cargar banners: {error.message}</p>
         </div>
       )}
@@ -304,7 +309,7 @@ export default function BannersPage() {
       {banners && banners.length > 0 && (
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--admin-muted-foreground)]" />
             <Input
               placeholder="Buscar por título o texto..."
               value={searchTerm}
@@ -314,7 +319,7 @@ export default function BannersPage() {
           </div>
           <Select value={filtroUbicacion} onValueChange={(v) => setFiltroUbicacion(v ?? "TODAS")}>
             <SelectTrigger className="w-full sm:w-[200px]">
-              <SlidersHorizontal className="mr-2 h-4 w-4 text-stone-400" />
+              <SlidersHorizontal className="mr-2 h-4 w-4 text-[var(--admin-muted-foreground)]" />
               <SelectValue placeholder="Ubicación" />
             </SelectTrigger>
             <SelectContent>
@@ -339,7 +344,7 @@ export default function BannersPage() {
 
       {/* Contador de resultados */}
       {banners && banners.length > 0 && (
-        <p className="text-sm text-stone-500">
+        <p className="text-sm text-[var(--admin-muted-foreground)] font-heading italic">
           Mostrando {filteredBanners.length} de {banners.length} banners
         </p>
       )}
@@ -349,27 +354,35 @@ export default function BannersPage() {
         {!banners ? (
           <>
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="overflow-hidden animate-pulse">
-                <div className="aspect-[3/1] bg-stone-200" />
+              <Card key={i} className="overflow-hidden animate-pulse border-[var(--admin-border)] bg-[var(--admin-card)]">
+                <div className="aspect-[3/1] bg-[var(--admin-canvas)]" />
                 <CardContent className="p-4 space-y-2">
-                  <div className="h-4 bg-stone-200 rounded w-3/4" />
-                  <div className="h-3 bg-stone-200 rounded w-1/2" />
+                  <div className="h-4 bg-[var(--admin-canvas)] rounded w-3/4" />
+                  <div className="h-3 bg-[var(--admin-canvas)] rounded w-1/2" />
                 </CardContent>
               </Card>
             ))}
           </>
         ) : filteredBanners.length === 0 ? (
-          <div className="col-span-full text-center py-12">
-            <p className="text-stone-500">
-              {banners.length === 0
-                ? 'No hay banners creados. Haz clic en "Nuevo Banner" para comenzar.'
-                : "No se encontraron banners con los filtros seleccionados."}
-            </p>
+          <div className="col-span-full">
+            <AdminEmptyState
+              icon={ImageIcon}
+              title={banners.length === 0 ? "No hay banners creados" : "No se encontraron banners"}
+              description={banners.length === 0 ? "Haz clic en \"Nuevo Banner\" para comenzar." : "Ajusta los filtros de búsqueda."}
+              action={
+                banners.length === 0 ? (
+                  <Button onClick={handleNew}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Crear primer banner
+                  </Button>
+                ) : undefined
+              }
+            />
           </div>
         ) : (
           filteredBanners.map((banner) => (
-            <Card key={banner.id} className="overflow-hidden group">
-              <div className="relative aspect-[3/1] bg-stone-100">
+            <Card key={banner.id} className="overflow-hidden group bg-[var(--admin-card)] border-[var(--admin-border)] shadow-sm hover:shadow-md transition-shadow">
+              <div className="relative aspect-[3/1] bg-[var(--admin-canvas)]">
                 <Image
                   src={banner.imagenUrl}
                   alt={banner.titulo ?? ""}
@@ -395,32 +408,27 @@ export default function BannersPage() {
                     onClick={() => handleDelete(banner)}
                     title="Eliminar"
                   >
-                    <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                    <Trash2 className="h-3.5 w-3.5 text-[var(--admin-danger-foreground)]" />
                   </Button>
                 </div>
                 <div className="absolute bottom-2 left-2">
-                  <Badge
-                    variant={banner.activo ? "default" : "secondary"}
-                    className={banner.activo
-                      ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
-                      : "bg-stone-100 text-stone-500 hover:bg-stone-100"
-                    }
-                  >
-                    {banner.activo ? "Activo" : "Inactivo"}
-                  </Badge>
+                  <StatusBadge
+                    variant={banner.activo ? "success" : "muted"}
+                    label={banner.activo ? "Activo" : "Inactivo"}
+                  />
                 </div>
               </div>
               <CardContent className="p-4">
-                <h3 className="font-semibold text-stone-900 truncate">
+                <h3 className="font-semibold text-[var(--admin-foreground)] truncate font-heading">
                   {banner.titulo || "Sin título"}
                 </h3>
-                <p className="text-sm text-stone-500 mt-1">
+                <p className="text-sm text-[var(--admin-muted-foreground)] mt-1">
                   {ubicacionLabel(banner.ubicacion)}
                   {banner.sedeId
                     ? ` · ${sedes?.find((s) => s.id === banner.sedeId)?.nombre ?? `Sede #${banner.sedeId}`}`
                     : " · Global"}
                 </p>
-                <p className="text-xs text-stone-400 mt-1">{ordenLabel(banner.orden)}</p>
+                <p className="text-xs text-[var(--admin-muted-foreground)]/70 mt-1 font-heading">{ordenLabel(banner.orden)}</p>
               </CardContent>
             </Card>
           ))
@@ -429,30 +437,37 @@ export default function BannersPage() {
 
       {/* Dialog: Crear/Editar */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingBanner ? "Editar Banner" : "Nuevo Banner"}</DialogTitle>
+        <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col border-t-4 border-t-[var(--color-brand-rose)] border-b-4 border-b-[var(--color-brand-rose)] p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
+            <div className="flex items-center gap-2 mb-1">
+              <ImageIcon className="size-5 text-[var(--color-brand-mustard)]" />
+              <DialogTitle className="text-[var(--color-brand-mustard)]">
+                {editingBanner ? "Editar Banner" : "Nuevo Banner"}
+              </DialogTitle>
+            </div>
             <DialogDescription>
               Configura los datos del banner promocional
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5">
             {/* Ubicación */}
             <div className="space-y-2">
-              <Label htmlFor="ubicacion">Ubicación</Label>
+              <Label htmlFor="ubicacion" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Ubicación</Label>
               <Select
                 value={form.ubicacion}
                 onValueChange={(val) =>
                   setForm((prev) => ({
                     ...prev,
                     ubicacion: val as UbicacionBanner,
-                    sedeId: val === "SELECTOR_SEDE" ? null : prev.sedeId,
+                    sedeId: val === "SELECTOR_SEDE" || val === "SHOWCASE" ? null : prev.sedeId,
                   }))
                 }
               >
-                <SelectTrigger id="ubicacion">
-                  <SelectValue placeholder="Selecciona una ubicación" />
+                <SelectTrigger id="ubicacion" className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50">
+                  <SelectValue placeholder="Selecciona una ubicación">
+                    {UBICACIONES.find(u => u.value === form.ubicacion)?.label}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {UBICACIONES.map((u) => (
@@ -462,17 +477,17 @@ export default function BannersPage() {
               </Select>
             </div>
 
-            {/* Sede (solo si no es SELECTOR_SEDE) */}
-            {form.ubicacion !== "SELECTOR_SEDE" && (
+            {/* Sede (solo para HOME_SEDE) */}
+            {form.ubicacion !== "SELECTOR_SEDE" && form.ubicacion !== "SHOWCASE" && (
               <div className="space-y-2">
-                <Label htmlFor="sede">Sede</Label>
+                <Label htmlFor="sede" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Sede</Label>
                 <Select
                   value={form.sedeId != null ? String(form.sedeId) : "global"}
                   onValueChange={(val) =>
                     setForm((prev) => ({ ...prev, sedeId: val === "global" ? null : Number(val) }))
                   }
                 >
-                  <SelectTrigger id="sede">
+                  <SelectTrigger id="sede" className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50">
                     <SelectValue placeholder="Global o específica" />
                   </SelectTrigger>
                   <SelectContent>
@@ -487,7 +502,7 @@ export default function BannersPage() {
 
             {/* Título */}
             <div className="space-y-2">
-              <Label htmlFor="titulo">Título</Label>
+              <Label htmlFor="titulo" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Título</Label>
               <Input
                 id="titulo"
                 value={form.titulo}
@@ -495,13 +510,14 @@ export default function BannersPage() {
                 placeholder="Ej: Colección Primavera"
                 disabled={isLoading}
                 maxLength={100}
+                className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
               />
               <CharCounter current={form.titulo.length} max={100} />
             </div>
 
             {/* Texto */}
             <div className="space-y-2">
-              <Label htmlFor="texto">Texto</Label>
+              <Label htmlFor="texto" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Texto</Label>
               <Textarea
                 id="texto"
                 value={form.texto}
@@ -510,24 +526,42 @@ export default function BannersPage() {
                 disabled={isLoading}
                 rows={2}
                 maxLength={255}
+                className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
               />
               <CharCounter current={form.texto.length} max={255} />
             </div>
 
             {/* Imagen */}
             <div className="space-y-2">
-              <Label htmlFor="imagen">Imagen</Label>
-              <Input
-                id="imagen"
-                type="file"
-                accept="image/*"
-                onChange={handleImagenUpload}
-                disabled={isLoading || uploading}
-                className="file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-[var(--color-brand-mustard)] file:text-stone-900 file:cursor-pointer hover:file:bg-[var(--color-brand-mustard-dark)]"
-              />
-              {uploading && <p className="text-xs text-stone-500">Subiendo imagen...</p>}
+              <Label className="text-[var(--color-brand-rose-dark)]/80 font-medium">Imagen</Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  id="imagen"
+                  type="text"
+                  value={imagenFile ? imagenFile.name : ""}
+                  placeholder="Seleccionar imagen"
+                  disabled
+                  className="flex-1"
+                />
+                <Label
+                  htmlFor="imagenUpload"
+                  className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md bg-[var(--color-brand-mustard)] px-3 py-2 text-sm font-medium text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]"
+                >
+                  <ImageIcon className="size-4" />
+                  Subir
+                </Label>
+                <input
+                  id="imagenUpload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImagenUpload}
+                  disabled={isLoading || uploading}
+                />
+              </div>
+              {uploading && <p className="text-xs text-[var(--admin-muted-foreground)]">Subiendo imagen...</p>}
               {form.imagenUrl && (
-                <div className="relative aspect-video w-full max-w-sm overflow-hidden rounded-lg border border-stone-200 bg-stone-100">
+                <div className="relative aspect-video w-full max-w-sm overflow-hidden rounded-lg border border-[var(--admin-border)] bg-[var(--admin-canvas)]">
                   <Image
                     src={form.imagenUrl}
                     alt="Preview"
@@ -536,7 +570,7 @@ export default function BannersPage() {
                   />
                 </div>
               )}
-              <p className="text-xs text-stone-500 mt-2">
+              <p className="text-xs text-[var(--admin-muted-foreground)] mt-2">
                 <strong>Tamaño recomendado:</strong> 1920 × 640 px (relación 3:1).
                 Mantén el contenido importante en la zona central para evitar recortes en diferentes dispositivos.
               </p>
@@ -544,7 +578,7 @@ export default function BannersPage() {
 
             {/* Enlace */}
             <div className="space-y-2">
-              <Label htmlFor="enlaceUrl">Enlace (opcional)</Label>
+              <Label htmlFor="enlaceUrl" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Enlace (opcional)</Label>
               <Input
                 id="enlaceUrl"
                 value={form.enlaceUrl}
@@ -552,22 +586,25 @@ export default function BannersPage() {
                 placeholder="/tienda/sede/1/producto/5"
                 disabled={isLoading}
                 maxLength={500}
+                className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
               />
-              <p className="text-xs text-stone-500">
+              <p className="text-xs text-[var(--admin-muted-foreground)]">
                 Ruta interna o URL externa a donde llevará el banner al hacer click
               </p>
             </div>
 
             {/* Orden */}
             <div className="space-y-2">
-              <Label htmlFor="orden">Orden</Label>
+              <Label htmlFor="orden" className="text-[var(--color-brand-rose-dark)]/80 font-medium">Orden</Label>
               <Select
                 value={String(form.orden)}
                 onValueChange={(v) => setForm((prev) => ({ ...prev, orden: v != null ? Number(v) : 0 }))}
                 disabled={isLoading}
               >
-                <SelectTrigger id="orden" className="w-48">
-                  <SelectValue placeholder="Selecciona el orden" />
+                <SelectTrigger id="orden" className="w-48 focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50">
+                  <SelectValue placeholder="Selecciona el orden">
+                    {ordenLabel(form.orden)}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {ORDEN_OPTIONS.map((o) => (
@@ -584,24 +621,43 @@ export default function BannersPage() {
                 checked={form.activo}
                 onCheckedChange={(checked) => setForm((prev) => ({ ...prev, activo: checked }))}
               />
-              <Label htmlFor="activo" className="cursor-pointer">Banner activo</Label>
+              <Label htmlFor="activo" className="cursor-pointer text-[var(--color-brand-rose-dark)]/80 font-medium">Banner activo</Label>
             </div>
-          </div>
+            </div>
 
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={isLoading}>
+          <div className="flex justify-end gap-2 px-6 py-4 border-t border-[var(--admin-border)] shrink-0 bg-[var(--admin-card)] rounded-b-xl">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDialogOpen(false)}
+              disabled={isLoading}
+              className="border-[var(--color-brand-mustard)]/40 text-[var(--color-brand-mustard)] hover:bg-[var(--color-brand-mustard)]/10 hover:border-[var(--color-brand-mustard)]"
+            >
               Cancelar
             </Button>
-            <Button onClick={handleSubmit} disabled={isLoading || uploading}>
-              {isLoading ? "Guardando..." : editingBanner ? "Guardar Cambios" : "Crear Banner"}
+            <Button
+              onClick={handleSubmit}
+              disabled={isLoading || uploading}
+              className="bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)] disabled:opacity-50"
+            >
+              {isLoading ? (
+                <>
+                  <LoaderCircle className="size-4 animate-spin" />
+                  Guardando...
+                </>
+              ) : editingBanner ? (
+                "Guardar Cambios"
+              ) : (
+                "Crear Banner"
+              )}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Dialog: Confirmar eliminación */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent className="border-t-4 border-t-[var(--admin-danger)]">
           <DialogHeader>
             <DialogTitle>Eliminar Banner</DialogTitle>
             <DialogDescription>
