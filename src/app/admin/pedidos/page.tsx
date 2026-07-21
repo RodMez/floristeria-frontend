@@ -43,8 +43,8 @@ import type { OrderStatus } from "@/types";
 
 const ORDER_ADMIN_VARIANT: Record<OrderStatus, AdminStatusVariant> = {
   PENDIENTE_PAGO: "muted",
-  PAGADO: "warning",
-  EN_PREPARACION: "info",
+  PAGADO: "mustard",
+  EN_PREPARACION: "sage",
   EN_CAMINO: "rose",
   ENTREGADO: "success",
   CANCELADO: "danger",
@@ -52,8 +52,8 @@ const ORDER_ADMIN_VARIANT: Record<OrderStatus, AdminStatusVariant> = {
 
 const ORDER_BORDER_L: Record<OrderStatus, string> = {
   PENDIENTE_PAGO: "border-l-[var(--admin-muted-foreground)]/40",
-  PAGADO: "border-l-[var(--admin-warning)]",
-  EN_PREPARACION: "border-l-[var(--admin-info)]",
+  PAGADO: "border-l-[var(--color-brand-mustard)]",
+  EN_PREPARACION: "border-l-[var(--admin-preparation)]",
   EN_CAMINO: "border-l-[var(--color-brand-rose-dark)]",
   ENTREGADO: "border-l-[var(--admin-success)]",
   CANCELADO: "border-l-[var(--admin-danger)]",
@@ -61,8 +61,8 @@ const ORDER_BORDER_L: Record<OrderStatus, string> = {
 
 const ORDER_SELECT_STYLES: Record<OrderStatus, string> = {
   PENDIENTE_PAGO: "bg-[var(--admin-canvas)] text-[var(--admin-muted-foreground)] border-[var(--admin-border)]",
-  PAGADO: "bg-[var(--admin-warning-soft)] text-[var(--admin-warning-foreground)] border-[var(--admin-warning)]/30",
-  EN_PREPARACION: "bg-[var(--admin-info-soft)] text-[var(--admin-info-foreground)] border-[var(--admin-info)]/30",
+  PAGADO: "bg-[var(--color-brand-mustard)]/15 text-[var(--color-brand-mustard-dark)] border-[var(--color-brand-mustard)]/30",
+  EN_PREPARACION: "bg-[var(--admin-preparation-light)] text-[var(--admin-preparation-foreground)] border-[var(--admin-preparation)]/30",
   EN_CAMINO: "bg-[var(--color-brand-rose-light)] text-[var(--color-brand-rose-dark)] border-[var(--color-brand-rose-dark)]/30",
   ENTREGADO: "bg-[var(--admin-success-soft)] text-[var(--admin-success-foreground)] border-[var(--admin-success)]/30",
   CANCELADO: "bg-[var(--admin-danger-soft)] text-[var(--admin-danger-foreground)] border-[var(--admin-danger)]/30",

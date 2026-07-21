@@ -6,7 +6,6 @@ import { fetcher } from "@/lib/fetcher";
 import {
   PedidoAdminResponse,
   ORDER_STATUS_LABELS,
-  ORDER_STATUS_COLORS,
 } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -50,12 +49,35 @@ function getOpcionesPermitidas(estadoActual: string): string[] {
 
 const STATUS_BORDER_COLORS: Record<string, string> = {
   PENDIENTE_PAGO: "border-l-[var(--admin-muted-foreground)]/40",
-  PAGADO: "border-l-[var(--admin-warning)]",
-  EN_PREPARACION: "border-l-[var(--admin-info)]",
+  PAGADO: "border-l-[var(--color-brand-mustard)]",
+  EN_PREPARACION: "border-l-[var(--admin-preparation)]",
   EN_CAMINO: "border-l-[var(--color-brand-rose-dark)]",
   ENTREGADO: "border-l-[var(--admin-success)]",
   CANCELADO: "border-l-[var(--admin-danger)]",
 };
+
+const STATUS_SHADOW_COLORS: Record<string, string> = {
+  PAGADO: "var(--color-brand-mustard)",
+  EN_PREPARACION: "var(--admin-preparation)",
+  EN_CAMINO: "var(--color-brand-rose-dark)",
+};
+
+const DASHBOARD_BADGE_COLORS: Record<string, string> = {
+  PENDIENTE_PAGO: "bg-[var(--admin-canvas)] text-[var(--admin-muted-foreground)] border-[var(--admin-border)]",
+  PAGADO: "bg-[var(--color-brand-mustard)]/15 text-[var(--color-brand-mustard-dark)] border-[var(--color-brand-mustard)]/30",
+  EN_PREPARACION: "bg-[var(--admin-preparation-light)] text-[var(--admin-preparation-foreground)] border-[var(--admin-preparation)]/30",
+  EN_CAMINO: "bg-[var(--color-brand-rose-light)] text-[var(--color-brand-rose-dark)] border-[var(--color-brand-rose-dark)]/30",
+  ENTREGADO: "bg-[var(--admin-success-soft)] text-[var(--admin-success-foreground)] border-[var(--admin-success)]/30",
+  CANCELADO: "bg-[var(--admin-danger-soft)] text-[var(--admin-danger-foreground)] border-[var(--admin-danger)]/30",
+};
+
+function getStatusShadow(estado: string): React.CSSProperties {
+  const color = STATUS_SHADOW_COLORS[estado];
+  if (!color) return {};
+  return {
+    boxShadow: `0 1px 3px 0 color-mix(in srgb, ${color} 25%, transparent), 0 1px 2px -1px color-mix(in srgb, ${color} 15%, transparent)`,
+  };
+}
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("es-CO", {
@@ -180,17 +202,17 @@ export default function AdminPage() {
         </button>
         <button
           onClick={() => toggleFilter("PAGADO")}
-          className={`rounded-xl p-3 text-center shadow-sm border transition-all duration-200 ${filtroEstado === "PAGADO" ? "bg-[var(--admin-warning-soft)] border-[var(--admin-warning)] ring-2 ring-[var(--admin-warning)]/30 scale-105" : "bg-[var(--admin-warning-soft)] border-[var(--admin-border)] hover:border-[var(--admin-warning)]/50 hover:scale-[1.02]"} cursor-pointer`}
+          className={`rounded-xl p-3 text-center shadow-sm border transition-all duration-200 ${filtroEstado === "PAGADO" ? "bg-[var(--color-brand-mustard)]/15 border-[var(--color-brand-mustard)] ring-2 ring-[var(--color-brand-mustard)]/30 scale-105" : "bg-[var(--color-brand-mustard)]/15 border-[var(--admin-border)] hover:border-[var(--color-brand-mustard)]/50 hover:scale-[1.02]"} cursor-pointer`}
         >
-          <p className="text-2xl font-bold text-[var(--admin-warning-foreground)] font-heading">{conteoPorEstado.PAGADO}</p>
-          <p className="text-xs text-[var(--admin-warning-foreground)]/80 font-heading">Por preparar</p>
+          <p className="text-2xl font-bold text-[var(--color-brand-mustard-dark)] font-heading">{conteoPorEstado.PAGADO}</p>
+          <p className="text-xs text-[var(--color-brand-mustard-dark)]/80 font-heading">Por preparar</p>
         </button>
         <button
           onClick={() => toggleFilter("EN_PREPARACION")}
-          className={`rounded-xl p-3 text-center shadow-sm border transition-all duration-200 ${filtroEstado === "EN_PREPARACION" ? "bg-[var(--admin-info-soft)] border-[var(--admin-info)] ring-2 ring-[var(--admin-info)]/30 scale-105" : "bg-[var(--admin-info-soft)] border-[var(--admin-border)] hover:border-[var(--admin-info)]/50 hover:scale-[1.02]"} cursor-pointer`}
+          className={`rounded-xl p-3 text-center shadow-sm border transition-all duration-200 ${filtroEstado === "EN_PREPARACION" ? "bg-[var(--admin-preparation-light)] border-[var(--admin-preparation)] ring-2 ring-[var(--admin-preparation)]/30 scale-105" : "bg-[var(--admin-preparation-light)] border-[var(--admin-border)] hover:border-[var(--admin-preparation)]/50 hover:scale-[1.02]"} cursor-pointer`}
         >
-          <p className="text-2xl font-bold text-[var(--admin-info-foreground)] font-heading">{conteoPorEstado.EN_PREPARACION}</p>
-          <p className="text-xs text-[var(--admin-info-foreground)]/80 font-heading">En preparación</p>
+          <p className="text-2xl font-bold text-[var(--admin-preparation-foreground)] font-heading">{conteoPorEstado.EN_PREPARACION}</p>
+          <p className="text-xs text-[var(--admin-preparation-foreground)]/80 font-heading">En preparación</p>
         </button>
         <button
           onClick={() => toggleFilter("EN_CAMINO")}
@@ -219,13 +241,14 @@ export default function AdminPage() {
           {pedidosMostrados.map((pedido) => (
             <Card
               key={pedido.id}
-              className={`group flex flex-col border-l-4 bg-[var(--admin-card)] border-[var(--admin-border)] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 ${STATUS_BORDER_COLORS[pedido.estado] ?? "border-l-[var(--admin-muted-foreground)]/40"}`}
+              className={`group flex flex-col border-l-4 bg-[var(--admin-card)] border-[var(--admin-border)] hover:-translate-y-0.5 transition-all duration-300 ${STATUS_BORDER_COLORS[pedido.estado] ?? "border-l-[var(--admin-muted-foreground)]/40"}`}
+              style={getStatusShadow(pedido.estado)}
             >
               <CardHeader>
                 <CardTitle className="flex items-center justify-between gap-2 text-[var(--admin-foreground)]">
                   <span>#{pedido.id}</span>
                   <Badge
-                    className={`${ORDER_STATUS_COLORS[pedido.estado as keyof typeof ORDER_STATUS_COLORS] ?? "bg-[var(--admin-canvas)] text-[var(--admin-foreground)] border-[var(--admin-border)]"} text-xs px-3 py-1.5 font-semibold flex items-center gap-1.5 shrink-0 transition-all duration-300 group-hover:ring-2 group-hover:ring-current/30`}
+                    className={`${DASHBOARD_BADGE_COLORS[pedido.estado] ?? "bg-[var(--admin-canvas)] text-[var(--admin-foreground)] border-[var(--admin-border)]"} text-xs px-3 py-1.5 font-semibold flex items-center gap-1.5 shrink-0 transition-all duration-300 group-hover:ring-2 group-hover:ring-current/30`}
                   >
                     <span className="size-2 rounded-full bg-current" />
                     {ORDER_STATUS_LABELS[
