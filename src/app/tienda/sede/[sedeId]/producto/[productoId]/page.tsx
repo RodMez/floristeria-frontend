@@ -247,21 +247,21 @@ export default function ProductoPage() {
           </div>
 
           {/* Precio */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             {tieneDescuento ? (
               <>
-                <Badge className="text-sm px-2.5 py-1 bg-brand-mustard text-white">
+                <Badge className="text-xs sm:text-sm px-2 py-0.5 sm:px-2.5 sm:py-1 bg-brand-mustard text-white">
                   -{producto.descuentoPorcentaje}% OFF
                 </Badge>
-                <span className="text-lg text-stone-400 line-through">
+                <span className="text-sm sm:text-lg text-stone-400 line-through">
                   {formatPrecio(producto.precioBase)}
                 </span>
-                <span className="text-4xl font-extrabold text-brand-mustard">
+                <span className="text-2xl sm:text-4xl font-extrabold text-brand-mustard">
                   {formatPrecio(producto.precioFinal)}
                 </span>
               </>
             ) : (
-              <span className="text-4xl font-extrabold text-[var(--color-brand-sage)]">
+              <span className="text-2xl sm:text-4xl font-extrabold text-[var(--color-brand-sage)]">
                 {formatPrecio(producto.precioBase)}
               </span>
             )}
@@ -289,24 +289,24 @@ export default function ProductoPage() {
               Producto Agotado
             </Button>
           ) : (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
               <div className="flex items-center border-2 border-dashed border-[var(--color-brand-mustard)] rounded-lg overflow-hidden shrink-0">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-12 w-12 rounded-none"
+                  className="h-10 w-10 sm:h-12 sm:w-12 rounded-none"
                   onClick={() => setCantidad(Math.max(1, cantidad - 1))}
                   disabled={cantidad <= 1}
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
-                <span className="w-12 text-center text-lg font-semibold tabular-nums">
+                <span className="w-10 sm:w-12 text-center text-base sm:text-lg font-semibold tabular-nums">
                   {cantidad}
                 </span>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-12 w-12 rounded-none"
+                  className="h-10 w-10 sm:h-12 sm:w-12 rounded-none"
                   onClick={() => setCantidad(Math.min(producto.stock, cantidad + 1))}
                   disabled={cantidad >= producto.stock}
                 >
@@ -316,15 +316,16 @@ export default function ProductoPage() {
 
               <Button
                 size="lg"
-                className={`flex-1 h-14 text-base font-extrabold transition-all duration-300 ${
+                className={`flex-1 min-w-0 h-12 sm:h-14 text-sm sm:text-base font-extrabold transition-all duration-300 ${
                   isAdding
                     ? "bg-brand-mustard text-stone-900"
                     : "bg-brand-rose-dark hover:bg-brand-mustard text-white hover:text-stone-900"
                 }`}
                 onClick={handleAddToCart}
               >
-                <ShoppingCart className="mr-2 h-5 w-5" />
-                {isAdding ? "¡Agregado!" : "Agregar al Carrito"}
+                <ShoppingCart className="mr-2 h-5 w-5 shrink-0" />
+                <span className="hidden sm:inline">{isAdding ? "¡Agregado!" : "Agregar al Carrito"}</span>
+                <span className="sm:hidden">{isAdding ? "¡Listo!" : "Agregar"}</span>
               </Button>
             </div>
           )}

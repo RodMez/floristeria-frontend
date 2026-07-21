@@ -864,7 +864,7 @@ function PedidoDetalleDialog({ pedido, onOpenChange }: PedidoDetalleDialogProps)
           </div>
         </div>
 
-        <DialogFooter className="px-6 pb-5 border-t border-[var(--color-brand-rose-light)] pt-4">
+        <DialogFooter className="px-6 pb-5 border-t border-[var(--color-brand-rose-light)] pt-4 mx-0 mb-0 bg-transparent rounded-none">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
