@@ -281,7 +281,7 @@ export default function ProductosPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleEdit(producto)}
-                      className="border-[var(--admin-border)] text-[var(--admin-muted-foreground)] hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] hover:bg-[var(--admin-warning-soft)]"
+className="border-[var(--admin-border)] text-[var(--admin-muted-foreground)] hover:border-[var(--admin-accent)] hover:text-stone-900 hover:bg-[var(--admin-warning-soft)]"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
