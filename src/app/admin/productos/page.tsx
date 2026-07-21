@@ -185,7 +185,7 @@ export default function ProductosPage() {
         icon={Flower2}
         actions={
           <>
-            <Button variant="outline" onClick={handleExport} disabled={exportando} className="border-[var(--admin-border)] text-[var(--admin-muted-foreground)] hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] hover:bg-[var(--admin-warning-soft)]">
+            <Button variant="outline" onClick={handleExport} disabled={exportando} className="border-[var(--admin-border)] text-[var(--admin-muted-foreground)] hover:border-[var(--admin-accent)] hover:text-stone-900 hover:bg-[var(--admin-warning-soft)]">
               <FileSpreadsheet className="mr-2 h-4 w-4" />
               {exportando ? "Exportando..." : "Exportar Excel"}
             </Button>
