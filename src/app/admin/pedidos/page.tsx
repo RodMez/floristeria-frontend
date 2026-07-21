@@ -45,7 +45,7 @@ const ORDER_ADMIN_VARIANT: Record<OrderStatus, AdminStatusVariant> = {
   PENDIENTE_PAGO: "muted",
   PAGADO: "warning",
   EN_PREPARACION: "info",
-  EN_CAMINO: "success",
+  EN_CAMINO: "rose",
   ENTREGADO: "success",
   CANCELADO: "danger",
 };
@@ -54,9 +54,18 @@ const ORDER_BORDER_L: Record<OrderStatus, string> = {
   PENDIENTE_PAGO: "border-l-[var(--admin-muted-foreground)]/40",
   PAGADO: "border-l-[var(--admin-warning)]",
   EN_PREPARACION: "border-l-[var(--admin-info)]",
-  EN_CAMINO: "border-l-[var(--admin-success)]",
+  EN_CAMINO: "border-l-[var(--color-brand-rose-dark)]",
   ENTREGADO: "border-l-[var(--admin-success)]",
   CANCELADO: "border-l-[var(--admin-danger)]",
+};
+
+const ORDER_SELECT_STYLES: Record<OrderStatus, string> = {
+  PENDIENTE_PAGO: "bg-[var(--admin-canvas)] text-[var(--admin-muted-foreground)] border-[var(--admin-border)]",
+  PAGADO: "bg-[var(--admin-warning-soft)] text-[var(--admin-warning-foreground)] border-[var(--admin-warning)]/30",
+  EN_PREPARACION: "bg-[var(--admin-info-soft)] text-[var(--admin-info-foreground)] border-[var(--admin-info)]/30",
+  EN_CAMINO: "bg-[var(--color-brand-rose-light)] text-[var(--color-brand-rose-dark)] border-[var(--color-brand-rose-dark)]/30",
+  ENTREGADO: "bg-[var(--admin-success-soft)] text-[var(--admin-success-foreground)] border-[var(--admin-success)]/30",
+  CANCELADO: "bg-[var(--admin-danger-soft)] text-[var(--admin-danger-foreground)] border-[var(--admin-danger)]/30",
 };
 
 const ORDER_STATUS_PULSE: Partial<Record<OrderStatus, boolean>> = {
@@ -624,6 +633,7 @@ export default function PedidosPage() {
                     <SelectTrigger
                       className={cn(
                         "h-7 rounded-full border px-3 text-xs font-medium",
+                        ORDER_SELECT_STYLES[item.estado as OrderStatus],
                         getOpcionesPermitidas(item.estado).length > 0
                           ? "cursor-pointer hover:opacity-80"
                           : "cursor-default opacity-100"
@@ -632,11 +642,11 @@ export default function PedidosPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={item.estado}>
+                      <SelectItem value={item.estado} className={ORDER_SELECT_STYLES[item.estado as OrderStatus]}>
                         {ORDER_STATUS_LABELS[item.estado as keyof typeof ORDER_STATUS_LABELS]}
                       </SelectItem>
                       {getOpcionesPermitidas(item.estado).map((status) => (
-                        <SelectItem key={status} value={status}>
+                        <SelectItem key={status} value={status} className={ORDER_SELECT_STYLES[status as OrderStatus]}>
                           {ORDER_STATUS_LABELS[status as keyof typeof ORDER_STATUS_LABELS]}
                         </SelectItem>
                       ))}

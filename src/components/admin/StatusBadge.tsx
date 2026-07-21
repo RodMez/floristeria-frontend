@@ -5,7 +5,8 @@ export type AdminStatusVariant =
   | "info"
   | "success"
   | "danger"
-  | "muted";
+  | "muted"
+  | "rose";
 
 type StatusBadgeProps = {
   variant: AdminStatusVariant;
@@ -43,6 +44,11 @@ const VARIANT_STYLES: Record<
     container:
       "bg-[var(--admin-canvas)] text-[var(--admin-muted-foreground)] border-[var(--admin-border)]",
     dot: "bg-[var(--admin-muted-foreground)]",
+  },
+  rose: {
+    container:
+      "bg-[var(--color-brand-rose-light)] text-[var(--color-brand-rose-dark)] border-[var(--color-brand-rose-dark)]/30",
+    dot: "bg-[var(--color-brand-rose-dark)]",
   },
 };
 
