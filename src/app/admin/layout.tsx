@@ -131,7 +131,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             ${
               isActive
                 ? "bg-[var(--admin-sidebar-hover)] text-[var(--admin-sidebar-foreground)] shadow-[inset_0_0_0_1px_var(--admin-sidebar-border)]"
-                : "text-[var(--admin-sidebar-muted)] hover:bg-[var(--admin-sidebar-hover)] hover:text-[var(--admin-sidebar-foreground)]"
+                : "text-[var(--admin-sidebar-muted)] hover:bg-[var(--admin-sidebar-hover)] hover:text-[var(--admin-accent)]"
             }
           `}
         >
@@ -145,7 +145,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             className={`h-[18px] w-[18px] shrink-0 transition-colors ${
               isActive
                 ? "text-[var(--admin-accent)]"
-                : "text-[var(--admin-sidebar-muted)] group-hover:text-[var(--admin-sidebar-foreground)]"
+                : "text-[var(--admin-sidebar-muted)] group-hover:text-[var(--admin-accent)]"
             }`}
           />
           <span className="truncate">{item.label}</span>
@@ -247,7 +247,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden text-[var(--admin-sidebar-muted)] hover:bg-[var(--admin-sidebar-hover)] hover:text-[var(--admin-sidebar-foreground)]"
+              className="md:hidden text-[var(--admin-sidebar-muted)] hover:bg-[var(--admin-sidebar-hover)] hover:text-[var(--admin-accent)]"
               onClick={closeSidebar}
               aria-label="Cerrar menú"
             >
