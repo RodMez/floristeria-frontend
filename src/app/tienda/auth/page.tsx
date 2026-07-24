@@ -29,9 +29,17 @@ type LoginFormData = z.infer<typeof loginSchema>;
 const registerSchema = z.object({
   nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   email: z.string().email("Email inválido"),
+  confirmEmail: z.string().email("Email inválido"),
   telefono: z.string().min(10, "Teléfono inválido"),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
+  confirmPassword: z.string(),
   aceptaDatos: z.literal(true, { message: "Debes aceptar la política de datos" }),
+}).refine((data) => data.email === data.confirmEmail, {
+  message: "Los correos no coinciden",
+  path: ["confirmEmail"],
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Las contraseñas no coinciden",
+  path: ["confirmPassword"],
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -57,6 +65,9 @@ function AuthContent() {
   const tagline = config?.tagline || "Flores que cuentan historias";
   const descripcion = config?.descripcion || "Creamos momentos únicos con flores frescas y arreglos personalizados. Cada pétalo cuenta una historia, cada bouquet lleva un mensaje de amor.";
   const logoUrl = config?.logoUrl || "/tao-logo-header.png";
+  const sitiNombreParts = sitioNombre.split(" ");
+  const nombreBase = sitiNombreParts[0];
+  const nombreAcento = sitiNombreParts.slice(1).join(" ");
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -68,8 +79,10 @@ function AuthContent() {
     defaultValues: {
       nombre: "",
       email: "",
+      confirmEmail: "",
       telefono: "",
       password: "",
+      confirmPassword: "",
       aceptaDatos: undefined as unknown as true,
     },
   });
@@ -143,12 +156,12 @@ function AuthContent() {
                 src={logoUrl}
                 alt={sitioNombre}
                 fill
-                className="object-contain p-1.5"
+                className="rounded-full object-contain p-1.5"
                 sizes="64px"
               />
             </div>
-            <span className="font-heading text-xl font-semibold text-stone-800">
-              {sitioNombre}
+            <span className="font-heading text-xl font-semibold text-[var(--admin-sidebar)]">
+              {nombreBase}{nombreAcento && <span className="text-brand-mustard"> {nombreAcento}</span>}
             </span>
           </div>
 
@@ -285,6 +298,21 @@ function AuthContent() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="register-confirm-email" className="text-stone-700 font-medium">Repite tu correo</Label>
+                  <Input
+                    id="register-confirm-email"
+                    type="email"
+                    placeholder="cliente@email.com"
+                    className="border-[#EAC3BD] focus:border-[#E5BE6F] focus:ring-[#E5BE6F]/20 bg-white h-12"
+                    {...registerForm.register("confirmEmail")}
+                    disabled={isLoading}
+                  />
+                  {registerForm.formState.errors.confirmEmail && (
+                    <p className="text-sm text-red-500">{registerForm.formState.errors.confirmEmail.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="register-telefono" className="text-stone-700 font-medium">Teléfono</Label>
                   <Input
                     id="register-telefono"
@@ -320,6 +348,30 @@ function AuthContent() {
                   </div>
                   {registerForm.formState.errors.password && (
                     <p className="text-sm text-red-500">{registerForm.formState.errors.password.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="register-confirm-password" className="text-stone-700 font-medium">Repite tu contraseña</Label>
+                  <div className="relative">
+                    <Input
+                      id="register-confirm-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      className="border-[#EAC3BD] focus:border-[#E5BE6F] focus:ring-[#E5BE6F]/20 bg-white h-12 pr-12"
+                      {...registerForm.register("confirmPassword")}
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                  {registerForm.formState.errors.confirmPassword && (
+                    <p className="text-sm text-red-500">{registerForm.formState.errors.confirmPassword.message}</p>
                   )}
                 </div>
 

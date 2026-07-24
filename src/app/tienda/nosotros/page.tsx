@@ -38,14 +38,17 @@ export default function NosotrosPage() {
       {/* Hero */}
       <section className="bg-gradient-to-b from-[var(--color-brand-rose-light)] to-white py-20">
         <div className="container mx-auto px-4 text-center">
-          <Image
-            src={logoUrl}
-            alt={sitioNombre}
-            width={80}
-            height={80}
-            className="mx-auto mb-6 rounded-full"
-          />
-          <h1 className="text-4xl md:text-5xl font-bold text-stone-800 mb-2">
+          <div className="relative mx-auto mb-6 w-48 h-48 md:w-64 md:h-64 rounded-2xl bg-white/60 backdrop-blur-sm overflow-hidden p-4 shadow-lg">
+            <Image
+              src={logoUrl}
+              alt={sitioNombre}
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 192px, 256px"
+              priority
+            />
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-[var(--admin-sidebar)] mb-2">
             {nombreBase}{nombreAcento && <span className="text-brand-mustard"> {nombreAcento}</span>}
           </h1>
           <p className="text-lg italic text-stone-500">&ldquo;{tagline}&rdquo;</p>

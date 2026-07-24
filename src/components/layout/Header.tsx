@@ -102,7 +102,7 @@ export default function Header() {
             alt={sitioNombre}
             className="h-14 w-14 rounded-full"
           />
-          <span className="font-heading text-xl font-semibold tracking-tight text-foreground transition-opacity hover:opacity-80 sm:text-2xl">
+          <span className="font-heading text-xl font-semibold tracking-tight text-[var(--admin-sidebar)] transition-opacity hover:opacity-80 sm:text-2xl">
             {nombreBase}{nombreAcento && <span className="text-brand-mustard"> {nombreAcento}</span>}
           </span>
         </Link>
