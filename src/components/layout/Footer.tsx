@@ -5,6 +5,7 @@ import { fetcher } from "@/lib/fetcher";
 import { Sede, ConfiguracionTiendaDTO } from "@/types";
 import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok, MdEmail } from "@/components/icons/SocialIcons";
 import { Separator } from "@/components/ui/separator";
+import Image from "next/image";
 import Link from "next/link";
 import { sanitizeUrl } from "@/lib/validation";
 
@@ -34,6 +35,7 @@ export default function Footer() {
   const sitioNombre = config?.nombreSitio || "TAO Boutique Floral";
   const tagline = config?.tagline || "Flores que cuentan historias";
   const descripcion = config?.descripcion || "";
+  const logoUrl = config?.logoUrl || "/tao-logo-header.png";
   const sitiNombreParts = sitioNombre.split(" ");
   const nombreBase = sitiNombreParts[0];
   const nombreAcento = sitiNombreParts.slice(1).join(" ");
@@ -44,9 +46,20 @@ export default function Footer() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           {/* ── Col 1: Brand ───────────────────────────────── */}
           <div className="space-y-4">
-            <h3 className="text-xl font-semibold tracking-tight text-stone-100">
-              {nombreBase}{nombreAcento && <span className="text-brand-mustard"> {nombreAcento}</span>}
-            </h3>
+            <div className="flex items-center gap-3">
+              <div className="relative size-10 shrink-0 overflow-hidden rounded-full">
+                <Image
+                  src={logoUrl}
+                  alt={sitioNombre}
+                  fill
+                  className="object-contain"
+                  sizes="40px"
+                />
+              </div>
+              <h3 className="text-xl font-semibold tracking-tight text-stone-100">
+                {nombreBase}{nombreAcento && <span className="text-brand-mustard"> {nombreAcento}</span>}
+              </h3>
+            </div>
             {tagline && (
               <p className="text-sm leading-relaxed italic text-stone-500">
                 &ldquo;{tagline}&rdquo;
@@ -251,11 +264,11 @@ export default function Footer() {
         <div className="flex flex-col items-center justify-between gap-2 text-xs text-stone-600 sm:flex-row">
           <p>&copy; {new Date().getFullYear()} {sitioNombre}. Todos los derechos reservados.</p>
           <p>
-            Hecho con{" "}
-            <span className="text-pink-400" aria-label="amor">
-              ♥
-            </span>{" "}
-            para los amantes de las flores
+        Hecho con{" "}
+        <Link href="/admin" className="text-pink-400 hover:opacity-70 transition-opacity" aria-label="Panel de administración">
+          <span aria-label="amor">♥</span>
+        </Link>{" "}
+        para los amantes de las flores
           </p>
         </div>
       </div>
