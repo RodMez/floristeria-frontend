@@ -343,6 +343,7 @@ export default function CheckoutPage() {
         onOpenChange={setShowZonaExcluida}
         direccion={direccionSeleccionada ?? null}
         whatsappNumber={sedeActual?.telefonoWhatsapp || ""}
+        notasEntrega={notasEntrega}
       />
     </>
   );

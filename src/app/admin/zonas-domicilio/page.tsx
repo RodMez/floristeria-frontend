@@ -440,9 +440,9 @@ export default function ZonasDomicilioPage() {
                 <TableCell className="text-[var(--admin-foreground)] font-semibold">{formatCurrency(zona.precio)}</TableCell>
                 <TableCell>
                   {zona.excluido ? (
-                    <StatusBadge variant="danger" label="Excluida" />
+                    <StatusBadge variant="danger" label="Excluida" className="font-sans" />
                   ) : (
-                    <StatusBadge variant="success" label="Activa" />
+                    <StatusBadge variant="success" label="Activa" className="font-sans" />
                   )}
                 </TableCell>
                 <TableCell className="text-right">

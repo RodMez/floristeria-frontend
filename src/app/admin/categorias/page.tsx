@@ -254,7 +254,7 @@ export default function CategoriasPage() {
                 <TableCell className="font-medium text-[var(--admin-foreground)]">{categoria.nombre}</TableCell>
                 <TableCell>
                   {categoria.tipo === "ADICIONAL" ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold font-heading tracking-wide bg-transparent text-[var(--admin-info-foreground)] border-[var(--admin-info)]/30">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold tracking-wide bg-transparent text-[var(--admin-info-foreground)] border-[var(--admin-info)]/30">
                       <span className="size-1.5 rounded-full bg-[var(--admin-info-foreground)]" />
                       ADICIONAL
                     </span>
@@ -267,12 +267,12 @@ export default function CategoriasPage() {
                 </TableCell>
                 <TableCell>
                   {(categoria.mostrarEnCatalogo ?? true) ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold font-heading tracking-wide bg-transparent text-[var(--admin-success-foreground)] border-[var(--admin-success)]/30">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold tracking-wide bg-transparent text-[var(--admin-success-foreground)] border-[var(--admin-success)]/30">
                       <span className="size-1.5 rounded-full bg-[var(--admin-success-foreground)]" />
                       Visible
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold font-heading italic tracking-wide bg-transparent text-[var(--admin-info-foreground)] border-[var(--admin-info)]/30">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold italic tracking-wide bg-transparent text-[var(--admin-info-foreground)] border-[var(--admin-info)]/30">
                       <span className="size-1.5 rounded-full bg-[var(--admin-info-foreground)]" />
                       Oculto
                     </span>
