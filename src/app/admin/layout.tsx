@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
-import { useAuthStore } from "@/store/useAuthStore";
+import { useAuthStore, useSessionExpiredSync } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -41,6 +41,7 @@ type NavItem = {
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  useSessionExpiredSync();
   const { rol, logout, isAuthenticated, isHydrated } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
@@ -59,7 +60,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (isHydrated && !isAuthenticated) {
-      router.push("/tienda/login");
+    router.push("/admin/login");
     }
   }, [isAuthenticated, isHydrated, router]);
 
@@ -87,7 +88,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const handleLogout = () => {
     closeSidebar();
     logout();
-    router.push("/tienda/login");
+    router.push("/admin/login");
   };
 
   const navItems: NavItem[] = [
@@ -156,6 +157,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </li>
     );
   };
+
+  const isLoginPage = pathname === '/admin/login';
+
+  if (isLoginPage) {
+    return <div className="min-h-screen bg-[var(--admin-canvas)]">{children}</div>;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--admin-canvas)]">

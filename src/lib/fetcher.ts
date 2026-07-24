@@ -249,10 +249,10 @@ function handleSessionExpired(): void {
     duration: 5000,
   });
 
-  // 5. Redirigir según el rol del usuario
-  // Admin → /tienda/login (login de admin)
-  // Cliente/otros → /tienda/auth (login/registro de cliente)
-  const redirectPath = isAdmin ? '/tienda/login' : '/tienda/auth';
+// 5. Redirigir según el rol del usuario
+// Admin → /admin/login (login de admin)
+// Cliente/otros → /tienda/auth (login/registro de cliente)
+const redirectPath = isAdmin ? '/admin/login' : '/tienda/auth';
 
   // Solo redirigir si NO estamos ya en la página destino
   if (window.location.pathname !== redirectPath) {

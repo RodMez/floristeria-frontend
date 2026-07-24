@@ -40,7 +40,7 @@ export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   const isAdminPage = pathname.startsWith('/admin');
-  const isLoginPage = pathname === '/tienda/login';
+  const isLoginPage = pathname === '/admin/login';
 
   // Verificar si el token es válido (existe y no está expirado)
   const isTokenValid = token && !isTokenExpired(token);
@@ -48,7 +48,7 @@ export function middleware(request: NextRequest) {
   // Sin token válido en /admin → redirigir a login
   if (isAdminPage && !isTokenValid) {
     // Limpiar cookie expirada si existe
-    const response = NextResponse.redirect(new URL('/tienda/login', request.url));
+    const response = NextResponse.redirect(new URL('/admin/login', request.url));
     if (token) {
       response.cookies.delete('token');
     }
@@ -56,7 +56,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Con token expirado en /login → limpiar cookie y permitir acceso
-  // NOTA: No redirigir de /tienda/login a /admin aunque haya token válido.
+  // NOTA: No redirigir de /admin/login a /admin aunque haya token válido.
   // El login page maneja esto en el cliente con isTokenValid.
   if (isLoginPage && token && !isTokenValid) {
     const response = NextResponse.next();
@@ -68,5 +68,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/tienda/login'],
+  matcher: ['/admin/:path*', '/admin/login'],
 };
