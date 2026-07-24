@@ -320,6 +320,9 @@ export interface PedidoHistorial {
   referenciaPago: string;
   sedeNombre: string;
   metodoPago: string;
+  clienteNombre?: string;
+  clienteEmail?: string;
+  clienteTelefono?: string;
   direccionEntrega: DireccionEntregaDTO;
   detalles: DetallePedidoHistorialDTO[];
 }

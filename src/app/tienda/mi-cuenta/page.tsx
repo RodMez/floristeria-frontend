@@ -223,7 +223,42 @@ async function generarPDF(pedido: PedidoHistorial) {
   doc.text(`Estado: ${ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado}`, margin, y);
   y += 5;
   doc.text(`Sede: ${pedido.sedeNombre || "—"}`, margin, y);
-  y += 10;
+  y += 5;
+  if (pedido.clienteNombre) {
+    const clienteLines = 1 + (pedido.clienteEmail ? 1 : 0) + (pedido.clienteTelefono ? 1 : 0);
+    const clienteHeight = 10 + clienteLines * 5 + 4;
+    doc.setFillColor(stone100.r, stone100.g, stone100.b);
+    doc.roundedRect(margin, y - 4, pageWidth - margin * 2, clienteHeight, 2, 2, "F");
+    doc.setFont(FONT, "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(mustardDark.r, mustardDark.g, mustardDark.b);
+    doc.text("Datos del Cliente", margin + 4, y + 2);
+    doc.setDrawColor(mustard.r, mustard.g, mustard.b);
+    doc.setLineWidth(0.3);
+    doc.line(margin + 4, y + 5, pageWidth - margin - 4, y + 5);
+    y += 10;
+    doc.setFont(FONT, "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(stone500.r, stone500.g, stone500.b);
+    doc.text(`Cliente:`, margin + 4, y);
+    doc.setTextColor(stone700.r, stone700.g, stone700.b);
+    doc.text(`${pedido.clienteNombre}`, margin + 55, y);
+    y += 5;
+    if (pedido.clienteEmail) {
+      doc.setTextColor(stone500.r, stone500.g, stone500.b);
+      doc.text(`Email:`, margin + 4, y);
+      doc.setTextColor(stone700.r, stone700.g, stone700.b);
+      doc.text(`${pedido.clienteEmail}`, margin + 55, y);
+      y += 5;
+    }
+    if (pedido.clienteTelefono) {
+      doc.setTextColor(stone500.r, stone500.g, stone500.b);
+      doc.text(`Teléfono:`, margin + 4, y);
+      doc.setTextColor(stone700.r, stone700.g, stone700.b);
+      doc.text(`${pedido.clienteTelefono}`, margin + 55, y);
+      y += 5;
+    }
+  }
 
   // ── Section: Pago ──
   doc.setFillColor(stone100.r, stone100.g, stone100.b);

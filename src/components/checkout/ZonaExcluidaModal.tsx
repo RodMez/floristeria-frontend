@@ -2,7 +2,8 @@
 
 import { useMemo } from "react";
 import { useCartStore, getPrecioFinal } from "@/store/useCartStore";
-import { DireccionResponse, ConfiguracionTiendaDTO, ProductoCatalogo } from "@/types";
+import { useAuthStore } from "@/store/useAuthStore";
+import { DireccionResponse, ProductoCatalogo } from "@/types";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import {
@@ -22,6 +23,7 @@ interface ZonaExcluidaModalProps {
   onOpenChange: (open: boolean) => void;
   direccion: DireccionResponse | null;
   whatsappNumber: string;
+  notasEntrega?: string;
 }
 
 function formatPrice(price: number): string {
@@ -37,15 +39,13 @@ export default function ZonaExcluidaModal({
   onOpenChange,
   direccion,
   whatsappNumber,
+  notasEntrega,
 }: ZonaExcluidaModalProps) {
   const items = useCartStore((state) => state.items);
   const sedeActual = useCartStore((state) => state.sedeActual);
+  const { nombre, email } = useAuthStore();
 
-  const { data: config } = useSWR<ConfiguracionTiendaDTO>(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/configuracion`,
-    fetcher
-  );
-  const sitioNombre = config?.nombreSitio || "TAO Boutique Floral";
+  const sitioNombre = "TAO Boutique Floral";
 
   const { data: catalogo } = useSWR<ProductoCatalogo[]>(
     sedeActual
@@ -76,6 +76,12 @@ export default function ZonaExcluidaModal({
     `Hola, me gustaría realizar un pedido:`,
     "",
     `─────────────────`,
+    `*👤 Datos del cliente*`,
+    `─────────────────`,
+    nombre ? `👤 Nombre: *${nombre}*` : null,
+    email ? `📧 Email: *${email}*` : null,
+    "",
+    `─────────────────`,
     `*🛒 Productos*`,
     `─────────────────`,
     ...items.flatMap((item, idx) => {
@@ -94,6 +100,7 @@ export default function ZonaExcluidaModal({
     `🏠 ${direccion?.direccion || "No especificada"}, ${direccion?.ciudad || ""}`,
     direccion?.detalles ? `📝 Detalles: ${direccion.detalles}` : null,
     `🏘️ Zona: ${zonaNombre}`,
+    notasEntrega ? `📋 Notas: _${notasEntrega}_` : null,
     "",
     `─────────────────`,
     `*💰 Total*`,
