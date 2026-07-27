@@ -376,6 +376,9 @@ export interface ConfiguracionTiendaDTO {
   showcaseBadge?: string | null;
   showcaseTitulo?: string | null;
   showcaseSubtitulo?: string | null;
+  correoHabeasData?: string | null;
+  politicaVersionActual?: string | null;
+  tycVersionActual?: string | null;
 }
 
 export type UbicacionBanner = "SELECTOR_SEDE" | "HOME_SEDE" | "SHOWCASE";

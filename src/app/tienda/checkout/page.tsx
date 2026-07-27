@@ -295,6 +295,9 @@ export default function CheckoutPage() {
               </div>
 
               <div className="flex items-start gap-2">
+                {/* TODO legal: El copy del checkbox de T&C debe ser revisado por abogado antes de lanzamiento.
+                    Debe mencionar expresamente la excepción de retracto para bienes perecederos
+                    (Ley 1480/2011 art. 47 lit. j). No modificar el texto sin firma del abogado. */}
                 <Checkbox
                   id="acepta-terminos"
                   checked={aceptaTerminos}

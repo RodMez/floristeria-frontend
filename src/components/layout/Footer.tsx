@@ -181,6 +181,16 @@ export default function Footer() {
                   Registrarse
                 </Link>
               </li>
+              <li>
+                <Link href="/legal/datos" className="hover:text-brand-mustard transition-colors">
+                  Política de Tratamiento de Datos
+                </Link>
+              </li>
+              <li>
+                <Link href="/legal/terminos" className="hover:text-brand-mustard transition-colors">
+                  Términos y Condiciones
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -212,6 +222,22 @@ export default function Footer() {
                   </a>
                 </li>
               )}
+              <li>
+                {config?.correoHabeasData ? (
+                  <a
+                    href={`mailto:${config.correoHabeasData}?subject=Solicitud%20ARCO%20-%20Habeas%20Data`}
+                    className="flex items-center gap-2 hover:text-brand-mustard transition-colors"
+                  >
+                    <MdEmail className="size-4 shrink-0 text-brand-mustard" />
+                    Ejercer tus derechos ARCO
+                  </a>
+                ) : (
+                  <span className="flex items-center gap-2 text-stone-500 italic">
+                    <MdEmail className="size-4 shrink-0" />
+                    Ejercer tus derechos ARCO: configurar correo en panel admin
+                  </span>
+                )}
+              </li>
               <li className="flex items-center gap-3 pt-2">
                 {config?.instagramUrl && (
                   <a
