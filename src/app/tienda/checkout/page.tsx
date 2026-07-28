@@ -194,6 +194,7 @@ export default function CheckoutPage() {
           direccionId: selectedDireccionId,
           detalles,
           notasEntrega: notasEntrega || undefined,
+          aceptaTerminos,
         }),
       });
 

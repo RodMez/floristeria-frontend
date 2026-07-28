@@ -33,7 +33,7 @@ const registerSchema = z.object({
   telefono: z.string().min(10, "Teléfono inválido"),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
   confirmPassword: z.string(),
-  aceptaDatos: z.literal(true, { message: "Debes aceptar la política de datos" }),
+  aceptaHabeasData: z.literal(true, { message: "Debes aceptar la política de datos" }),
 }).refine((data) => data.email === data.confirmEmail, {
   message: "Los correos no coinciden",
   path: ["confirmEmail"],
@@ -83,7 +83,7 @@ function AuthContent() {
       telefono: "",
       password: "",
       confirmPassword: "",
-      aceptaDatos: undefined as unknown as true,
+      aceptaHabeasData: undefined as unknown as true,
     },
   });
 
@@ -378,9 +378,9 @@ function AuthContent() {
                 <div className="flex items-start space-x-3 pt-2">
                   <Checkbox
                     id="register-acepta-datos"
-                    checked={!!registerForm.watch("aceptaDatos")}
+                    checked={!!registerForm.watch("aceptaHabeasData")}
                     onCheckedChange={(checked) =>
-                      registerForm.setValue("aceptaDatos", (checked ? true : undefined) as unknown as true, {
+                      registerForm.setValue("aceptaHabeasData", (checked ? true : undefined) as unknown as true, {
                         shouldValidate: true,
                       })
                     }
@@ -394,8 +394,8 @@ function AuthContent() {
                     </a>
                   </Label>
                 </div>
-                {registerForm.formState.errors.aceptaDatos && (
-                  <p className="text-sm text-red-500">{registerForm.formState.errors.aceptaDatos.message}</p>
+                {registerForm.formState.errors.aceptaHabeasData && (
+                  <p className="text-sm text-red-500">{registerForm.formState.errors.aceptaHabeasData.message}</p>
                 )}
 
                 <Button

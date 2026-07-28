@@ -46,7 +46,7 @@ export function middleware(request: NextRequest) {
   const isTokenValid = token && !isTokenExpired(token);
 
   // Sin token válido en /admin → redirigir a login
-  if (isAdminPage && !isTokenValid) {
+  if (isAdminPage && !isLoginPage && !isTokenValid) {
     // Limpiar cookie expirada si existe
     const response = NextResponse.redirect(new URL('/admin/login', request.url));
     if (token) {
