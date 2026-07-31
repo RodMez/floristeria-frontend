@@ -37,6 +37,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 const configSchema = z.object({
   enviarCopiaMaestro: z.boolean(),
   correoMaestro: z.string().email("Correo inválido").optional().or(z.literal("")),
+  correoHabeasData: z.string().email("Correo inválido").max(200, "Máximo 200 caracteres").optional().or(z.literal("")),
   whatsappGeneral: z.string().max(20, "Máximo 20 caracteres").optional().or(z.literal("")),
   instagramUrl: z.string().url("URL inválida").max(500, "Máximo 500 caracteres").optional().or(z.literal("")),
   facebookUrl: z.string().url("URL inválida").max(500, "Máximo 500 caracteres").optional().or(z.literal("")),
@@ -118,6 +119,7 @@ export default function ConfiguracionPage() {
     defaultValues: {
       enviarCopiaMaestro: false,
       correoMaestro: "",
+      correoHabeasData: "",
       whatsappGeneral: "",
       instagramUrl: "",
       facebookUrl: "",
@@ -248,6 +250,7 @@ export default function ConfiguracionPage() {
       reset({
         enviarCopiaMaestro: configuracion.enviarCopiaMaestro,
         correoMaestro: configuracion.correoMaestro ?? "",
+        correoHabeasData: configuracion.correoHabeasData ?? "",
         whatsappGeneral: configuracion.whatsappGeneral ?? "",
         instagramUrl: configuracion.instagramUrl ?? "",
         facebookUrl: configuracion.facebookUrl ?? "",
@@ -284,6 +287,7 @@ export default function ConfiguracionPage() {
     const payload: ConfiguracionTiendaDTO = {
       enviarCopiaMaestro: data.enviarCopiaMaestro,
       correoMaestro: data.correoMaestro || null,
+      correoHabeasData: data.correoHabeasData || null,
       whatsappGeneral: data.whatsappGeneral || null,
       instagramUrl: data.instagramUrl || null,
       facebookUrl: data.facebookUrl || null,
@@ -405,6 +409,28 @@ export default function ConfiguracionPage() {
                     {watchedEnviarCopia
                       ? "Se enviarán copias de todas las ventas a este correo."
                       : "Activa la opción anterior para recibir copias de ventas."}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="correoHabeasData">Correo para derechos ARCO (Habeas Data)</Label>
+                  <Input
+                    id="correoHabeasData"
+                    type="email"
+                    {...register("correoHabeasData")}
+                    placeholder="correo@ejemplo.com"
+                    disabled={isLoading}
+                    maxLength={200}
+                    className={errors.correoHabeasData ? "border-[var(--admin-danger)]/40" : ""}
+                  />
+                  {errors.correoHabeasData && (
+                    <p className="text-xs text-[var(--admin-danger-foreground)]" role="alert">
+                      {errors.correoHabeasData.message}
+                    </p>
+                  )}
+                  <p className="text-xs text-[var(--admin-muted-foreground)]">
+                    Se muestra en el footer de la tienda para que los clientes ejerzan sus derechos ARCO.
+                    Si se deja vacío, el enlace no aparece.
                   </p>
                 </div>
               </div>
