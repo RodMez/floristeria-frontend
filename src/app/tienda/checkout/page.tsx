@@ -249,7 +249,7 @@ export default function CheckoutPage() {
         <h1 className="font-heading text-2xl font-bold text-brand-mustard">Checkout</h1>
       </div>
 
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1fr_1.5fr_1fr]">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)]">
         {/* ── Columna 1: Direcciones ────────────────────────── */}
         <section>
           <div className="flex items-center gap-2 mb-4">

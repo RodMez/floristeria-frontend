@@ -46,7 +46,7 @@ function ItemRow({ item }: { item: CartItem }) {
           )}
         </p>
         {item.notaPersonalizacion && (
-          <p className="text-xs text-muted-foreground/70 italic truncate">
+          <p className="text-xs text-muted-foreground/70 italic break-words">
             📝 {item.notaPersonalizacion}
           </p>
         )}
