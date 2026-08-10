@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ProductoResponse, CategoriaResponse, ProductoRequest } from "@/types";
@@ -26,7 +27,10 @@ import Image from "next/image";
 const productoSchema = z.object({
   sku: z.string().min(3, "El SKU debe tener al menos 3 caracteres"),
   nombre: z.string().min(1, "El nombre es obligatorio"),
-  descripcion: z.string().min(1, "La descripción es obligatoria"),
+  descripcion: z
+    .string()
+    .min(1, "La descripción es obligatoria")
+    .max(1500, "La descripción no puede superar los 1500 caracteres"),
   categoriaIds: z
     .array(z.number())
     .min(1, "Debe seleccionar al menos una categoría"),
@@ -34,6 +38,21 @@ const productoSchema = z.object({
 
 /** ─────────── Types ─────────── */
 type ProductoFormData = z.infer<typeof productoSchema>;
+
+function CharCounter({ current, max }: { current: number; max: number }) {
+  const pct = (current / max) * 100;
+  const color =
+    pct > 90
+      ? "text-[var(--admin-danger-foreground)]"
+      : pct > 70
+        ? "text-[var(--admin-warning-foreground)]"
+        : "text-[var(--admin-muted-foreground)]";
+  return (
+    <p className={`text-xs text-right ${color}`}>
+      {current}/{max}
+    </p>
+  );
+}
 
 interface ProductDialogProps {
   isOpen: boolean;
@@ -250,13 +269,16 @@ export function ProductDialog({
             <Label htmlFor="descripcion" className="text-[var(--color-brand-rose-dark)]/80 font-medium">
               Descripción <span>*</span>
             </Label>
-            <Input
+            <Textarea
               id="descripcion"
               placeholder="Descripción del producto"
               disabled={isLoading}
-              className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
+              rows={5}
+              maxLength={1500}
+              className="resize-none focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
               {...register("descripcion")}
             />
+            <CharCounter current={watch("descripcion")?.length || 0} max={1500} />
             {errors.descripcion && (
               <p className="text-xs text-[var(--admin-danger-foreground)]">
                 {errors.descripcion.message}
