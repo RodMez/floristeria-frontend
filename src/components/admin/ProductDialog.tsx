@@ -200,7 +200,7 @@ export function ProductDialog({
 
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.message || "Error al guardar el producto");
+        throw new Error(errData.mensaje || errData.message || "Error al guardar el producto");
       }
 
       toast.success(isEditing ? "Producto actualizado correctamente" : "Producto creado correctamente");

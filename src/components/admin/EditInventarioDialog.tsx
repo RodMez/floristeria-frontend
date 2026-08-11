@@ -78,7 +78,7 @@ export function EditInventarioDialog({ item, mutate }: EditInventarioDialogProps
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.message || "Error al actualizar el inventario");
+        throw new Error(errData.mensaje || errData.message || "Error al actualizar el inventario");
       }
 
       toast.success("Inventario actualizado correctamente");

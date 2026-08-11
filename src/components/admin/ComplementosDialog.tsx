@@ -134,7 +134,7 @@ export function ComplementosDialog({
 
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.message || "Error al agregar complemento");
+        throw new Error(errData.mensaje || errData.message || "Error al agregar complemento");
       }
 
       toast.success("Complemento agregado correctamente");
@@ -166,7 +166,7 @@ export function ComplementosDialog({
 
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.message || "Error al eliminar");
+        throw new Error(errData.mensaje || errData.message || "Error al eliminar");
       }
 
       toast.success("Complemento eliminado");
