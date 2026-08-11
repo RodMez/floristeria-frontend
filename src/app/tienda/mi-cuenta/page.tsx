@@ -9,6 +9,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/useAuthStore";
 import { fetcher, authFetch, obtenerPerfil } from "@/lib/fetcher";
+import { useSedes } from "@/hooks/useSedes";
 import {
   crearDireccion,
   actualizarDireccion,
@@ -22,7 +23,6 @@ import {
   ConfiguracionTiendaDTO,
   DireccionResponse,
   DireccionRequest,
-  Sede,
   ZonaDomicilioResponse,
   ClientePerfilResponse,
 } from "@/types";
@@ -87,7 +87,6 @@ import ReseñasModal from "@/components/reseñas/ReseñasModal";
 
 const API_PEDIDOS_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/pedidos`;
 const API_DIRECCIONES_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/clientes/direcciones`;
-const API_SEDES_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/sedes`;
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("es-CO", {
@@ -1459,9 +1458,7 @@ function DireccionDialog({
   const isEditing = direccion !== null;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: sedes } = useSWR<Sede[]>(API_SEDES_URL, fetcher, {
-    revalidateOnFocus: false,
-  });
+  const { sedes, esUnicaSede } = useSedes();
   const sedesOptions = sedes?.map((s) => ({
     id: s.id,
     label: `${s.nombre} - ${s.ciudad}`,
@@ -1498,10 +1495,16 @@ function DireccionDialog({
     { shouldRetryOnError: false, revalidateOnFocus: false }
   );
 
+  const sedeEfectivaId = useMemo(() => {
+    if (selectedSedeId) return selectedSedeId;
+    if (esUnicaSede && sedes && sedes.length === 1) return sedes[0].id;
+    return null;
+  }, [selectedSedeId, esUnicaSede, sedes]);
+
   const zonasBySede = useMemo(() => {
-    if (!allZones || !selectedSedeId) return [];
-    return allZones.filter((z) => z.sedeId === selectedSedeId);
-  }, [allZones, selectedSedeId]);
+    if (!allZones || !sedeEfectivaId) return [];
+    return allZones.filter((z) => z.sedeId === sedeEfectivaId);
+  }, [allZones, sedeEfectivaId]);
 
   const [selectedLocalidad, setSelectedLocalidad] = useState<string>("");
   const [selectedBarrio, setSelectedBarrio] = useState<string>("");
@@ -1600,7 +1603,9 @@ function DireccionDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.alias.trim() || !form.direccion.trim() || !form.ciudad.trim()) {
+    const sedeUnicaEnvio = esUnicaSede && sedes && sedes.length === 1 ? sedes[0] : null;
+
+    if (!form.alias.trim() || !form.direccion.trim() || (!form.ciudad.trim() && !sedeUnicaEnvio)) {
       toast.error("Completa los campos obligatorios: alias, dirección y ciudad.");
       return;
     }
@@ -1610,13 +1615,18 @@ function DireccionDialog({
       return;
     }
 
+    const formFinal: DireccionRequest = {
+      ...form,
+      ciudad: sedeUnicaEnvio ? sedeUnicaEnvio.ciudad : form.ciudad,
+    };
+
     setIsSubmitting(true);
     try {
       if (isEditing) {
-        await actualizarDireccion(direccion.id, form);
+        await actualizarDireccion(direccion.id, formFinal);
         toast.success("Dirección actualizada.");
       } else {
-        await crearDireccion(form);
+        await crearDireccion(formFinal);
         toast.success("Dirección guardada.");
       }
       onSaved();
@@ -1677,50 +1687,58 @@ function DireccionDialog({
 
           <div className="space-y-2">
             <Label className="text-[var(--color-brand-rose-dark)]/80 font-medium">Sede de Despacho *</Label>
-            <Select
-              value={selectedSedeId?.toString() ?? ""}
-              onValueChange={handleSedeChange}
-              disabled={isSubmitting || !sedes}
-            >
-              <SelectTrigger className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50">
-                {selectedSedeId && sedes
-                  ? (() => {
-                      const sede = sedes.find((s) => s.id === selectedSedeId);
-                      return sede ? `${sede.nombre} - ${sede.ciudad}` : null;
-                    })()
-                  : (
-                    <SelectValue placeholder={
-                      !sedes ? "Cargando sedes..." : "Selecciona una sede"
-                    } />
-                  )}
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none">Selecciona una sede...</SelectItem>
-                {sedesOptions.map((sede) => (
-                  <SelectItem key={sede.id} value={sede.id.toString()}>
-                    {sede.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {esUnicaSede ? (
+              <Input
+                value={sedes?.[0] ? `${sedes[0].nombre} - ${sedes[0].ciudad}` : ""}
+                disabled
+                className="bg-[var(--color-brand-rose-light)]/20 text-muted-foreground focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50"
+              />
+            ) : (
+              <Select
+                value={selectedSedeId?.toString() ?? ""}
+                onValueChange={handleSedeChange}
+                disabled={isSubmitting || !sedes}
+              >
+                <SelectTrigger className="focus-visible:ring-[var(--color-brand-mustard)]/30 focus-visible:border-[var(--color-brand-mustard)]/50">
+                  {selectedSedeId && sedes
+                    ? (() => {
+                        const sede = sedes.find((s) => s.id === selectedSedeId);
+                        return sede ? `${sede.nombre} - ${sede.ciudad}` : null;
+                      })()
+                    : (
+                      <SelectValue placeholder={
+                        !sedes ? "Cargando sedes..." : "Selecciona una sede"
+                      } />
+                    )}
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">Selecciona una sede...</SelectItem>
+                  {sedesOptions.map((sede) => (
+                    <SelectItem key={sede.id} value={sede.id.toString()}>
+                      {sede.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {/* ── Zona de Domicilio (Selects Dependientes) ─────── */}
-          {loadingZonas && selectedSedeId && (
+          {loadingZonas && sedeEfectivaId && (
             <div className="space-y-2">
               <div className="h-10 animate-pulse rounded-md bg-[var(--color-brand-rose-light)]/50" />
               <div className="h-10 animate-pulse rounded-md bg-[var(--color-brand-rose-light)]/50" />
             </div>
           )}
 
-          {!loadingZonas && allZones && zonasBySede.length === 0 && selectedSedeId && (
+          {!loadingZonas && allZones && zonasBySede.length === 0 && sedeEfectivaId && (
             <div className="flex items-center gap-2 text-sm text-[var(--color-brand-rose-dark)] bg-[var(--color-brand-rose-light)]/50 border border-[var(--color-brand-rose)]/20 rounded-md p-3">
               <MapPinIcon className="size-4 shrink-0 text-[var(--color-brand-rose-dark)]" />
               No hay zonas de domicilio configuradas para esta sede. Contacta al administrador.
             </div>
           )}
 
-          {!loadingZonas && allZones && zonasBySede.length > 0 && selectedSedeId && (
+          {!loadingZonas && allZones && zonasBySede.length > 0 && sedeEfectivaId && (
             <>
               <div className="space-y-2">
                 <Label className="text-[var(--color-brand-rose-dark)]/80 font-medium">Localidad / Municipio *</Label>

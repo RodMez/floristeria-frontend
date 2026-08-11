@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
+import { useSedes } from "@/hooks/useSedes";
 import { ProductoShowcase, ShowcaseVariante, ConfiguracionTiendaDTO } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +44,8 @@ export default function ShowcasePage() {
     `${process.env.NEXT_PUBLIC_API_URL}/api/v1/configuracion`,
     fetcher
   );
+
+  const { esUnicaSede, sedeUnica } = useSedes();
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<ProductoShowcase | null>(null);
@@ -105,7 +108,10 @@ export default function ShowcasePage() {
           <div className="inline-flex items-center gap-2 bg-[var(--color-brand-mustard)]/10 px-4 py-1.5 rounded-full mb-6">
             <Sparkles className="h-4 w-4 text-brand-mustard" />
             <span className="text-sm font-medium text-[var(--color-brand-mustard-dark)]">
-              {config?.showcaseBadge || "Todas nuestras sedes, un solo lugar"}
+              {config?.showcaseBadge ||
+                (esUnicaSede
+                  ? config?.nombreSitio || "TAO Boutique Floral"
+                  : "Todas nuestras sedes, un solo lugar")}
             </span>
           </div>
           <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold text-stone-800 mb-4">
@@ -115,7 +121,9 @@ export default function ShowcasePage() {
           </h1>
           <p className="text-base md:text-lg text-stone-500 max-w-xl mx-auto leading-relaxed">
             {config?.showcaseSubtitulo ||
-              "Explora cada creación, elige la sede más cercana y transforma cualquier momento en un recuerdo inolvidable."}
+              (esUnicaSede
+                ? "Explora cada creación y transforma cualquier momento en un recuerdo inolvidable."
+                : "Explora cada creación, elige la sede más cercana y transforma cualquier momento en un recuerdo inolvidable.")}
           </p>
         </div>
 
@@ -162,7 +170,14 @@ export default function ShowcasePage() {
             <ProductCard
               key={producto.productoId}
               producto={producto}
-              onClick={() => setSelectedProduct(producto)}
+              esUnicaSede={esUnicaSede}
+              onClick={() => {
+                if (esUnicaSede && sedeUnica) {
+                  router.push(`/tienda/sede/${sedeUnica.id}/producto/${producto.productoId}`);
+                } else {
+                  setSelectedProduct(producto);
+                }
+              }}
             />
           ))}
         </div>
@@ -194,9 +209,11 @@ export default function ShowcasePage() {
 function ProductCard({
   producto,
   onClick,
+  esUnicaSede,
 }: {
   producto: ProductoShowcase;
   onClick: () => void;
+  esUnicaSede: boolean;
 }) {
   const tieneDescuento = producto.variantes.some((v) => v.descuentoPorcentaje > 0);
   const menorPrecio = Math.min(
@@ -224,12 +241,14 @@ function ProductCard({
             Hasta -{menorDescuento}%
           </div>
         )}
-        <div className="absolute bottom-2 left-2">
-          <Badge className="bg-white/90 text-stone-600 text-xs shadow-sm backdrop-blur-sm">
-            <MapPin className="h-3 w-3 mr-1" />
-            {producto.variantes.length} sede{producto.variantes.length > 1 ? "s" : ""}
-          </Badge>
-        </div>
+        {!esUnicaSede && (
+          <div className="absolute bottom-2 left-2">
+            <Badge className="bg-white/90 text-stone-600 text-xs shadow-sm backdrop-blur-sm">
+              <MapPin className="h-3 w-3 mr-1" />
+              {producto.variantes.length} sede{producto.variantes.length > 1 ? "s" : ""}
+            </Badge>
+          </div>
+        )}
       </div>
 
       <div className="p-3 md:p-4">

@@ -2,7 +2,8 @@
 
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
-import { Sede, ConfiguracionTiendaDTO } from "@/types";
+import { useSedes } from "@/hooks/useSedes";
+import { ConfiguracionTiendaDTO } from "@/types";
 import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok, MdEmail } from "@/components/icons/SocialIcons";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
@@ -10,14 +11,7 @@ import Link from "next/link";
 import { sanitizeUrl } from "@/lib/validation";
 
 export default function Footer() {
-  const { data: sedes, error: sedesError } = useSWR<Sede[]>(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/sedes`,
-    fetcher,
-    {
-      fallbackData: [],
-      errorRetryCount: 2,
-    }
-  );
+  const { sedes, error: sedesError, esUnicaSede } = useSedes();
 
   const { data: config, error: configError } = useSWR<ConfiguracionTiendaDTO>(
     `${process.env.NEXT_PUBLIC_API_URL}/api/v1/configuracion`,
@@ -74,9 +68,11 @@ export default function Footer() {
 
           {/* ── Col 2: Sedes & Redes Sociales ──────────────── */}
           <div className="space-y-4">
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-300">
-              Nuestras sedes
-            </h4>
+            {!esUnicaSede && (
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-300">
+                Nuestras sedes
+              </h4>
+            )}
             {sedes && sedes.length > 0 ? (
               <ul className="space-y-4">
                 {sedes.map((sede) => (

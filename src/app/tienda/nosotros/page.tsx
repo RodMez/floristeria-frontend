@@ -4,7 +4,8 @@ import useSWR from "swr";
 import Link from "next/link";
 import Image from "next/image";
 import { fetcher } from "@/lib/fetcher";
-import { ConfiguracionTiendaDTO, Sede } from "@/types";
+import { useSedes } from "@/hooks/useSedes";
+import { ConfiguracionTiendaDTO } from "@/types";
 import { Heart, Sparkles, Target, ChevronRight } from "lucide-react";
 import SedeCard from "@/components/SedeCard";
 import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok, MdEmail } from "@/components/icons/SocialIcons";
@@ -16,10 +17,7 @@ export default function NosotrosPage() {
     fetcher
   );
 
-  const { data: sedes } = useSWR<Sede[]>(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/sedes`,
-    fetcher
-  );
+  const { sedes, esUnicaSede } = useSedes();
 
   const sitioNombre = config?.nombreSitio || "TAO Boutique Floral";
   const logoUrl = config?.logoUrl || "/tao-logo-header.png";
@@ -167,7 +165,9 @@ export default function NosotrosPage() {
           {/* Sedes */}
           {sedes && sedes.length > 0 && (
             <div className="mb-8">
-              <h3 className="text-xs font-heading font-semibold text-stone-400 uppercase tracking-wider mb-3">Nuestras Sedes</h3>
+              {!esUnicaSede && (
+                <h3 className="text-xs font-heading font-semibold text-stone-400 uppercase tracking-wider mb-3">Nuestras Sedes</h3>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-2xl mx-auto">
                 {sedes.map((sede) => (
                   <SedeCard key={sede.id} sede={sede} />

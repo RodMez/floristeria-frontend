@@ -24,6 +24,7 @@ interface CartState {
   sedeActual: Sede | null;
   drawerOpen: boolean;
   setDrawerOpen: (open: boolean) => void;
+  setSedeActual: (sede: Sede) => void;
   addItem: (item: CartItem, sede: Sede) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, cantidad: number) => void;
@@ -38,6 +39,7 @@ export const useCartStore = create<CartState>()(
       sedeActual: null,
       drawerOpen: false,
       setDrawerOpen: (open) => set({ drawerOpen: open }),
+      setSedeActual: (sede) => set({ sedeActual: sede }),
       addItem: (item, sede) =>
         set((state) => {
           // Si hay items en el carrito y la sede es diferente, vaciar el carrito
