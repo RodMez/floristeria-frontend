@@ -12,14 +12,6 @@ import { sanitizeUrl } from "@/lib/validation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
-function imageKitUrl(base: string, w: number, h: number): string {
-  if (base.includes("ik.imagekit.io")) {
-    const sep = base.includes("?") ? "&" : "?";
-    return `${base}${sep}tr=w-${w},h-${h},c-at_max`;
-  }
-  return base;
-}
-
 interface BannerCarouselProps {
   ubicacion: UbicacionBanner;
   sedeId?: number;
@@ -104,10 +96,7 @@ export default function BannerCarousel({
       onBlur={() => setIsPaused(false)}
     >
       <Image
-        src={aspectRatio
-          ? imageKitUrl(banner.imagenUrl, aspectRatio === "1/1" ? 600 : 1200, aspectRatio === "1/1" ? 600 : aspectRatio === "16/9" ? 675 : 400)
-          : imageKitUrl(banner.imagenUrl, 1920, 640)
-        }
+        src={banner.imagenUrl}
         alt={banner.titulo ?? "Banner promocional"}
         fill
         className="object-cover"
