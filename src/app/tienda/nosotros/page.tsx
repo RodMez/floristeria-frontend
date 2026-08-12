@@ -119,22 +119,22 @@ export default function NosotrosPage() {
             Estamos aquí para ayudarte. Ya sea que tengas una consulta, necesites un arreglo especial o quieras hacer un pedido, no dudes en comunicarte con nosotros.
           </p>
 
-          <div className="grid gap-4 sm:grid-cols-2 max-w-lg mx-auto mb-8">
+          <div className="flex flex-wrap justify-center gap-4 max-w-lg mx-auto mb-8">
             {config?.correoMaestro && (
-              <a href={`mailto:${config.correoMaestro}`} className="flex items-center gap-3 rounded-lg border-2 border-brand-rose bg-white px-5 py-4 text-left text-sm font-medium text-stone-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard hover:text-amber-600">
+              <a href={`mailto:${config.correoMaestro}`} className="flex items-center gap-3 rounded-lg border-2 border-brand-rose bg-white px-5 py-4 text-left text-sm font-medium text-stone-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard hover:text-amber-600 max-w-[340px]">
                 <MdEmail className="size-5 shrink-0 text-amber-500" />
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-stone-400">Email</p>
-                  <p className="truncate">{config.correoMaestro}</p>
+                  <p className="break-words">{config.correoMaestro}</p>
                 </div>
               </a>
             )}
             {config?.whatsappGeneral && (
-              <a href={`https://wa.me/${config.whatsappGeneral.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-lg border-2 border-brand-rose bg-white px-5 py-4 text-left text-sm font-medium text-stone-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard hover:text-emerald-600">
+              <a href={`https://wa.me/${config.whatsappGeneral.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-lg border-2 border-brand-rose bg-white px-5 py-4 text-left text-sm font-medium text-stone-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-brand-mustard hover:text-emerald-600 max-w-[340px]">
                 <FaWhatsapp className="size-5 shrink-0 text-emerald-500" />
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-stone-400">WhatsApp</p>
-                  <p>{config.whatsappGeneral}</p>
+                  <p className="break-words">{config.whatsappGeneral}</p>
                 </div>
               </a>
             )}
@@ -168,7 +168,7 @@ export default function NosotrosPage() {
               {!esUnicaSede && (
                 <h3 className="text-xs font-heading font-semibold text-stone-400 uppercase tracking-wider mb-3">Nuestras Sedes</h3>
               )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-2xl mx-auto">
+              <div className={`grid gap-8 max-w-2xl mx-auto ${esUnicaSede ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}>
                 {sedes.map((sede) => (
                   <SedeCard key={sede.id} sede={sede} />
                 ))}

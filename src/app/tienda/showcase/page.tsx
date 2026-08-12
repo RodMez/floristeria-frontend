@@ -319,7 +319,7 @@ function SedeModal({
           <h2 className="text-xl font-bold text-stone-800 mb-1">
             {producto.nombre}
           </h2>
-          <p className="text-sm text-stone-500 line-clamp-2 mb-4">
+          <p className="text-sm text-stone-500 whitespace-pre-line mb-4">
             {producto.descripcion}
           </p>
 
