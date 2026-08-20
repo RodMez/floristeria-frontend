@@ -241,7 +241,7 @@ export default function AdminPage() {
           {pedidosMostrados.map((pedido) => (
             <Card
               key={pedido.id}
-              className={`group flex flex-col border-l-4 bg-[var(--admin-card)] border-[var(--admin-border)] hover:-translate-y-0.5 transition-all duration-300 ${STATUS_BORDER_COLORS[pedido.estado] ?? "border-l-[var(--admin-muted-foreground)]/40"}`}
+              className={`group flex h-full flex-col border-l-4 bg-[var(--admin-card)] border-[var(--admin-border)] hover:-translate-y-0.5 transition-all duration-300 ${STATUS_BORDER_COLORS[pedido.estado] ?? "border-l-[var(--admin-muted-foreground)]/40"}`}
               style={getStatusShadow(pedido.estado)}
             >
               <CardHeader>
@@ -279,7 +279,7 @@ export default function AdminPage() {
                   <p className="text-[11px] font-semibold text-[var(--admin-muted-foreground)] uppercase tracking-wider mb-1 font-heading">
                     Productos
                   </p>
-                  <div className="max-h-[108px] overflow-y-auto space-y-1.5">
+                  <div className="h-[108px] overflow-y-auto space-y-1.5">
                     {pedido.detalles?.map((d, i) => (
                       <div key={i}>
                         <p className="text-xs text-[var(--admin-foreground)] flex items-baseline gap-1">
