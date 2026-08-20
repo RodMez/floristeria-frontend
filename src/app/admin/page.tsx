@@ -285,6 +285,7 @@ export default function AdminPage() {
                         <p className="text-xs text-[var(--admin-foreground)] flex items-baseline gap-1">
                           <span className="font-medium shrink-0">{d.cantidad}x</span>
                           <span className="truncate">{d.productoNombre}</span>
+                          <span className="shrink-0 text-[10px] text-[var(--admin-muted-foreground)] uppercase">{d.productoSku}</span>
                         </p>
                         {d.notaPersonalizacion && (
                           <div className="flex items-baseline gap-1 ml-4 mt-0.5">
