@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
-import { Package, ArrowRight, StickyNote, MapPin } from "lucide-react";
+import { Package, ArrowRight, StickyNote, MapPin, MessageSquare } from "lucide-react";
 import Link from "next/link";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -296,6 +296,23 @@ export default function AdminPage() {
                         )}
                       </div>
                     )) ?? <p className="text-xs text-[var(--admin-muted-foreground)] italic">Sin productos</p>}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-[var(--admin-info)]/30 bg-[var(--admin-info)]/10 px-2.5 py-2 mt-2">
+                  <p className="text-[11px] font-semibold text-[var(--admin-info)] uppercase tracking-wider mb-0.5 flex items-center gap-1 font-heading">
+                    <MessageSquare className="h-3 w-3" />
+                    Notas de entrega
+                  </p>
+                  <div className="max-h-[52px] overflow-y-auto min-h-[16px]">
+                    {pedido.notasEntrega ? (
+                      <p className="text-xs text-[var(--admin-foreground)] leading-tight break-words">
+                        {pedido.notasEntrega}
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-[var(--admin-muted-foreground)] italic">
+                        Sin notas
+                      </p>
+                    )}
                   </div>
                 </div>
                 {pedido.direccionEntrega && (
