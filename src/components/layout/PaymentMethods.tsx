@@ -44,13 +44,13 @@ export default function PaymentMethods() {
           />
         </Chip>
 
-        <Chip label="DaviPlata" tight className="flex-1 min-w-[140px]">
+        <Chip label="DaviPlata" tight>
           <Image
             src="/payments/daviplata.svg"
             alt="DaviPlata"
             width={120}
             height={28}
-            className="h-7 w-auto object-contain"
+            className="h-8 w-auto object-contain"
           />
         </Chip>
 
