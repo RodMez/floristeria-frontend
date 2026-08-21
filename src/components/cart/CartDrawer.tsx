@@ -166,6 +166,7 @@ export default function CartDrawer() {
                           className="mt-1.5 h-14 text-xs border-brand-rose/30 bg-brand-rose/5 focus:border-[var(--color-brand-mustard)] focus:ring-[var(--color-brand-mustard)]/20 transition-all duration-200"
                           value={item.notaPersonalizacion || ""}
                           onChange={(e) => updateNota(item.id, e.target.value)}
+                          maxLength={255}
                         />
                       )}
                     </div>

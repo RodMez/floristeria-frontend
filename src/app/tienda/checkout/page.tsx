@@ -291,6 +291,7 @@ export default function CheckoutPage() {
                   value={notasEntrega}
                   onChange={(e) => setNotasEntrega(e.target.value)}
                   rows={3}
+                  maxLength={255}
                   className="mt-1 border-[var(--color-brand-rose)] focus:border-[var(--color-brand-mustard)] focus:ring-[var(--color-brand-mustard)]/20 break-words"
                 />
               </div>

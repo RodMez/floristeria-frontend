@@ -6,6 +6,7 @@ import { useSedes } from "@/hooks/useSedes";
 import { ConfiguracionTiendaDTO } from "@/types";
 import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok, MdEmail } from "@/components/icons/SocialIcons";
 import { Separator } from "@/components/ui/separator";
+import PaymentMethods from "./PaymentMethods";
 import Image from "next/image";
 import Link from "next/link";
 import { sanitizeUrl } from "@/lib/validation";
@@ -144,6 +145,7 @@ export default function Footer() {
             ) : (
               <p className="text-sm text-stone-600 italic">Cargando sedes...</p>
             )}
+            <PaymentMethods />
           </div>
 
           {/* ── Col 3: Enlaces rápidos ─────────────────────── */}
