@@ -54,13 +54,13 @@ export default function PaymentMethods() {
           />
         </Chip>
 
-        <Chip label="SU+ Pay" compact>
+        <Chip label="PSE - Pagos Seguros en Línea" tight>
           <Image
-            src="/payments/su-pay.png"
-            alt="SU+ Pay"
-            width={72}
-            height={20}
-            className="h-7 w-auto object-contain"
+            src="/payments/pse.png"
+            alt="PSE - Pagos Seguros en Línea"
+            width={78}
+            height={22}
+            className="h-8 w-auto object-contain"
           />
         </Chip>
 
@@ -95,23 +95,23 @@ export default function PaymentMethods() {
           />
         </Chip>
 
-        <Chip label="American Express" className="p-0 overflow-hidden">
+        <Chip label="American Express" className="w-[72px] p-0 overflow-hidden">
           <Image
             src="/payments/amex.jpg"
             alt="American Express"
             width={230}
             height={50}
-            className="h-[42px] w-auto object-contain"
+            className="h-8 w-auto scale-[1.18] object-contain"
           />
         </Chip>
 
-        <Chip label="PSE - Pagos Seguros en Línea" tight>
+        <Chip label="SU+ Pay" compact>
           <Image
-            src="/payments/pse.png"
-            alt="PSE - Pagos Seguros en Línea"
-            width={78}
-            height={22}
-            className="h-8 w-auto object-contain"
+            src="/payments/su-pay.png"
+            alt="SU+ Pay"
+            width={72}
+            height={20}
+            className="h-7 w-auto object-contain"
           />
         </Chip>
 
