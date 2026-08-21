@@ -75,13 +75,13 @@ export default function PaymentMethods() {
         </Chip>
 
         {/* ── Tarjetas ── */}
-        <Chip label="Visa" compact>
+        <Chip label="Visa" tight>
           <Image
             src="/payments/visa.png"
             alt="Visa"
             width={64}
             height={20}
-            className="h-7 w-auto object-contain"
+            className="h-8 w-auto object-contain"
           />
         </Chip>
 
@@ -95,33 +95,33 @@ export default function PaymentMethods() {
           />
         </Chip>
 
-        <Chip label="American Express" className="w-[72px] p-0 overflow-hidden">
+        <Chip label="American Express" tight>
           <Image
             src="/payments/amex.jpg"
             alt="American Express"
             width={230}
             height={50}
-            className="h-8 w-auto scale-[1.18] object-contain"
+            className="h-8 w-auto object-contain"
           />
         </Chip>
 
-        <Chip label="SU+ Pay" compact>
+        <Chip label="SU+ Pay" tight>
           <Image
             src="/payments/su-pay.png"
             alt="SU+ Pay"
             width={72}
             height={20}
-            className="h-7 w-auto object-contain"
+            className="h-8 w-auto object-contain"
           />
         </Chip>
 
-        <Chip label="Wompi">
+        <Chip label="Wompi" tight>
           <Image
             src="/payments/wompi.svg"
             alt="Wompi"
             width={80}
             height={22}
-            className="h-6 w-auto object-contain"
+            className="h-8 w-auto object-contain"
           />
         </Chip>
       </div>
