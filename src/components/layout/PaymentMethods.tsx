@@ -97,10 +97,10 @@ export default function PaymentMethods() {
 
         <Chip label="American Express" tight>
           <Image
-            src="/payments/amex.jpg"
+            src="/payments/amex.png"
             alt="American Express"
-            width={230}
-            height={50}
+            width={68}
+            height={20}
             className="h-8 w-auto object-contain"
           />
         </Chip>
