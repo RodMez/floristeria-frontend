@@ -1,9 +1,17 @@
 import Image from "next/image";
 
-function Chip({ children, label }: { children: React.ReactNode; label: string }) {
+function Chip({
+  children,
+  label,
+  compact = false,
+}: {
+  children: React.ReactNode;
+  label: string;
+  compact?: boolean;
+}) {
   return (
     <div
-      className="inline-flex h-10 items-center justify-center rounded-lg bg-white px-3.5 shadow-sm"
+      className={`inline-flex h-10 items-center justify-center rounded-lg bg-white shadow-sm ${compact ? "px-2" : "px-3.5"}`}
       aria-label={label}
       title={label}
     >
@@ -41,13 +49,13 @@ export default function PaymentMethods() {
           />
         </Chip>
 
-        <Chip label="PSE - Pagos Seguros en Línea">
+        <Chip label="PSE - Pagos Seguros en Línea" compact>
           <Image
             src="/payments/pse.png"
             alt="PSE - Pagos Seguros en Línea"
             width={78}
             height={22}
-            className="h-6 w-auto object-contain"
+            className="h-7 w-auto object-contain"
           />
         </Chip>
 
@@ -62,13 +70,13 @@ export default function PaymentMethods() {
         </Chip>
 
         {/* ── Tarjetas ── */}
-        <Chip label="Visa">
+        <Chip label="Visa" compact>
           <Image
             src="/payments/visa.png"
             alt="Visa"
             width={64}
             height={20}
-            className="h-6 w-auto object-contain"
+            className="h-7 w-auto object-contain"
           />
         </Chip>
 
@@ -82,24 +90,24 @@ export default function PaymentMethods() {
           />
         </Chip>
 
-        <Chip label="American Express">
+        <Chip label="American Express" compact>
           <Image
-            src="/payments/amex.svg"
+            src="/payments/amex.jpg"
             alt="American Express"
             width={68}
             height={20}
-            className="h-6 w-auto object-contain"
+            className="h-7 w-auto object-contain"
           />
         </Chip>
 
         {/* ── Crédito ── */}
-        <Chip label="SU+ Pay">
+        <Chip label="SU+ Pay" compact>
           <Image
             src="/payments/su-pay.png"
             alt="SU+ Pay"
             width={72}
             height={20}
-            className="h-6 w-auto object-contain"
+            className="h-7 w-auto object-contain"
           />
         </Chip>
       </div>
