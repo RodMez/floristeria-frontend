@@ -95,13 +95,13 @@ export default function PaymentMethods() {
           />
         </Chip>
 
-        <Chip label="American Express" tight>
+        <Chip label="American Express" className="p-0 overflow-hidden">
           <Image
             src="/payments/amex.jpg"
             alt="American Express"
-            width={68}
-            height={20}
-            className="h-8 w-auto object-contain"
+            width={230}
+            height={50}
+            className="h-[42px] w-auto object-contain"
           />
         </Chip>
 
@@ -112,6 +112,16 @@ export default function PaymentMethods() {
             width={78}
             height={22}
             className="h-8 w-auto object-contain"
+          />
+        </Chip>
+
+        <Chip label="Wompi">
+          <Image
+            src="/payments/wompi.svg"
+            alt="Wompi"
+            width={80}
+            height={22}
+            className="h-6 w-auto object-contain"
           />
         </Chip>
       </div>
