@@ -48,6 +48,7 @@ const configSchema = z.object({
   logoUrl: z.string().max(500, "Máximo 500 caracteres").optional().or(z.literal("")),
   iconUrl: z.string().max(500, "Máximo 500 caracteres").optional().or(z.literal("")),
   historia: z.string().max(10000, "Máximo 10000 caracteres").optional().or(z.literal("")),
+  historiaImagenUrl: z.string().max(500, "Máximo 500 caracteres").optional().or(z.literal("")),
   mision: z.string().max(10000, "Máximo 10000 caracteres").optional().or(z.literal("")),
   vision: z.string().max(10000, "Máximo 10000 caracteres").optional().or(z.literal("")),
   showcaseBadge: z.string().max(100, "Máximo 100 caracteres").optional().or(z.literal("")),
@@ -94,6 +95,7 @@ export default function ConfiguracionPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingIcon, setUploadingIcon] = useState(false);
+  const [uploadingHistoria, setUploadingHistoria] = useState(false);
   const [exportandoExcel, setExportandoExcel] = useState(false);
   const [exportandoProductos, setExportandoProductos] = useState(false);
 
@@ -130,6 +132,7 @@ export default function ConfiguracionPage() {
       logoUrl: "",
       iconUrl: "",
       historia: "",
+      historiaImagenUrl: "",
       mision: "",
       vision: "",
       showcaseBadge: "",
@@ -140,7 +143,7 @@ export default function ConfiguracionPage() {
 
   const watchedEnviarCopia = watch("enviarCopiaMaestro");
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: "logoUrl" | "iconUrl") => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: "logoUrl" | "iconUrl" | "historiaImagenUrl") => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -150,7 +153,7 @@ export default function ConfiguracionPage() {
       return;
     }
 
-    const setter = field === "logoUrl" ? setUploadingLogo : setUploadingIcon;
+    const setter = field === "logoUrl" ? setUploadingLogo : field === "iconUrl" ? setUploadingIcon : setUploadingHistoria;
     setter(true);
     try {
       const formData = new FormData();
@@ -160,7 +163,8 @@ export default function ConfiguracionPage() {
         { method: "POST", body: formData }
       );
       setValue(field, res.url, { shouldValidate: true });
-      toast.success(`${field === "logoUrl" ? "Logo" : "Favicon"} subido correctamente`);
+      const label = field === "logoUrl" ? "Logo" : field === "iconUrl" ? "Favicon" : "Imagen historia";
+      toast.success(`${label} subida correctamente`);
     } catch {
       toast.error("Error al subir imagen");
     } finally {
@@ -261,6 +265,7 @@ export default function ConfiguracionPage() {
         logoUrl: configuracion.logoUrl ?? "",
         iconUrl: configuracion.iconUrl ?? "",
         historia: configuracion.historia ?? "",
+        historiaImagenUrl: configuracion.historiaImagenUrl ?? "",
         mision: configuracion.mision ?? "",
         vision: configuracion.vision ?? "",
         showcaseBadge: configuracion.showcaseBadge ?? "",
@@ -298,6 +303,7 @@ export default function ConfiguracionPage() {
       logoUrl: data.logoUrl || null,
       iconUrl: data.iconUrl || null,
       historia: data.historia || null,
+      historiaImagenUrl: data.historiaImagenUrl || null,
       mision: data.mision || null,
       vision: data.vision || null,
       showcaseBadge: data.showcaseBadge || null,
@@ -688,6 +694,46 @@ export default function ConfiguracionPage() {
                 maxLength={10000}
               />
               <CharCounter current={watch("historia")?.length || 0} max={10000} />
+              <p className="text-xs text-[var(--admin-muted-foreground)] italic">Se mantiene en base de datos pero no se muestra en tienda (reemplazada por imagen).</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="historiaImagenUrl">Imagen Nuestra Historia (ancho igual a sedes, alto adaptable)</Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  id="historiaImagenUrl"
+                  type="text"
+                  {...register("historiaImagenUrl")}
+                  placeholder="URL de la imagen de historia"
+                  disabled={isLoading}
+                  className="flex-1"
+                />
+                <Label
+                  htmlFor="historiaImagenUpload"
+                  className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md bg-[var(--color-brand-mustard)] px-3 py-2 text-sm font-medium text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]"
+                >
+                  <ImageIcon className="size-4" />
+                  {uploadingHistoria ? "..." : "Subir"}
+                </Label>
+                <input
+                  id="historiaImagenUpload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleImageUpload(e, "historiaImagenUrl")}
+                  disabled={uploadingHistoria}
+                />
+              </div>
+              {watch("historiaImagenUrl") && (
+                <div className="relative mt-2 w-full max-w-2xl overflow-hidden rounded-xl border">
+                  <img
+                    src={watch("historiaImagenUrl") || ""}
+                    alt="Preview historia"
+                    className="w-full h-auto object-cover"
+                  />
+                </div>
+              )}
+              <p className="text-xs text-[var(--admin-muted-foreground)]">Se muestra en /tienda/nosotros con ancho max-w-2xl y alto adaptable (w-full h-auto).</p>
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">

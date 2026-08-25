@@ -630,7 +630,7 @@ function PedidosTab() {
     );
   }
 
-  const pedidosOrdenados = [...data].sort((a, b) => (b.id ?? "").localeCompare(a.id ?? ""));
+  const pedidosOrdenados = [...data].sort((a, b) => new Date(b.creadoEn).getTime() - new Date(a.creadoEn).getTime());
 
   return (
     <div className="space-y-4">

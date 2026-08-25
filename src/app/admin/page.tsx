@@ -98,7 +98,7 @@ export default function AdminPage() {
 
   const pedidosActivos = (data ?? [])
     .filter((p) => ["PAGADO", "EN_PREPARACION", "EN_CAMINO"].includes(p.estado))
-    .sort((a, b) => (a.id ?? "").localeCompare(b.id ?? ""));
+    .sort((a, b) => new Date(b.creadoEn).getTime() - new Date(a.creadoEn).getTime());
 
   const conteoPorEstado = {
     PAGADO: pedidosActivos.filter((p) => p.estado === "PAGADO").length,

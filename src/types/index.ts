@@ -371,6 +371,7 @@ export interface ConfiguracionTiendaDTO {
   logoUrl?: string | null;
   iconUrl?: string | null;
   historia?: string | null;
+  historiaImagenUrl?: string | null;
   mision?: string | null;
   vision?: string | null;
   showcaseBadge?: string | null;

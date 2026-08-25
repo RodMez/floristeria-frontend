@@ -41,6 +41,8 @@ export function middleware(request: NextRequest) {
 
   const isAdminPage = pathname.startsWith('/admin');
   const isLoginPage = pathname === '/admin/login';
+  const isTiendaProtected = pathname.startsWith('/tienda/mi-cuenta') || pathname.startsWith('/tienda/checkout');
+  const isTiendaAuth = pathname === '/tienda/auth';
 
   // Verificar si el token es válido (existe y no está expirado)
   const isTokenValid = token && !isTokenExpired(token);
@@ -49,6 +51,17 @@ export function middleware(request: NextRequest) {
   if (isAdminPage && !isLoginPage && !isTokenValid) {
     // Limpiar cookie expirada si existe
     const response = NextResponse.redirect(new URL('/admin/login', request.url));
+    if (token) {
+      response.cookies.delete('token');
+    }
+    return response;
+  }
+
+  // Sin token válido en rutas protegidas de tienda → redirigir a /tienda/auth con redirect
+  if (isTiendaProtected && !isTokenValid) {
+    const redirectUrl = new URL('/tienda/auth', request.url);
+    redirectUrl.searchParams.set('redirect', pathname);
+    const response = NextResponse.redirect(redirectUrl);
     if (token) {
       response.cookies.delete('token');
     }
@@ -64,9 +77,16 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
+  // Con token expirado en /tienda/auth → limpiar cookie y permitir acceso
+  if (isTiendaAuth && token && !isTokenValid) {
+    const response = NextResponse.next();
+    response.cookies.delete('token');
+    return response;
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/admin/login'],
+  matcher: ['/admin/:path*', '/admin/login', '/tienda/mi-cuenta/:path*', '/tienda/checkout/:path*', '/tienda/auth'],
 };

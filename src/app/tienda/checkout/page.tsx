@@ -124,7 +124,7 @@ export default function CheckoutPage() {
     );
   }
 
-  // ── Idempotencia del Widget Wompi ────────────────────────────
+  // ── Widget Wompi ──────────────────────────────────────────
   const abrirWidgetWompi = (data: CrearPedidoResponse) => {
     const checkout = new (window as any).WidgetCheckout({
       currency: "COP",
@@ -142,7 +142,14 @@ export default function CheckoutPage() {
         toast.success("¡Pago aprobado!");
         router.push("/tienda/mi-cuenta");
       } else if (status === "DECLINED" || status === "ERROR") {
+        // Wompi rechaza reuso de referencia: limpiar para forzar nuevo pedido en próximo intento
+        sessionStorage.removeItem('pedidoPendiente');
         toast.error("El pago fue rechazado o hubo un error.");
+      } else if (!result.transaction) {
+        // Usuario cerró el widget sin completar pago
+        sessionStorage.removeItem('pedidoPendiente');
+      } else {
+        sessionStorage.removeItem('pedidoPendiente');
       }
     });
   };
@@ -161,15 +168,10 @@ export default function CheckoutPage() {
       return;
     }
 
+    // Eliminar cualquier referencia previa: Wompi exige referencia única por transacción
+    // Reusar referencia causa "La referencia ya ha sido usada"
     const pedidoGuardadoRaw = sessionStorage.getItem('pedidoPendiente');
     if (pedidoGuardadoRaw) {
-      const { data, itemsSnapshot, direccionId, sedeId } = JSON.parse(pedidoGuardadoRaw);
-      const itemsActuales = items.map(i => ({ id: i.id, cantidad: i.cantidad, notaPersonalizacion: i.notaPersonalizacion }));
-      const carritoIgual = JSON.stringify(itemsActuales) === JSON.stringify(itemsSnapshot);
-      if (carritoIgual && direccionId === selectedDireccionId && sedeId === sedeActual?.id) {
-        abrirWidgetWompi(data);
-        return;
-      }
       sessionStorage.removeItem('pedidoPendiente');
     }
 
@@ -225,6 +227,7 @@ export default function CheckoutPage() {
         itemsSnapshot: items.map(i => ({ id: i.id, cantidad: i.cantidad, notaPersonalizacion: i.notaPersonalizacion })),
         direccionId: selectedDireccionId,
         sedeId: sedeActual.id,
+        timestamp: Date.now(),
       }));
       abrirWidgetWompi(data);
     } catch (error) {

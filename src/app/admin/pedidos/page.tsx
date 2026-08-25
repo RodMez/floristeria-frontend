@@ -510,7 +510,7 @@ export default function PedidosPage() {
   const pedidosFiltrados = [...(data ?? [])]
     .filter((p) => filtroEstado === "" || p.estado === filtroEstado)
     .filter((p) => filtroSede === "" || p.sedeNombre === filtroSede)
-    .sort((a, b) => (b.id ?? "").localeCompare(a.id ?? ""));
+    .sort((a, b) => new Date(b.creadoEn).getTime() - new Date(a.creadoEn).getTime());
 
   // Filtro de búsqueda local
   const pedidosConBusqueda = pedidosFiltrados.filter((p) =>

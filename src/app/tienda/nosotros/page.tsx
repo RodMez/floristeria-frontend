@@ -23,7 +23,7 @@ export default function NosotrosPage() {
   const logoUrl = config?.logoUrl || "/tao-logo-header.png";
   const tagline = config?.tagline || "Flores que cuentan historias";
   const descripcion = config?.descripcion || "";
-  const historia = config?.historia || "";
+  const historiaImagenUrl = config?.historiaImagenUrl || "";
   const mision = config?.mision || "";
   const vision = config?.vision || "";
 
@@ -68,17 +68,21 @@ export default function NosotrosPage() {
         </section>
       )}
 
-      {/* Historia */}
-      {historia && (
+      {/* Historia – imagen ancho igual a sedes (max-w-2xl) y alto adaptable */}
+      {historiaImagenUrl && (
         <section className="py-16">
-          <div className="container mx-auto max-w-3xl px-4">
+          <div className="container mx-auto max-w-2xl px-4">
             <h2 className="text-2xl font-semibold text-stone-800 mb-6 flex items-center justify-center gap-2">
               <Heart className="size-6 text-brand-rose-dark" />
               Nuestra Historia
             </h2>
-            {historia.split("\n\n").map((p: string, i: number) => (
-              <p key={i} className="text-stone-600 leading-relaxed mb-4">{p}</p>
-            ))}
+            <div className="overflow-hidden rounded-xl border-2 border-brand-rose shadow-md">
+              <img
+                src={historiaImagenUrl}
+                alt="Nuestra Historia"
+                className="w-full h-auto object-cover"
+              />
+            </div>
           </div>
         </section>
       )}

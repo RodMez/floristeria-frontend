@@ -3,6 +3,7 @@ import { Cinzel } from "next/font/google";
 import { Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
+import SessionExpiredListener from "@/components/auth/SessionExpiredListener";
 import "./globals.css";
 
 const cinzel = Cinzel({
@@ -127,6 +128,7 @@ export default function RootLayout({
     <html lang="es" className={`${cinzel.variable} ${inter.variable} antialiased`} suppressHydrationWarning>
       <body className="bg-background text-foreground min-h-screen">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+          <SessionExpiredListener />
           {children}
         </ThemeProvider>
         <Toaster position="top-right" richColors closeButton />
