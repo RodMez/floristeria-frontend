@@ -694,11 +694,11 @@ export default function ConfiguracionPage() {
                 maxLength={10000}
               />
               <CharCounter current={watch("historia")?.length || 0} max={10000} />
-              <p className="text-xs text-[var(--admin-muted-foreground)] italic">Se mantiene en base de datos pero no se muestra en tienda (reemplazada por imagen).</p>
+              <p className="text-xs text-[var(--admin-muted-foreground)]">Se muestra en <span className="font-medium">/tienda/nosotros</span> como texto editorial completo. Si también hay imagen, se ven lado a lado en desktop (stacked en móvil).</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="historiaImagenUrl">Imagen Nuestra Historia (ancho igual a sedes, alto adaptable)</Label>
+              <Label htmlFor="historiaImagenUrl">Imagen Nuestra Historia</Label>
               <div className="flex items-center gap-3">
                 <Input
                   id="historiaImagenUrl"
@@ -733,7 +733,7 @@ export default function ConfiguracionPage() {
                   />
                 </div>
               )}
-              <p className="text-xs text-[var(--admin-muted-foreground)]">Se muestra en /tienda/nosotros con ancho max-w-2xl y alto adaptable (w-full h-auto).</p>
+              <p className="text-xs text-[var(--admin-muted-foreground)]">Se muestra en <span className="font-medium">/tienda/nosotros</span>. Si hay historia + imagen se ven en grid 2 cols (desktop). Solo imagen → centrado max-w-2xl.</p>
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
