@@ -69,7 +69,7 @@ export async function fetcher<T = unknown>(url: string): Promise<T> {
 
     // ── Interceptor de sesión expirada (solo endpoints protegidos) ──
     if (!isPublic && (res.status === 401 || res.status === 403)) {
-      const wasAuthenticated = !!token;
+      const wasAuthenticated = !!token || useAuthStore.getState().isAuthenticated;
 
       if (wasAuthenticated) {
         handleSessionExpired();
@@ -239,7 +239,7 @@ function handleSessionExpired(): void {
 
   // 2. Leer el rol ANTES de dispatchEvent (logout lo limpia síncronamente)
   const rol = useAuthStore.getState().rol;
-  const isAdmin = rol === 'ADMIN' || rol === 'SUPERADMIN';
+  const isAdmin = rol === 'ADMIN' || rol === 'SUPERADMIN' || window.location.pathname.startsWith('/admin');
 
   // 3. Disparar evento custom para que el store Zustand reaccione
   window.dispatchEvent(new CustomEvent('auth:session-expired'));
@@ -285,7 +285,7 @@ export async function authFetch<T = unknown>(
   });
 
   if (res.status === 401 || res.status === 403) {
-    const wasAuthenticated = !!token;
+    const wasAuthenticated = !!token || useAuthStore.getState().isAuthenticated;
     if (wasAuthenticated) {
       handleSessionExpired();
     }

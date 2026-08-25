@@ -600,6 +600,7 @@ function PedidosTab() {
   }
 
   if (error) {
+    if ((error as Error)?.message === 'Sesión expirada') return null;
     return (
       <div className="py-12 text-center">
         <p className="text-red-500">
@@ -1319,6 +1320,7 @@ function DireccionesTab() {
   }
 
   if (error) {
+    if ((error as Error)?.message === 'Sesión expirada') return null;
     return (
       <div className="py-12 text-center">
         <p className="text-red-500">

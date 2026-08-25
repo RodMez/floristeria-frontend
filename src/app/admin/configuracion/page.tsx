@@ -44,7 +44,7 @@ const configSchema = z.object({
   tiktokUrl: z.string().url("URL inválida").max(500, "Máximo 500 caracteres").optional().or(z.literal("")),
   nombreSitio: z.string().max(100, "Máximo 100 caracteres").optional().or(z.literal("")),
   tagline: z.string().max(150, "Máximo 150 caracteres").optional().or(z.literal("")),
-  descripcion: z.string().max(500, "Máximo 500 caracteres").optional().or(z.literal("")),
+  descripcion: z.string().max(1000, "Máximo 1000 caracteres").optional().or(z.literal("")),
   logoUrl: z.string().max(500, "Máximo 500 caracteres").optional().or(z.literal("")),
   iconUrl: z.string().max(500, "Máximo 500 caracteres").optional().or(z.literal("")),
   historia: z.string().max(10000, "Máximo 10000 caracteres").optional().or(z.literal("")),
@@ -598,9 +598,9 @@ export default function ConfiguracionPage() {
                 placeholder="Transformamos flores en experiencias inolvidables..."
                 disabled={isLoading}
                 rows={3}
-                maxLength={500}
+                maxLength={1000}
               />
-              <CharCounter current={watch("descripcion")?.length || 0} max={500} />
+              <CharCounter current={watch("descripcion")?.length || 0} max={1000} />
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">

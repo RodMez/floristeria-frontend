@@ -156,6 +156,7 @@ export default function Header() {
                   <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-border bg-background py-1 shadow-lg">
                     <Link
                       href="/tienda/mi-cuenta"
+                      prefetch={false}
                       onClick={() => setUserMenuOpen(false)}
                       className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-brand-mustard"
                     >
@@ -164,6 +165,7 @@ export default function Header() {
                     </Link>
                     <Link
                       href="/tienda/mi-cuenta"
+                      prefetch={false}
                       onClick={() => setUserMenuOpen(false)}
                       className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-brand-mustard"
                     >
@@ -269,6 +271,7 @@ export default function Header() {
                       <div className="space-y-1">
                         <Link
                           href="/tienda/mi-cuenta"
+                          prefetch={false}
                           onClick={() => setMobileMenuOpen(false)}
                           className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm text-stone-600 transition-colors hover:bg-[var(--color-brand-mustard)]/15 hover:text-[var(--color-brand-mustard-dark)]"
                         >
@@ -277,6 +280,7 @@ export default function Header() {
                         </Link>
                         <Link
                           href="/tienda/mi-cuenta"
+                          prefetch={false}
                           onClick={() => setMobileMenuOpen(false)}
                           className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm text-stone-600 transition-colors hover:bg-[var(--color-brand-mustard)]/15 hover:text-[var(--color-brand-mustard-dark)]"
                         >

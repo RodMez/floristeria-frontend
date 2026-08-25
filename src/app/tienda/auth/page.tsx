@@ -93,6 +93,7 @@ function AuthContent() {
       const response = await loginCliente(data.email, data.password);
       setClienteAuth(response);
       toast.success(`¡Bienvenido, ${response.nombre}!`);
+      router.refresh();
       router.replace(redirectTo);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Error al iniciar sesión");
@@ -107,6 +108,7 @@ function AuthContent() {
       const response = await registerCliente(data);
       setClienteAuth(response);
       toast.success(`¡Bienvenido, ${response.nombre}! Tu cuenta ha sido creada.`);
+      router.refresh();
       router.replace(redirectTo);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Error al registrarse");
