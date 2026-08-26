@@ -17,6 +17,12 @@ import {
   Quote,
   Leaf,
   ArrowRight,
+  ArrowUpRight,
+  Mail,
+  Phone,
+  Truck,
+  QuoteIcon,
+  MapPin,
 } from "lucide-react";
 import SedeCard from "@/components/SedeCard";
 import {
@@ -24,47 +30,103 @@ import {
   FaInstagram,
   FaFacebook,
   FaTiktok,
-  MdEmail,
 } from "@/components/icons/SocialIcons";
 import { sanitizeUrl } from "@/lib/validation";
-import { motion, useReducedMotion } from "framer-motion";
+import { useEffect } from "react";
+
+// ── reveal hook ── observa también nodos inyectados tras fetch (has* cambia)
+function useReveal() {
+  useEffect(() => {
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            (e.target as HTMLElement).classList.add("is-visible");
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -60px 0px" }
+    );
+
+    const observeAll = () => {
+      document.querySelectorAll<HTMLElement>("[data-reveal]:not(.is-visible)").forEach((el) => {
+        // evita observar dos veces el mismo
+        if ((el as unknown as { __ioObserved?: boolean }).__ioObserved) return;
+        (el as unknown as { __ioObserved?: boolean }).__ioObserved = true;
+        // si ya está en viewport, marcar visible sin esperar (evita quedarse oculto si se inyecta ya visible)
+        const rect = el.getBoundingClientRect();
+        const inView = rect.top < window.innerHeight - 60 && rect.bottom > 0;
+        if (inView && rect.top < window.innerHeight * 0.92) {
+          // pequeña defer para animación
+          requestAnimationFrame(() => el.classList.add("is-visible"));
+          return;
+        }
+        io.observe(el);
+      });
+    };
+
+    observeAll();
+    const mo = new MutationObserver(() => observeAll());
+    mo.observe(document.body, { childList: true, subtree: true });
+
+    // fallback: re-observa tras cualquier render tardío (SWR)
+    const t = setTimeout(observeAll, 400);
+
+    return () => {
+      clearTimeout(t);
+      io.disconnect();
+      mo.disconnect();
+    };
+  }, []);
+}
 
 function SectionLabel({
   icon: Icon,
   children,
+  kicker,
 }: {
   icon: React.ElementType;
   children: React.ReactNode;
+  kicker?: string;
 }) {
   return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-brand-rose bg-white px-4 py-1.5 shadow-sm">
-      <Icon className="size-3.5 text-brand-mustard" />
-      <span className="text-[11px] font-semibold tracking-[0.18em] uppercase text-stone-500">
-        {children}
-      </span>
+    <div className="inline-flex flex-col items-center gap-2">
+      {kicker && (
+        <span className="text-[10px] font-semibold tracking-[0.22em] uppercase text-stone-400">
+          {kicker}
+        </span>
+      )}
+      <div className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-1.5 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+        <Icon className="size-3.5 text-brand-mustard" />
+        <span className="text-[11px] font-semibold tracking-[0.16em] uppercase text-stone-600">
+          {children}
+        </span>
+      </div>
     </div>
   );
 }
 
-function EditorialDivider() {
+function GrainOverlay() {
   return (
-    <div className="flex items-center justify-center gap-4 py-2">
-      <span className="h-px w-12 bg-brand-mustard/30" />
-      <span className="flex h-7 w-7 items-center justify-center rounded-full border border-brand-rose bg-white text-brand-rose-dark">
-        <Heart className="size-3.5" />
-      </span>
-      <span className="h-px w-12 bg-brand-mustard/30" />
-    </div>
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 opacity-[0.035] mix-blend-multiply"
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+      }}
+    />
   );
 }
 
 export default function NosotrosPage() {
-  const shouldReduceMotion = useReducedMotion();
-  const { data: config } = useSWR<ConfiguracionTiendaDTO>(
+  useReveal();
+
+  const { data: config, isLoading: configLoading } = useSWR<ConfiguracionTiendaDTO>(
     `${process.env.NEXT_PUBLIC_API_URL}/api/v1/configuracion`,
     fetcher
   );
-  const { sedes, esUnicaSede } = useSedes();
+  const { sedes, isLoading: sedesLoading } = useSedes();
 
   const sitioNombre = config?.nombreSitio || "TAO Boutique Floral";
   const logoUrl = config?.logoUrl || "/tao-logo-header.png";
@@ -81,41 +143,23 @@ export default function NosotrosPage() {
   const hasHistoriaSection = hasHistoria || hasHistoriaImagen;
   const hasMisionVision = !!(mision || vision);
 
-  const sitiNombreParts = sitioNombre.split(" ");
-  const nombreBase = sitiNombreParts[0];
-  const nombreAcento = sitiNombreParts.slice(1).join(" ");
-
-  const ease: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
-
-  const fadeUp = (delay = 0) => ({
-    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 18 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.62, ease, delay },
-    },
-  });
-
-  const staggerContainer = {
-    hidden: {},
-    visible: {
-      transition: {
-        staggerChildren: shouldReduceMotion ? 0 : 0.12,
-        delayChildren: 0.08,
-      },
-    },
-  };
+  // DB guarda solo "Boutique Floral" — el logo TAO es la primera palabra visual
+  const nombreSinTao = sitioNombre.replace(/^tao\s+/i, "").trim() || sitioNombre;
+  const nameParts = nombreSinTao.split(/\s+/).filter(Boolean);
+  const nombreBase = nameParts[0] ?? nombreSinTao;
+  const nombreAcento = nameParts.slice(1).join(" ");
+  const boutiquePart = nombreSinTao; // para lockup TAO + boutiquePart = nombre completo
 
   const historiaParagraphs = hasHistoria
-    ? historia.split(/\n\s*\n/).flatMap((block) =>
-        block
-          .split("\n")
-          .map((s) => s.trim())
-          .filter(Boolean)
-      )
+    ? historia
+        .split(/\n\s*\n/)
+        .flatMap((block) =>
+          block
+            .split("\n")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        )
     : [];
-
-  // Fallback if no double line breaks, keep original split
   const descripcionParagraphs = hasDescripcion
     ? descripcion
         .split(/\n\s*\n/)
@@ -123,568 +167,925 @@ export default function NosotrosPage() {
         .filter(Boolean)
     : [];
 
-  return (
-    <div className="min-h-screen bg-[#fffbf8] selection:bg-brand-mustard/30">
-      <style>{`html{scroll-behavior:smooth}`}</style>
+  const sedesCount = sedes?.length ?? 0;
+  const isSingleSede = sedesCount <= 1;
+  const showSedesTitle = sedesCount >= 2;
 
-      {/* ── HERO · sutil elegante ─────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[var(--color-brand-rose-light)] via-[#fff5f1] to-white">
-        {/* decorative blurs */}
+  return (
+    <div className="min-h-screen bg-[#fffbf8] text-stone-800 selection:bg-brand-mustard/30">
+      <style>{`
+        html{scroll-behavior:smooth}
+        [data-reveal]{opacity:0;transform:translateY(14px);transition:opacity .52s cubic-bezier(.16,1,.3,1),transform .52s cubic-bezier(.16,1,.3,1);will-change:transform,opacity}
+        [data-reveal].is-visible{opacity:1;transform:translateY(0)}
+        @media (prefers-reduced-motion:reduce){
+          [data-reveal]{opacity:1;transform:none;transition:none;will-change:auto}
+          html{scroll-behavior:auto}
+        }
+        .text-balance{ text-wrap:balance }
+        .dropcap:first-letter{
+          float:left;
+          font-family:var(--font-cinzel);
+          font-size:3.1rem;
+          line-height:0.85;
+          font-weight:700;
+          padding-right:10px;
+          margin-top:6px;
+          color:#E5BE6F;
+        }
+      `}</style>
+
+      {/* ── HERO · editorial split ───────────────────────────────────── */}
+      <section className="relative overflow-hidden border-b border-stone-200/60 bg-[#fffaf6]">
+        {/* washes */}
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-32 -left-32 h-[520px] w-[520px] rounded-full bg-brand-rose/20 blur-[90px]" />
-          <div className="absolute -top-20 right-0 h-[420px] w-[420px] rounded-full bg-brand-mustard/12 blur-[80px]" />
-          <div className="absolute bottom-0 left-1/2 h-px w-full -translate-x-1/2 bg-gradient-to-r from-transparent via-brand-rose/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#f1e5e2] via-[#fff5f1] to-[#fffbf8]" />
+          <div className="absolute -top-32 -left-24 h-[620px] w-[620px] rounded-full bg-[#EAC3BD]/22 blur-[90px]" />
+          <div className="absolute -top-28 right-[-80px] h-[540px] w-[540px] rounded-full bg-[#E5BE6F]/14 blur-[84px]" />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-stone-200 to-transparent" />
+        </div>
+        <GrainOverlay />
+
+        {/* top editorial bar */}
+        <div className="relative border-b border-stone-200/70 bg-white/55 backdrop-blur-[6px]">
+          <div className="container mx-auto flex max-w-6xl items-center justify-between px-4 py-2.5 text-[10px] tracking-[0.18em] uppercase text-stone-400">
+            <span className="hidden sm:inline-flex items-center gap-2">
+              <span className="h-px w-6 bg-stone-300" /> Artesanía floral · Colombia
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" /> Pide hoy · entrega a tiempo
+            </span>
+            <span className="hidden items-center gap-1.5 md:inline-flex">
+              <span className="relative block size-4 overflow-hidden rounded-full border border-stone-200 bg-white">
+                <Image src={logoUrl} alt="TAO" fill className="object-contain p-0.5" sizes="16px" />
+              </span>
+              TAO {boutiquePart}
+            </span>
+          </div>
         </div>
 
-        <div className="container relative mx-auto px-4 py-16 md:py-24">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={staggerContainer}
-            className="mx-auto max-w-4xl text-center"
-          >
-            <motion.div variants={fadeUp(0)} className="mb-6 flex justify-center">
-              <SectionLabel icon={Leaf}>Nuestra Casa</SectionLabel>
-            </motion.div>
-
-            {/* Logo card with subtle float */}
-            <motion.div
-              variants={fadeUp(0.08)}
-              className="relative mx-auto mb-8 w-fit"
-            >
-              <motion.div
-                animate={
-                  shouldReduceMotion
-                    ? {}
-                    : { y: [0, -6, 0] }
-                }
-                transition={
-                  shouldReduceMotion
-                    ? {}
-                    : {
-                        duration: 5,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      }
-                }
-                className="relative mx-auto h-44 w-44 overflow-hidden rounded-[28px] border border-white bg-white/70 p-4 shadow-[0_20px_60px_-24px_rgba(212,164,158,0.55)] backdrop-blur-md md:h-56 md:w-56 md:p-5"
+        <div className="container relative mx-auto max-w-6xl px-4 py-10 md:py-14 lg:py-16">
+          <div className="grid items-center gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:gap-10">
+            {/* left: manifesto */}
+            <div className="min-w-0">
+              <div
+                data-reveal
+                className="is-visible inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-1.5 shadow-sm"
+                style={{ transitionDelay: "40ms" }}
               >
-                <Image
-                  src={logoUrl}
-                  alt={sitioNombre}
-                  fill
-                  className="object-contain"
-                  sizes="(max-width: 768px) 176px, 224px"
-                  priority
-                />
-              </motion.div>
-              {/* soft shadow */}
-              <div className="absolute -bottom-3 left-1/2 h-6 w-32 -translate-x-1/2 rounded-full bg-brand-rose-dark/10 blur-xl" />
-            </motion.div>
-
-            <motion.h1
-              variants={fadeUp(0.16)}
-              className="font-heading text-[2.2rem] font-semibold leading-[0.95] tracking-tight text-[var(--admin-sidebar)] md:text-5xl lg:text-[3.4rem]"
-            >
-              <span className="inline-block">{nombreBase}</span>
-              {nombreAcento && (
-                <span className="inline-block text-brand-mustard">
-                  {" "}
-                  {nombreAcento}
+                <span className="flex size-5 items-center justify-center rounded-full bg-brand-mustard text-white">
+                  <Leaf className="size-3" />
                 </span>
+                <span className="text-[11px] font-semibold tracking-[0.16em] uppercase text-stone-600">
+                  Nuestra Casa
+                </span>
+              </div>
+
+              {/* Lockup: logo TAO siempre a la izquierda/arriba del nombre */}
+              {configLoading ? (
+                <div className="mt-6 flex items-center gap-4">
+                  <div className="size-16 animate-pulse rounded-2xl bg-stone-200 md:size-20" />
+                  <div className="space-y-3">
+                    <div className="h-8 w-44 animate-pulse rounded-lg bg-stone-200 md:h-9 md:w-56" />
+                    <div className="h-8 w-36 animate-pulse rounded-lg bg-stone-200 md:h-9 md:w-44" />
+                  </div>
+                </div>
+              ) : (
+                <div
+                  data-reveal
+                  className="is-visible mt-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4"
+                  style={{ transitionDelay: "110ms" }}
+                >
+                  <div className="shrink-0 overflow-hidden rounded-2xl border border-stone-200 bg-white p-2 shadow-sm">
+                    <div className="relative size-16 md:size-20">
+                      <Image src={logoUrl} alt="TAO" fill className="object-contain" sizes="80px" priority />
+                    </div>
+                  </div>
+                  <h1 className="font-heading text-[2.45rem] font-semibold leading-[0.88] tracking-[-0.03em] text-[#1c1917] md:text-[3.05rem] lg:text-[3.55rem] text-balance">
+                    <span className="block">{nombreBase}</span>
+                    {nombreAcento && (
+                      <span className="block font-light italic tracking-[-0.04em] text-brand-mustard">
+                        {nombreAcento}
+                      </span>
+                    )}
+                  </h1>
+                </div>
               )}
-            </motion.h1>
 
-            <motion.p
-              variants={fadeUp(0.24)}
-              className="mx-auto mt-4 max-w-2xl text-[15px] font-light italic leading-relaxed text-stone-500 md:text-lg"
-            >
-              &ldquo;{tagline}&rdquo;
-            </motion.p>
+              {configLoading ? (
+                <div className="mt-4 h-4 w-56 animate-pulse rounded-full bg-stone-200" />
+              ) : (
+                <p
+                  data-reveal
+                  className="is-visible mt-4 flex items-center gap-3 text-[13px] font-medium tracking-[0.14em] uppercase text-stone-400"
+                  style={{ transitionDelay: "170ms" }}
+                >
+                  <span className="h-px w-8 bg-brand-mustard/40" />
+                  &ldquo;{tagline}&rdquo;
+                </p>
+              )}
 
-            <motion.div
-              variants={fadeUp(0.32)}
-              className="mt-8 flex flex-wrap items-center justify-center gap-3"
-            >
-              <a
-                href="#historia"
-                className="group inline-flex items-center gap-2 rounded-full bg-[var(--admin-sidebar)] px-6 py-3 text-sm font-medium text-white shadow-lg shadow-stone-900/10 transition-all hover:bg-stone-800 hover:shadow-xl hover:shadow-stone-900/15"
+              <p
+                data-reveal
+                className="is-visible mt-6 max-w-[560px] text-[15.5px] leading-7 text-stone-600"
+                style={{ transitionDelay: "210ms" }}
               >
-                Conoce nuestra historia
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-              </a>
-              <Link
-                href="/tienda"
-                className="inline-flex items-center gap-2 rounded-full border border-brand-rose bg-white px-6 py-3 text-sm font-medium text-stone-700 shadow-sm transition-all hover:border-brand-mustard hover:text-brand-mustard-dark"
-              >
-                Explorar catálogo
-              </Link>
-            </motion.div>
+                {hasDescripcion ? (
+                  descripcionParagraphs[0]?.slice(0, 220) +
+                  (descripcionParagraphs[0] && descripcionParagraphs[0].length > 220 ? "…" : "")
+                ) : (
+                  <>
+                    No vendemos solo flores. Componemos gestos: textura, color y perfume para decir lo que
+                    a veces no cabe en palabras. Cada arreglo nace a mano, sin prisa y con detalle.
+                  </>
+                )}
+              </p>
 
-            {/* tiny editorial note */}
-            <motion.p
-              variants={fadeUp(0.42)}
-              className="mt-10 text-xs tracking-wide text-stone-400"
-            >
-              Artesanía floral · Desde el corazón de cada sede
-            </motion.p>
-          </motion.div>
+              <div
+                data-reveal
+                className="is-visible mt-7 flex flex-wrap gap-3"
+                style={{ transitionDelay: "260ms" }}
+              >
+                <a
+                  href="#historia"
+                  className="group inline-flex items-center gap-2 rounded-full bg-[#1c1917] px-6 py-3.5 text-sm font-medium text-white shadow-[0_12px_32px_-14px_rgba(28,25,23,0.45)] transition hover:bg-black hover:shadow-[0_16px_36px_-14px_rgba(0,0,0,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mustard focus-visible:ring-offset-2"
+                >
+                  Nuestra historia
+                  <span className="flex size-7 items-center justify-center rounded-full bg-white text-[#1c1917] transition group-hover:translate-x-0.5">
+                    <ArrowRight className="size-3.5" />
+                  </span>
+                </a>
+                <Link
+                  href="/tienda"
+                  className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-6 py-3.5 text-sm font-medium text-stone-700 shadow-sm transition hover:border-brand-mustard/40 hover:text-[#1c1917] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mustard focus-visible:ring-offset-2"
+                >
+                  Ver catálogo <ArrowUpRight className="size-4 opacity-60" />
+                </Link>
+              </div>
+
+              {/* trust row */}
+              <div
+                data-reveal
+                className="is-visible mt-8 grid grid-cols-3 gap-2 border-t border-stone-200/70 pt-6 sm:gap-3"
+                style={{ transitionDelay: "310ms" }}
+              >
+                {[
+                  { k: "Frescura", v: "Mismo día", icon: Flower2 },
+                  { k: "Entrega", v: "Puntual", icon: Truck },
+                  { k: "Asesoría", v: "Humana", icon: HandHeart },
+                ].map((s) => (
+                  <div key={s.k} className="flex items-center gap-2.5">
+                    <span className="hidden size-8 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-500 sm:flex">
+                      <s.icon className="size-3.5" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[11px] font-semibold tracking-[0.14em] uppercase text-stone-400">
+                        {s.k}
+                      </span>
+                      <span className="block text-sm font-medium text-stone-700">{s.v}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {/* prueba social: Sabaneta · envíos */}
+              <div
+                data-reveal
+                className="is-visible mt-3 flex flex-wrap gap-2"
+                style={{ transitionDelay: "360ms" }}
+              >
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3.5 py-1.5 text-xs font-medium text-stone-600 shadow-sm">
+                  <MapPin className="size-3.5 text-brand-sage" /> Sabaneta · Antioquia
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3.5 py-1.5 text-xs font-medium text-stone-600 shadow-sm">
+                  <Truck className="size-3.5 text-emerald-600" /> Envíos hoy · puntuales
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs text-stone-500">
+                  <Heart className="size-3 text-rose-400" /> Hecho a mano
+                </span>
+              </div>
+            </div>
+
+            {/* right: brand showcase — solo logo, limpio */}
+            <div data-reveal className="is-visible relative lg:pl-2" style={{ transitionDelay: "140ms" }}>
+              <div className="relative mx-auto max-w-[460px]">
+                <div className="absolute inset-0 translate-x-3 translate-y-3 rotate-[1.2deg] rounded-[32px] border border-stone-200 bg-white shadow-sm" />
+                <div className="absolute inset-0 translate-x-1.5 translate-y-1.5 rotate-[0.6deg] rounded-[32px] border border-stone-200 bg-[#fffdfb]" />
+
+                {/* front — solo logo */}
+                <div className="relative overflow-hidden rounded-[32px] border border-stone-200 bg-white p-3 shadow-[0_24px_64px_-20px_rgba(28,25,23,0.18)]">
+                  <div className="relative aspect-[4/3.4] overflow-hidden rounded-[24px] border border-stone-100 bg-[#fffbf8]">
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#fffdf8] via-white to-[#f8ede5]" />
+                    <GrainOverlay />
+                    <div className="absolute inset-0 flex items-center justify-center p-8 md:p-10">
+                      <div className="relative h-full w-full">
+                        <Image
+                          src={logoUrl}
+                          alt={`Logo TAO ${boutiquePart}`}
+                          fill
+                          className="object-contain drop-shadow-[0_10px_24px_rgba(0,0,0,0.08)]"
+                          sizes="(max-width: 768px) 320px, 420px"
+                          priority
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* marquee — decorativo, oculto para lectores */}
+        <div className="relative overflow-hidden border-y border-stone-200 bg-white" aria-hidden="true">
+          <div className="flex animate-[marquee_22s_linear_infinite] whitespace-nowrap py-2.5 text-[11px] font-semibold tracking-[0.18em] uppercase text-stone-400">
+            <span className="mx-6">Flores que cuentan historias</span>
+            <span className="text-stone-300">•</span>
+            <span className="mx-6">Diseño con alma</span>
+            <span className="text-stone-300">•</span>
+            <span className="mx-6">Frescura del día</span>
+            <span className="text-stone-300">•</span>
+            <span className="mx-6">Hecho a mano</span>
+            <span className="text-stone-300">•</span>
+            <span className="mx-6">Cercanía real</span>
+            <span className="text-stone-300">•</span>
+            <span className="mx-6">Flores que cuentan historias</span>
+            <span className="text-stone-300">•</span>
+            <span className="mx-6">Diseño con alma</span>
+            <span className="text-stone-300">•</span>
+            <span className="mx-6">Frescura del día</span>
+            <span className="text-stone-300">•</span>
+          </div>
+          <style>{`@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}`}</style>
         </div>
       </section>
 
-      {/* ── NUESTRA ESENCIA · descripcion ─────────────────────── */}
-      {hasDescripcion && (
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={staggerContainer}
-          className="relative py-14 md:py-20"
-        >
-          <div className="container mx-auto max-w-3xl px-4">
-            <motion.div variants={fadeUp()} className="mb-8 text-center">
-              <SectionLabel icon={Sparkles}>Nuestra esencia</SectionLabel>
-              <h2 className="mt-5 font-heading text-3xl font-semibold tracking-tight text-stone-800 md:text-4xl">
-                Flores que cuentan historias
-              </h2>
-              <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-stone-500">
-                No solo creamos ramos. Traducimos emociones en textura, color y perfume.
-              </p>
-            </motion.div>
-
-            <motion.div
-              variants={staggerContainer}
-              className="relative rounded-[28px] border border-brand-rose/40 bg-white p-7 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.12)] md:p-10"
-            >
-              <Quote className="absolute -top-3 -left-3 size-8 rounded-full border border-brand-rose bg-brand-mustard p-1.5 text-white shadow-sm md:-top-4 md:-left-4 md:size-9" />
-              <div className="space-y-5">
-                {descripcionParagraphs.map((p, i) => (
-                  <motion.p
-                    key={i}
-                    variants={fadeUp(i * 0.06)}
-                    className="text-[15px] leading-7 text-stone-600"
-                  >
-                    {p}
-                  </motion.p>
-                ))}
+      {/* ── MANIFIESTO / ESENCIA ───────────────────────────────────── */}
+      {configLoading && (
+        <section className="relative overflow-hidden py-12 md:py-16">
+          <div className="container mx-auto max-w-6xl px-4">
+            <div className="grid gap-8 lg:grid-cols-[0.95fr_1.15fr] lg:gap-10">
+              <div className="space-y-3">
+                <div className="h-6 w-32 animate-pulse rounded-full bg-stone-200" />
+                <div className="h-8 w-64 animate-pulse rounded-lg bg-stone-200" />
+                <div className="h-4 w-80 animate-pulse rounded bg-stone-100" />
               </div>
-            </motion.div>
+              <div className="rounded-[28px] border border-stone-200 bg-white p-6 md:p-8">
+                <div className="space-y-3">
+                  <div className="h-4 w-full animate-pulse rounded bg-stone-100" />
+                  <div className="h-4 w-11/12 animate-pulse rounded bg-stone-100" />
+                  <div className="h-4 w-10/12 animate-pulse rounded bg-stone-100" />
+                  <div className="h-4 w-full animate-pulse rounded bg-stone-100" />
+                </div>
+              </div>
+            </div>
           </div>
-        </motion.section>
+        </section>
+      )}
+      {hasDescripcion && (
+        <section className="relative overflow-hidden py-12 md:py-16">
+          <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,_#fff1e6_0%,_transparent_62%)] opacity-60" />
+          <div className="container mx-auto max-w-6xl px-4">
+            <div className="grid gap-8 lg:grid-cols-[0.95fr_1.15fr] lg:gap-10">
+              {/* left label */}
+              <div data-reveal className="lg:sticky lg:top-24 self-start">
+                <SectionLabel icon={Sparkles} kicker="Manifiesto">
+                  Nuestra esencia
+                </SectionLabel>
+                <h2 className="mt-5 font-heading text-[2rem] font-semibold leading-[0.95] tracking-[-0.02em] text-[#1c1917] md:text-[2.35rem] text-balance">
+                  No hacemos ramos.
+                  <span className="block font-light italic text-stone-500">Traducimos emociones.</span>
+                </h2>
+                <p className="mt-3 max-w-[420px] text-sm leading-6 text-stone-500">
+                  Textura, color y perfume para decir gracias, perdón, te amo o estoy aquí — sin decirlo todo
+                  con palabras.
+                </p>
+                <div className="mt-6 hidden items-center gap-2.5 lg:flex">
+                  <span className="h-px w-10 bg-stone-200" />
+                  <span className="relative block size-6 overflow-hidden rounded-full border border-stone-200 bg-white">
+                    <Image src={logoUrl} alt="TAO" fill className="object-contain p-0.5" sizes="24px" />
+                  </span>
+                  <span className="text-xs tracking-[0.14em] uppercase text-stone-400">TAO {boutiquePart}</span>
+                </div>
+              </div>
+
+              {/* right card */}
+              <div
+                data-reveal
+                className="relative overflow-hidden rounded-[28px] border border-stone-200 bg-white p-6 shadow-[0_20px_60px_-28px_rgba(0,0,0,0.14)] md:p-8"
+              >
+                <GrainOverlay />
+                <Quote className="absolute -right-2 -top-2 size-24 text-stone-100" />
+                <div className="relative">
+                  <div className="mb-5 inline-flex items-center gap-2 text-brand-mustard">
+                    <Quote className="size-5" />
+                    <span className="h-px w-10 bg-brand-mustard/30" />
+                    <span className="text-xs font-semibold tracking-[0.14em] uppercase text-stone-400">
+                      En nuestras palabras
+                    </span>
+                  </div>
+                  <div className="space-y-5">
+                    {descripcionParagraphs.map((p, i) => (
+                      <p
+                        key={i}
+                        data-reveal
+                        style={{ transitionDelay: `${i * 70}ms` }}
+                        className="text-[15px] leading-7 text-stone-600"
+                      >
+                        {p}
+                      </p>
+                    ))}
+                  </div>
+                  <div className="mt-8 flex flex-wrap gap-2 border-t border-stone-100 pt-6">
+                    {[
+                      { icon: Leaf, label: "Selección diaria" },
+                      { icon: Palette, label: "Diseño único" },
+                      { icon: HandHeart, label: "Trato cercano" },
+                    ].map((b) => (
+                      <span
+                        key={b.label}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-medium text-stone-600"
+                      >
+                        <b.icon className="size-3.5 text-stone-400" /> {b.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       )}
 
-      <div className="container mx-auto max-w-5xl px-4">
-        <EditorialDivider />
+      {/* divider */}
+      <div className="container mx-auto max-w-6xl px-4">
+        <div className="flex items-center justify-center gap-4 py-2">
+          <span className="h-px w-16 bg-stone-200" />
+          <span className="flex size-7 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-400">
+            <Heart className="size-3.5" />
+          </span>
+          <span className="h-px w-16 bg-stone-200" />
+        </div>
       </div>
 
-      {/* ── HISTORIA · TEXTO COMPLETO + IMAGEN lado a lado ───── */}
-      {hasHistoriaSection && (
-        <motion.section
-          id="historia"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          variants={staggerContainer}
-          className="relative overflow-hidden py-14 md:py-20"
-        >
-          {/* soft bg wash */}
-          <div className="pointer-events-none absolute inset-0 -z-10">
-            <div className="absolute left-1/2 top-1/2 h-[700px] w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-rose-light/40 blur-[70px]" />
-          </div>
-
+      {/* ── HISTORIA ───────────────────────────────────────────────── */}
+      {configLoading && (
+        <section className="relative overflow-hidden py-10 md:py-16">
           <div className="container mx-auto max-w-6xl px-4">
-            <motion.div variants={fadeUp()} className="mb-10 text-center">
-              <SectionLabel icon={Heart}>Nuestra Historia</SectionLabel>
-              <h2 className="mt-5 font-heading text-3xl font-semibold tracking-tight text-stone-800 md:text-4xl">
+            <div className="mx-auto max-w-2xl space-y-3 text-center">
+              <div className="mx-auto h-6 w-36 animate-pulse rounded-full bg-stone-200" />
+              <div className="mx-auto h-8 w-80 animate-pulse rounded-lg bg-stone-200" />
+            </div>
+            <div className="mt-10 grid gap-8 lg:grid-cols-2">
+              <div className="aspect-[4/3] animate-pulse rounded-[28px] bg-stone-100" />
+              <div className="space-y-3 rounded-[28px] border border-stone-200 bg-white p-7">
+                <div className="h-4 w-full animate-pulse rounded bg-stone-100" />
+                <div className="h-4 w-11/12 animate-pulse rounded bg-stone-100" />
+                <div className="h-4 w-10/12 animate-pulse rounded bg-stone-100" />
+                <div className="h-4 w-full animate-pulse rounded bg-stone-100" />
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+      {hasHistoriaSection && (
+        <section id="historia" className="relative scroll-mt-24 overflow-hidden py-10 md:py-16">
+          <div className="pointer-events-none absolute left-1/2 top-1/2 h-[820px] w-[980px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#f1e5e2]/55 blur-[74px]" />
+          <div className="container mx-auto max-w-6xl px-4">
+            <div data-reveal className="mx-auto max-w-2xl text-center">
+              <SectionLabel icon={Heart}>Nuestra historia</SectionLabel>
+              <h2 className="mt-4 font-heading text-[1.9rem] font-semibold leading-[0.95] tracking-[-0.02em] text-[#1c1917] md:text-[2.4rem] text-balance">
                 El arte de transformar flores en recuerdos
               </h2>
-            </motion.div>
+              <div className="mx-auto mt-4 h-px w-12 bg-brand-mustard/40" />
+            </div>
 
-            {/* Caso: ambos → grid 50/50 */}
-            {hasHistoria && hasHistoriaImagen ? (
-              <div className="grid items-start gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
-                {/* Imagen */}
-                <motion.div
-                  variants={{
-                    hidden: {
-                      opacity: 0,
-                      y: shouldReduceMotion ? 0 : 16,
-                      scale: shouldReduceMotion ? 1 : 0.98,
-                    },
-                    visible: {
-                      opacity: 1,
-                      y: 0,
-                      scale: 1,
-                      transition: { duration: 0.7, ease },
-                    },
-                  }}
-                  className="group relative"
-                >
-                  <div className="overflow-hidden rounded-[24px] border border-brand-rose bg-white shadow-[0_24px_64px_-24px_rgba(212,164,158,0.55)]">
-                    {/* subtle grain overlay */}
-                    <div className="pointer-events-none absolute inset-0 z-10 rounded-[24px] ring-1 ring-white/60" />
-                    <motion.img
-                      src={historiaImagenUrl}
-                      alt="Nuestra Historia"
-                      className="h-auto w-full object-cover"
-                      whileHover={shouldReduceMotion ? {} : { scale: 1.015 }}
-                      transition={{ duration: 0.6, ease }}
-                      loading="lazy"
-                    />
-                  </div>
-                  {/* caption */}
-                  <div className="absolute -bottom-4 left-4 z-20 hidden rounded-full border border-brand-rose bg-white px-4 py-1.5 text-xs font-medium text-stone-600 shadow-md md:flex items-center gap-1.5">
-                    <Leaf className="size-3.5 text-brand-sage" />
-                    Hecho a mano, con amor
-                  </div>
-                </motion.div>
-
-                {/* Texto completo */}
-                <motion.div variants={fadeUp(0.12)} className="relative">
-                  <div className="rounded-[24px] border border-brand-rose/30 bg-white/80 p-7 backdrop-blur-sm md:p-8">
-                    <div className="mb-4 flex items-center gap-2 text-brand-mustard">
-                      <Quote className="size-5" />
-                      <span className="h-px w-8 bg-brand-mustard/30" />
+            <div className="mt-10">
+              {hasHistoria && hasHistoriaImagen ? (
+                <div className="grid items-start gap-8 lg:grid-cols-[0.98fr_1.02fr] lg:gap-10">
+                  {/* image */}
+                  <div data-reveal className="group relative lg:sticky lg:top-24">
+                    <div className="overflow-hidden rounded-[28px] border border-stone-200 bg-white p-2 shadow-[0_24px_64px_-24px_rgba(0,0,0,0.16)]">
+                      <div className="overflow-hidden rounded-[20px] bg-stone-100">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={historiaImagenUrl}
+                          alt="Arreglo floral artesanal — historia de TAO Boutique Floral"
+                          className="h-auto w-full object-cover transition duration-700 group-hover:scale-[1.02]"
+                          loading="lazy"
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-4">
+                    <div className="absolute -bottom-3 left-4 hidden items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-xs font-medium text-stone-600 shadow-md md:inline-flex">
+                      <span className="flex size-6 items-center justify-center rounded-full bg-brand-sage/10 text-brand-sage">
+                        <Leaf className="size-3.5" />
+                      </span>
+                      Hecho a mano, con amor
+                    </div>
+                    {/* tape effect */}
+                    <div className="absolute -right-1 -top-1 hidden h-6 w-16 rotate-[8deg] rounded-sm bg-brand-mustard/18 shadow-sm md:block" />
+                  </div>
+
+                  {/* text */}
+                  <div
+                    data-reveal
+                    className="relative overflow-hidden rounded-[28px] border border-stone-200 bg-white shadow-[0_20px_60px_-28px_rgba(0,0,0,0.10)]"
+                  >
+                    <GrainOverlay />
+                    <div className="relative p-7 md:p-8">
+                      <div className="mb-6 flex items-center gap-3 border-b border-stone-100 pb-5">
+                        <span className="flex size-9 items-center justify-center rounded-full bg-[#1c1917] text-white">
+                          <QuoteIcon className="size-4" />
+                        </span>
+                        <div>
+                          <p className="text-xs font-semibold tracking-[0.14em] uppercase text-stone-400">
+                            Historia
+                          </p>
+                          <p className="font-heading text-sm font-semibold text-stone-700">Contada sin prisa</p>
+                        </div>
+                        <span className="ml-auto hidden text-xs text-stone-400 md:inline">
+                          {historiaParagraphs.length} fragmentos
+                        </span>
+                      </div>
+
+                      <div className="space-y-5">
+                        {historiaParagraphs.map((para, idx) => (
+                          <p
+                            key={idx}
+                            data-reveal
+                            style={{ transitionDelay: `${idx * 60}ms` }}
+                            className={`text-[15px] leading-7 text-stone-600 ${idx === 0 ? "dropcap" : ""}`}
+                          >
+                            {para}
+                          </p>
+                        ))}
+                      </div>
+
+                      <div className="mt-8 grid grid-cols-3 gap-3 border-t border-stone-100 pt-6">
+                        {[
+                          { v: "Flores frescas", k: "Selección diaria" },
+                          { v: "Piezas únicas", k: "Diseño irrepetible" },
+                          { v: "Atención cercana", k: "Asesoría humana" },
+                        ].map((s) => (
+                          <div key={s.v} className="rounded-2xl border border-stone-100 bg-stone-50 px-3 py-3 text-center">
+                            <div className="font-heading text-sm font-semibold text-stone-700">{s.v}</div>
+                            <div className="text-[11px] tracking-wide text-stone-400">{s.k}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : hasHistoria ? (
+                <div
+                  data-reveal
+                  className="mx-auto max-w-3xl overflow-hidden rounded-[28px] border border-stone-200 bg-white shadow-[0_20px_60px_-28px_rgba(0,0,0,0.12)]"
+                >
+                  <GrainOverlay />
+                  <div className="relative p-7 md:p-10">
+                    <div className="mb-6 flex items-center gap-3">
+                      <span className="flex size-9 items-center justify-center rounded-full bg-[#1c1917] text-white">
+                        <QuoteIcon className="size-4" />
+                      </span>
+                      <span className="text-xs font-semibold tracking-[0.16em] uppercase text-stone-400">
+                        Nuestra Historia
+                      </span>
+                      <span className="h-px flex-1 bg-stone-100" />
+                    </div>
+                    <div className="space-y-5">
                       {historiaParagraphs.map((para, idx) => (
-                        <motion.p
+                        <p
                           key={idx}
-                          variants={fadeUp(idx * 0.04)}
-                          className="text-[15px] leading-7 text-stone-600"
+                          data-reveal
+                          style={{ transitionDelay: `${idx * 60}ms` }}
+                          className={`text-[15px] leading-7 text-stone-600 ${idx === 0 ? "dropcap" : ""}`}
                         >
                           {para}
-                        </motion.p>
+                        </p>
                       ))}
                     </div>
                   </div>
-                </motion.div>
-              </div>
-            ) : hasHistoria ? (
-              /* Solo texto → centrado editorial ancho */
-              <motion.div
-                variants={fadeUp(0.1)}
-                className="mx-auto max-w-3xl rounded-[24px] border border-brand-rose/30 bg-white p-8 shadow-[0_20px_60px_-28px_rgba(0,0,0,0.12)] md:p-10"
-              >
-                <div className="mb-6 flex items-center gap-2 text-brand-mustard">
-                  <Quote className="size-5" />
-                  <span className="h-px w-8 bg-brand-mustard/30" />
-                  <span className="text-xs font-semibold tracking-widest uppercase text-stone-400">
-                    Nuestra Historia
-                  </span>
                 </div>
-                <div className="space-y-4">
-                  {historiaParagraphs.map((para, idx) => (
-                    <motion.p
-                      key={idx}
-                      variants={fadeUp(idx * 0.04)}
-                      className="text-[15px] leading-7 text-stone-600"
-                    >
-                      {para}
-                    </motion.p>
-                  ))}
-                </div>
-              </motion.div>
-            ) : (
-              /* Solo imagen → max-w-2xl centrado (comportamiento legacy mejorado) */
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 14, scale: shouldReduceMotion ? 1 : 0.98 },
-                  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.65, ease } },
-                }}
-                className="mx-auto max-w-2xl"
-              >
-                <div className="overflow-hidden rounded-[24px] border border-brand-rose bg-white shadow-[0_24px_64px_-24px_rgba(212,164,158,0.45)]">
-                  <motion.img
-                    src={historiaImagenUrl}
-                    alt="Nuestra Historia"
-                    className="h-auto w-full object-cover"
-                    whileHover={shouldReduceMotion ? {} : { scale: 1.015 }}
-                    transition={{ duration: 0.6, ease }}
-                    loading="lazy"
-                  />
-                </div>
-              </motion.div>
-            )}
-          </div>
-        </motion.section>
-      )}
-
-      {/* ── MISIÓN / VISIÓN ───────────────────────────────────── */}
-      {hasMisionVision && (
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={staggerContainer}
-          className="relative border-y border-brand-rose/20 bg-brand-rose-light/35 py-14 md:py-20"
-        >
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white via-transparent to-transparent opacity-70" />
-          <div className="container mx-auto max-w-5xl px-4">
-            <motion.div variants={fadeUp()} className="mb-10 text-center">
-              <SectionLabel icon={Target}>Propósito</SectionLabel>
-              <h2 className="mt-5 font-heading text-3xl font-semibold tracking-tight text-stone-800 md:text-4xl">
-                Lo que nos mueve
-              </h2>
-            </motion.div>
-
-            <div
-              className={`grid gap-6 md:gap-8 ${mision && vision ? "md:grid-cols-2" : "mx-auto max-w-2xl grid-cols-1"}`}
-            >
-              {mision && (
-                <motion.div
-                  variants={fadeUp(0.08)}
-                  whileHover={shouldReduceMotion ? {} : { y: -4 }}
-                  transition={{ duration: 0.35, ease }}
-                  className="group relative overflow-hidden rounded-[24px] border border-brand-rose bg-white p-7 shadow-[0_20px_60px_-28px_rgba(0,0,0,0.12)] md:p-8"
-                >
-                  <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-brand-mustard/10 blur-2xl transition-colors group-hover:bg-brand-mustard/18" />
-                  <div className="relative mb-5 flex h-12 w-12 items-center justify-center rounded-2xl border border-brand-mustard/20 bg-brand-mustard/10 text-brand-mustard">
-                    <Target className="size-6" />
+              ) : (
+                <div data-reveal className="mx-auto max-w-2xl">
+                  <div className="overflow-hidden rounded-[28px] border border-stone-200 bg-white p-2 shadow-[0_24px_64px_-24px_rgba(0,0,0,0.16)]">
+                    <div className="overflow-hidden rounded-[20px]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={historiaImagenUrl}
+                        alt="Arreglo floral artesanal — historia de TAO Boutique Floral"
+                        className="h-auto w-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
                   </div>
-                  <h3 className="font-heading text-xl font-semibold text-stone-800">Misión</h3>
-                  <p className="mt-3 text-[15px] leading-7 text-stone-600">{mision}</p>
-                </motion.div>
-              )}
-              {vision && (
-                <motion.div
-                  variants={fadeUp(0.16)}
-                  whileHover={shouldReduceMotion ? {} : { y: -4 }}
-                  transition={{ duration: 0.35, ease }}
-                  className="group relative overflow-hidden rounded-[24px] border border-brand-rose bg-white p-7 shadow-[0_20px_60px_-28px_rgba(0,0,0,0.12)] md:p-8"
-                >
-                  <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-brand-rose/20 blur-2xl transition-colors group-hover:bg-brand-rose/30" />
-                  <div className="relative mb-5 flex h-12 w-12 items-center justify-center rounded-2xl border border-brand-rose bg-brand-rose/15 text-brand-rose-dark">
-                    <Sparkles className="size-6" />
-                  </div>
-                  <h3 className="font-heading text-xl font-semibold text-stone-800">Visión</h3>
-                  <p className="mt-3 text-[15px] leading-7 text-stone-600">{vision}</p>
-                </motion.div>
+                </div>
               )}
             </div>
           </div>
-        </motion.section>
+        </section>
       )}
 
-      {/* ── VALORES · añadido sutil elegante ─────────────────── */}
-      <motion.section
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-80px" }}
-        variants={staggerContainer}
-        className="py-14 md:py-20"
-      >
-        <div className="container mx-auto max-w-6xl px-4">
-          <motion.div variants={fadeUp()} className="mx-auto max-w-2xl text-center">
-            <SectionLabel icon={Flower2}>Nuestros pilares</SectionLabel>
-            <h2 className="mt-5 font-heading text-3xl font-semibold tracking-tight text-stone-800 md:text-4xl">
-              Detalles que hacen la diferencia
-            </h2>
-            <p className="mt-3 text-sm leading-relaxed text-stone-500">
-              Cada entrega lleva nuestro compromiso silencioso con la calidad y la cercanía.
-            </p>
-          </motion.div>
+      {/* ── MISIÓN / VISIÓN · editorial spread ─────────────────────── */}
+      {configLoading && (
+        <section className="relative overflow-hidden border-y border-stone-200 bg-[#fdf6f0] py-12 md:py-16">
+          <div className="container mx-auto max-w-6xl px-4">
+            <div className="mx-auto max-w-2xl space-y-3 text-center">
+              <div className="mx-auto h-6 w-32 animate-pulse rounded-full bg-stone-200" />
+              <div className="mx-auto h-6 w-64 animate-pulse rounded-full bg-stone-100" />
+            </div>
+            <div className="mt-10 grid gap-6 md:grid-cols-2">
+              <div className="h-44 animate-pulse rounded-[28px] bg-white" />
+              <div className="h-44 animate-pulse rounded-[28px] bg-white" />
+            </div>
+          </div>
+        </section>
+      )}
+      {hasMisionVision && (
+        <section className="relative overflow-hidden border-y border-stone-200 bg-[#fdf6f0] py-12 md:py-16">
+          <GrainOverlay />
+          <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_white,_transparent_60%)]" />
+          <div className="container mx-auto max-w-6xl px-4">
+            <div data-reveal className="mx-auto max-w-2xl text-center">
+              <SectionLabel icon={Target} kicker="Propósito">
+                Lo que nos mueve
+              </SectionLabel>
+              {/* fila estilo marquee/pills — misma estética que Hecho a mano • Cercanía real • ... */}
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                <span className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-1.5 text-xs font-semibold tracking-[0.16em] uppercase text-stone-600 shadow-sm">
+                  <span className="size-1.5 rounded-full bg-brand-mustard" /> Claridad
+                </span>
+                <span className="text-stone-300">•</span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-1.5 text-xs font-semibold tracking-[0.16em] uppercase text-stone-600 shadow-sm">
+                  <span className="size-1.5 rounded-full bg-brand-rose-dark" /> Calma
+                </span>
+                <span className="text-stone-300">•</span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-1.5 text-xs font-semibold tracking-[0.16em] uppercase text-stone-600 shadow-sm">
+                  <span className="size-1.5 rounded-full bg-brand-sage" /> Oficio
+                </span>
+              </div>
+              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-stone-500">
+                Dos ideas simples que guían cada tallo que tocamos y cada entrega que cuidamos.
+              </p>
+            </div>
 
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            <div className={`mt-10 grid gap-6 ${mision && vision ? "md:grid-cols-2" : "mx-auto max-w-2xl grid-cols-1"}`}>
+              {mision && (
+                <div
+                  data-reveal
+                  className="group relative overflow-hidden rounded-[28px] border border-stone-200 bg-white p-7 shadow-[0_20px_60px_-28px_rgba(0,0,0,0.12)] md:p-8"
+                >
+                  <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-brand-mustard/10 blur-2xl transition group-hover:bg-brand-mustard/14" />
+                  <div className="relative flex items-start justify-between">
+                    <span className="flex size-12 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-600">
+                      <Target className="size-6" />
+                    </span>
+                    <span className="font-heading text-5xl font-light leading-none text-stone-100">01</span>
+                  </div>
+                  <h3 className="mt-5 font-heading text-xl font-semibold tracking-tight text-[#1c1917]">Misión</h3>
+                  <p className="mt-2 text-[15px] leading-7 text-stone-600">{mision}</p>
+                  <div className="mt-6 flex items-center gap-2 text-xs font-medium tracking-[0.14em] uppercase text-stone-400">
+                    <span className="h-px w-8 bg-stone-200" /> Oficio diario
+                  </div>
+                </div>
+              )}
+              {vision && (
+                <div
+                  data-reveal
+                  style={{ transitionDelay: "110ms" }}
+                  className="group relative overflow-hidden rounded-[28px] border border-stone-200 bg-white p-7 shadow-[0_20px_60px_-28px_rgba(0,0,0,0.12)] md:p-8"
+                >
+                  <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-brand-rose/18 blur-2xl transition group-hover:bg-brand-rose/24" />
+                  <div className="relative flex items-start justify-between">
+                    <span className="flex size-12 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 text-brand-rose-dark">
+                      <Sparkles className="size-6" />
+                    </span>
+                    <span className="font-heading text-5xl font-light leading-none text-stone-100">02</span>
+                  </div>
+                  <h3 className="mt-5 font-heading text-xl font-semibold tracking-tight text-[#1c1917]">Visión</h3>
+                  <p className="mt-2 text-[15px] leading-7 text-stone-600">{vision}</p>
+                  <div className="mt-6 flex items-center gap-2 text-xs font-medium tracking-[0.14em] uppercase text-stone-400">
+                    <span className="h-px w-8 bg-stone-200" /> Largo plazo
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── VALORES ────────────────────────────────────────────────── */}
+      <section className="relative py-12 md:py-16">
+        <div className="container mx-auto max-w-6xl px-4">
+          <div data-reveal className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <SectionLabel icon={Flower2} kicker="Pilares">
+                Nuestros pilares
+              </SectionLabel>
+              <h2 className="mt-4 font-heading text-[1.9rem] font-semibold leading-[0.95] tracking-[-0.02em] text-[#1c1917] md:text-[2.3rem] text-balance">
+                Detalles que se sienten,
+                <span className="block font-light italic text-stone-500">aunque no se digan.</span>
+              </h2>
+            </div>
+            <p data-reveal className="max-w-[420px] text-sm leading-6 text-stone-600">
+              Cada entrega lleva un compromiso silencioso: flores vivas, diseño honesto y cercanía sin
+              condiciones.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-5 md:grid-cols-3">
             {[
               {
+                n: "01",
                 icon: Flower2,
                 title: "Frescura que perdura",
-                desc: "Seleccionamos cada tallo el mismo día. Flores que llegan vibrantes y se mantienen hermosas por más tiempo.",
-                accent: "bg-brand-sage/10 border-brand-sage/20 text-brand-sage",
+                desc: "Selección del día, tallo a tallo. Flores que llegan vibrantes y se mantienen hermosas por más tiempo.",
+                accent: "bg-emerald-50 border-emerald-200 text-emerald-700",
+                dot: "bg-emerald-500",
               },
               {
+                n: "02",
                 icon: Palette,
                 title: "Diseño con alma",
                 desc: "Cada arreglo es una composición única, pensada para la persona y el momento que celebra.",
-                accent: "bg-brand-mustard/10 border-brand-mustard/20 text-brand-mustard",
+                accent: "bg-amber-50 border-amber-200 text-amber-700",
+                dot: "bg-amber-500",
               },
               {
+                n: "03",
                 icon: HandHeart,
                 title: "Cercanía real",
-                desc: "Asesoría humana, respuesta rápida y entregas puntuales en cada sede, sin letras pequeñas.",
-                accent: "bg-brand-rose/15 border-brand-rose text-brand-rose-dark",
+                desc: "Asesoría humana, respuesta rápida y entregas puntuales en cada sede. Sin letras pequeñas.",
+                accent: "bg-rose-50 border-rose-200 text-rose-700",
+                dot: "bg-rose-400",
               },
             ].map((v, i) => (
-              <motion.div
+              <div
                 key={v.title}
-                variants={fadeUp(i * 0.08)}
-                whileHover={shouldReduceMotion ? {} : { y: -6 }}
-                transition={{ duration: 0.35, ease }}
-                className="group rounded-[24px] border border-stone-200 bg-white p-7 shadow-sm transition-all hover:border-brand-rose hover:shadow-[0_20px_60px_-28px_rgba(0,0,0,0.12)]"
+                data-reveal
+                style={{ transitionDelay: `${i * 90}ms` }}
+                className="group relative overflow-hidden rounded-[28px] border border-stone-200 bg-white p-6 shadow-[0_10px_32px_-18px_rgba(0,0,0,0.12)] transition hover:-translate-y-1 hover:shadow-[0_20px_48px_-18px_rgba(0,0,0,0.14)] md:p-7"
               >
-                <div
-                  className={`mb-4 flex h-11 w-11 items-center justify-center rounded-2xl border ${v.accent}`}
-                >
-                  <v.icon className="size-5" />
+                <div className="flex items-start justify-between">
+                  <span className={`flex size-11 items-center justify-center rounded-2xl border ${v.accent}`}>
+                    <v.icon className="size-5" />
+                  </span>
+                  <span className="font-heading text-sm font-semibold tracking-[0.14em] text-stone-300">
+                    {v.n}
+                  </span>
                 </div>
-                <h3 className="font-heading text-base font-semibold text-stone-800">
+                <h3 className="mt-5 font-heading text-[17px] font-semibold leading-tight text-[#1c1917]">
                   {v.title}
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-stone-500">{v.desc}</p>
-              </motion.div>
+                <p className="mt-2 text-sm leading-6 text-stone-600">{v.desc}</p>
+                <div className="mt-5 flex items-center gap-2 text-xs font-medium text-stone-500">
+                  <span className={`size-1.5 rounded-full ${v.dot}`} /> TAO {boutiquePart}
+                </div>
+                <div className="pointer-events-none absolute -right-6 -bottom-6 h-24 w-24 rounded-full bg-stone-50 opacity-0 transition group-hover:opacity-100" />
+              </div>
+            ))}
+          </div>
+
+          {/* mini process */}
+          <div
+            data-reveal
+            className="mt-8 grid gap-3 rounded-[24px] border border-stone-200 bg-stone-50/70 p-3 md:grid-cols-4"
+          >
+            {[
+              { t: "Eliges", d: "Catálogo o a medida" },
+              { t: "Componemos", d: "A mano, con detalle" },
+              { t: "Cuidamos", d: "Frescura + detalle" },
+              { t: "Entregamos", d: "Puntual, con calidez" },
+            ].map((s, i) => (
+              <div
+                key={s.t}
+                className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3.5 shadow-sm"
+                style={{ transitionDelay: `${i * 60}ms` } as React.CSSProperties}
+              >
+                <span className="flex size-7 items-center justify-center rounded-full bg-[#1c1917] text-xs font-bold text-white">
+                  {i + 1}
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold text-stone-700">{s.t}</span>
+                  <span className="block text-xs text-stone-400">{s.d}</span>
+                </span>
+              </div>
             ))}
           </div>
         </div>
-      </motion.section>
+      </section>
 
-      {/* ── CONTACTO + SEDES ──────────────────────────────────── */}
-      <motion.section
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-80px" }}
-        variants={staggerContainer}
-        className="relative overflow-hidden bg-[#fffbf8] py-14 md:py-20"
-      >
+      {/* ── CONTACTO + SEDES ───────────────────────────────────────── */}
+      <section id="contacto" className="relative scroll-mt-24 overflow-hidden bg-[#fffbf8] py-12 md:py-16">
         <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute bottom-0 left-1/2 h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-brand-rose-light/50 blur-[70px]" />
+          <div className="absolute bottom-0 left-1/2 h-[640px] w-[980px] -translate-x-1/2 rounded-full bg-[#f1e5e2]/55 blur-[74px]" />
         </div>
 
-        <div className="container mx-auto max-w-3xl px-4 text-center">
-          <motion.div variants={fadeUp()}>
-            <SectionLabel icon={Sparkles}>Contacto</SectionLabel>
-            <h2 className="mt-5 font-heading text-3xl font-semibold tracking-tight text-stone-800 md:text-4xl">
+        <div className="container mx-auto max-w-6xl px-4">
+          <div className="mx-auto max-w-2xl text-center" data-reveal>
+            <SectionLabel icon={Sparkles} kicker="Contacto">
               Estamos aquí para ti
+            </SectionLabel>
+            <h2 className="mt-4 font-heading text-[1.9rem] font-semibold tracking-[-0.02em] text-[#1c1917] md:text-[2.35rem]">
+              Conversemos
             </h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-stone-500">
-              Ya sea una consulta, un arreglo a medida o un pedido de último momento, te respondemos con calidez y rapidez.
+            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-stone-600">
+              Una consulta, un arreglo a medida o un pedido de último momento — te respondemos con calidez y
+              sin demora.
             </p>
-          </motion.div>
+          </div>
 
-          <motion.div
-            variants={staggerContainer}
-            className="mt-8 flex flex-wrap justify-center gap-4"
-          >
+          {/* contact cards */}
+          <div className="mx-auto mt-8 grid max-w-3xl gap-4 md:grid-cols-2" data-reveal>
             {config?.correoMaestro && (
-              <motion.a
-                variants={fadeUp()}
-                whileHover={shouldReduceMotion ? {} : { y: -4 }}
-                whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
+              <a
                 href={`mailto:${config.correoMaestro}`}
-                className="group flex max-w-[360px] items-center gap-3 rounded-2xl border border-brand-rose bg-white px-5 py-4 text-left shadow-sm transition-all hover:border-brand-mustard hover:shadow-md"
+                className="group flex items-center gap-4 rounded-[20px] border border-stone-200 bg-white p-4 shadow-sm transition hover:border-amber-200 hover:shadow-[0_12px_32px_-16px_rgba(0,0,0,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mustard focus-visible:ring-offset-2"
               >
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600">
-                  <MdEmail className="size-5" />
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 ring-1 ring-amber-100">
+                  <Mail className="size-5" />
                 </span>
-                <span className="min-w-0">
-                  <span className="block text-xs font-medium tracking-wide text-stone-400">Email</span>
-                  <span className="block break-words text-sm font-medium text-stone-700 group-hover:text-amber-600">
+                <span className="min-w-0 text-left">
+                  <span className="block text-[11px] font-semibold tracking-[0.14em] uppercase text-stone-400">
+                    Email
+                  </span>
+                  <span className="block truncate text-sm font-medium text-stone-700 group-hover:text-amber-700">
                     {config.correoMaestro}
                   </span>
                 </span>
-              </motion.a>
+                <ChevronRight className="ml-auto size-4 text-stone-300 transition group-hover:translate-x-0.5 group-hover:text-stone-500" />
+              </a>
             )}
             {config?.whatsappGeneral && (
-              <motion.a
-                variants={fadeUp(0.08)}
-                whileHover={shouldReduceMotion ? {} : { y: -4 }}
-                whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
+              <a
                 href={`https://wa.me/${config.whatsappGeneral.replace(/[^0-9]/g, "")}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex max-w-[360px] items-center gap-3 rounded-2xl border border-brand-rose bg-white px-5 py-4 text-left shadow-sm transition-all hover:border-emerald-200 hover:shadow-md"
+                className="group flex items-center gap-4 rounded-[20px] border border-stone-200 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-[0_12px_32px_-16px_rgba(0,0,0,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
               >
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
-                  <FaWhatsapp className="size-5" />
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
+                  <Phone className="size-5" />
                 </span>
-                <span className="min-w-0">
-                  <span className="block text-xs font-medium tracking-wide text-stone-400">WhatsApp</span>
-                  <span className="block break-words text-sm font-medium text-stone-700 group-hover:text-emerald-600">
+                <span className="min-w-0 text-left">
+                  <span className="block text-[11px] font-semibold tracking-[0.14em] uppercase text-stone-400">
+                    WhatsApp
+                  </span>
+                  <span className="block truncate text-sm font-medium text-stone-700 group-hover:text-emerald-700">
                     {config.whatsappGeneral}
                   </span>
                 </span>
-              </motion.a>
+                <ChevronRight className="ml-auto size-4 text-stone-300 transition group-hover:translate-x-0.5 group-hover:text-stone-500" />
+              </a>
             )}
-          </motion.div>
+          </div>
 
-          <motion.div
-            variants={staggerContainer}
-            className="mt-6 flex flex-wrap justify-center gap-3"
-          >
-            {config?.instagramUrl && (
-              <motion.a
-                variants={fadeUp()}
-                whileHover={shouldReduceMotion ? {} : { y: -3 }}
-                href={sanitizeUrl(config.instagramUrl ?? "")}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-brand-rose bg-white px-5 py-2.5 text-sm font-medium text-stone-700 shadow-sm transition-all hover:border-pink-200 hover:text-pink-600"
-              >
-                <FaInstagram className="size-4 text-pink-500" /> Instagram
-              </motion.a>
-            )}
-            {config?.facebookUrl && (
-              <motion.a
-                variants={fadeUp(0.06)}
-                whileHover={shouldReduceMotion ? {} : { y: -3 }}
-                href={sanitizeUrl(config.facebookUrl ?? "")}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-brand-rose bg-white px-5 py-2.5 text-sm font-medium text-stone-700 shadow-sm transition-all hover:border-blue-200 hover:text-blue-600"
-              >
-                <FaFacebook className="size-4 text-blue-600" /> Facebook
-              </motion.a>
-            )}
-            {config?.tiktokUrl && (
-              <motion.a
-                variants={fadeUp(0.12)}
-                whileHover={shouldReduceMotion ? {} : { y: -3 }}
-                href={sanitizeUrl(config.tiktokUrl ?? "")}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-brand-rose bg-white px-5 py-2.5 text-sm font-medium text-stone-700 shadow-sm transition-all hover:border-stone-200 hover:text-stone-900"
-              >
-                <FaTiktok className="size-4" /> TikTok
-              </motion.a>
-            )}
-          </motion.div>
-
-          {/* Sedes */}
-          {sedes && sedes.length > 0 && (
-            <motion.div variants={fadeUp(0.16)} className="mt-12">
-              {!esUnicaSede && (
-                <h3 className="mb-4 font-heading text-xs font-semibold uppercase tracking-[0.18em] text-stone-400">
-                  Nuestras Sedes
-                </h3>
+          {/* socials */}
+          {(config?.instagramUrl || config?.facebookUrl || config?.tiktokUrl) && (
+            <div data-reveal className="mt-5 flex flex-wrap justify-center gap-2.5">
+              {config?.instagramUrl && (
+                <a
+                  href={sanitizeUrl(config.instagramUrl ?? "")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-600 shadow-sm transition hover:border-pink-200 hover:text-pink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 focus-visible:ring-offset-2"
+                >
+                  <FaInstagram className="size-4 text-pink-500" /> Instagram
+                </a>
               )}
-              <motion.div
-                variants={staggerContainer}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-60px" }}
-                className={`grid gap-6 md:gap-8 max-w-2xl mx-auto ${esUnicaSede ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}
-              >
-                {sedes.map((sede, idx) => (
-                  <motion.div
-                    key={sede.id}
-                    variants={fadeUp(idx * 0.08)}
-                    whileHover={shouldReduceMotion ? {} : { y: -4 }}
-                    transition={{ duration: 0.32, ease }}
-                  >
-                    <SedeCard sede={sede} />
-                  </motion.div>
-                ))}
-              </motion.div>
-            </motion.div>
+              {config?.facebookUrl && (
+                <a
+                  href={sanitizeUrl(config.facebookUrl ?? "")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-600 shadow-sm transition hover:border-blue-200 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2"
+                >
+                  <FaFacebook className="size-4 text-blue-600" /> Facebook
+                </a>
+              )}
+              {config?.tiktokUrl && (
+                <a
+                  href={sanitizeUrl(config.tiktokUrl ?? "")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-600 shadow-sm transition hover:border-stone-300 hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-300 focus-visible:ring-offset-2"
+                >
+                  <FaTiktok className="size-4" /> TikTok
+                </a>
+              )}
+            </div>
           )}
 
-          <motion.div variants={fadeUp(0.2)} className="mt-12">
+          {/* sedes */}
+          {sedes && sedesCount > 0 && (
+            <div data-reveal className="mt-10">
+              {showSedesTitle && (
+                <div className="mb-5 flex items-center justify-center gap-3">
+                  <span className="h-px w-8 bg-stone-200" />
+                  <h3 className="font-heading text-xs font-semibold uppercase tracking-[0.18em] text-stone-400">
+                    Nuestras Sedes
+                  </h3>
+                  <span className="h-px w-8 bg-stone-200" />
+                </div>
+              )}
+              <div
+                className={`grid gap-5 mx-auto ${
+                  isSingleSede ? "max-w-md grid-cols-1" : "max-w-3xl grid-cols-1 sm:grid-cols-2"
+                }`}
+              >
+                {sedes.map((sede) => (
+                  <div
+                    key={sede.id}
+                    className="rounded-[24px] transition hover:-translate-y-1 focus-within:ring-2 focus-within:ring-brand-mustard focus-within:ring-offset-2"
+                  >
+                    <SedeCard sede={sede} />
+                  </div>
+                ))}
+              </div>
+
+              {isSingleSede && (
+                <p className="mx-auto mt-4 max-w-md text-center text-xs leading-5 text-stone-500">
+                  Atendemos toda la ciudad desde nuestra sede principal — escríbenos y coordinamos tu entrega con
+                  cuidado.
+                </p>
+              )}
+            </div>
+          )}
+          {sedesLoading && (
+            <div className="mt-10 grid gap-5 mx-auto max-w-3xl grid-cols-1 sm:grid-cols-2">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="h-36 animate-pulse rounded-[24px] border border-stone-200 bg-stone-100" />
+              ))}
+            </div>
+          )}
+
+          {/* climax CTA */}
+          <div
+            data-reveal
+            className="relative mt-10 overflow-hidden rounded-[28px] border border-stone-200 bg-[#1c1917] p-6 text-white shadow-[0_24px_64px_-20px_rgba(0,0,0,0.35)] md:p-8"
+          >
+            <GrainOverlay />
+            <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-brand-mustard/18 blur-[40px]" />
+            <div className="pointer-events-none absolute -left-12 -bottom-12 h-56 w-56 rounded-full bg-brand-rose/12 blur-[36px]" />
+            <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] uppercase text-white/60">
+                  <span className="size-1.5 rounded-full bg-brand-mustard" /> Siguiente paso
+                </p>
+                <h3 className="mt-2 font-heading text-2xl font-semibold leading-tight tracking-tight md:text-[1.7rem] text-balance">
+                  ¿Listo para decirlo con flores?
+                </h3>
+                <p className="mt-1.5 max-w-[520px] text-sm leading-6 text-white/65">
+                  Explora el catálogo o escríbenos — componemos tu arreglo a mano, con frescura del día.
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-wrap gap-3">
+                <Link
+                  href="/tienda"
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-[#1c1917] shadow transition hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1c1917]"
+                >
+                  Explorar catálogo <ArrowRight className="size-4" />
+                </Link>
+                {config?.whatsappGeneral && (
+                  <a
+                    href={`https://wa.me/${config.whatsappGeneral.replace(/[^0-9]/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-3.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1c1917]"
+                  >
+                    <FaWhatsapp className="size-4" /> WhatsApp
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 text-center">
             <Link
               href="/tienda"
-              className="group inline-flex items-center gap-1.5 text-sm font-medium text-brand-mustard transition-colors hover:text-brand-mustard-dark"
+              className="group inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-stone-500 transition hover:text-[#1c1917] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-mustard focus-visible:ring-offset-2"
             >
               Volver a la tienda
-              <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+              <ChevronRight className="size-4 transition group-hover:translate-x-0.5" />
             </Link>
-          </motion.div>
+          </div>
         </div>
-      </motion.section>
+      </section>
 
-      {/* footer whisper */}
-      <div className="border-t border-brand-rose/20 bg-white py-6 text-center text-xs tracking-wide text-stone-400">
-        <span className="font-heading font-medium text-stone-500">{sitioNombre}</span>
-        <span className="mx-2 text-stone-300">·</span>
-        <span className="italic">&ldquo;{tagline}&rdquo;</span>
+      {/* footer whisper — lockup TAO + nombre */}
+      <div className="border-t border-stone-200 bg-white py-6">
+        <div className="container mx-auto flex flex-col items-center gap-2 px-4 text-center">
+          <div className="flex items-center gap-2.5">
+            <span className="relative block size-7 overflow-hidden rounded-full border border-stone-200 bg-white">
+              <Image src={logoUrl} alt="TAO" fill className="object-contain p-0.5" sizes="28px" />
+            </span>
+            <span className="font-heading text-sm font-semibold tracking-tight text-stone-700">
+              TAO <span className="font-normal text-stone-500">{boutiquePart}</span>
+            </span>
+            <span className="mx-1 text-stone-300">·</span>
+            <span className="text-xs italic tracking-wide text-stone-400">&ldquo;{tagline}&rdquo;</span>
+          </div>
+          <p className="max-w-xl text-[11px] leading-5 text-stone-400">
+            Artesanía floral hecha a mano, con flores frescas del día y entregas cuidadas en cada sede.
+          </p>
+        </div>
       </div>
     </div>
   );
