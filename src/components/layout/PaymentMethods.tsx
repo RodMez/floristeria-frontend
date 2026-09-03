@@ -27,12 +27,12 @@ function Chip({
 
 export default function PaymentMethods() {
   return (
-    <div className="border-t border-stone-800 pt-4 mt-2">
-      <h5 className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-stone-500">
+    <div className="border-t border-stone-800 pt-6 mt-6">
+      <h5 className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-brand-rose">
         Métodos de pago
       </h5>
 
-      <div className="flex flex-wrap gap-2.5">
+      <div className="flex flex-wrap gap-3">
         {/* ── Billeteras / Transferencia ── */}
         <Chip label="Nequi">
           <Image

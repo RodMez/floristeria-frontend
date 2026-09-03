@@ -62,7 +62,7 @@ export default function Footer() {
             )}
             {descripcion && (
               <p className="text-sm leading-relaxed text-stone-400">
-                {descripcion}
+                {descripcion.length > 400 ? `${descripcion.slice(0, 400).trim()}…` : descripcion}
               </p>
             )}
           </div>
@@ -279,6 +279,17 @@ export default function Footer() {
                 </a>
               </li>
             </ul>
+            <div className="flex justify-center pt-8 mt-6">
+              <div className="relative size-24 overflow-hidden rounded-full border border-stone-800 bg-white sm:size-28">
+                <Image
+                  src={logoUrl}
+                  alt={sitioNombre}
+                  fill
+                  className="object-contain p-1.5"
+                  sizes="112px"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
