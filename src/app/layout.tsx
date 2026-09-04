@@ -17,8 +17,18 @@ const inter = Inter({
   variable: "--font-sans",
 });
 
+function getMetadataBase(): URL {
+  const raw = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+  const candidate = raw.startsWith("http://") || raw.startsWith("https://") ? raw : `https://${raw}`;
+  try {
+    return new URL(candidate);
+  } catch {
+    return new URL("http://localhost:3000");
+  }
+}
+
 const DEFAULT_METADATA: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_URL || "http://localhost:3000"),
+  metadataBase: getMetadataBase(),
   title: {
     default: "TAO Boutique Floral | Flores que cuentan historias",
     template: "%s | TAO Boutique Floral",
@@ -38,7 +48,7 @@ const DEFAULT_METADATA: Metadata = {
     title: "TAO Boutique Floral",
     description:
       "Transformamos flores en experiencias inolvidables. Diseños exclusivos, flores frescas y atención personalizada para cada ocasión especial.",
-    url: process.env.NEXT_PUBLIC_URL,
+    url: getMetadataBase().href,
     siteName: "TAO Boutique Floral",
     images: [
       {
