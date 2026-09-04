@@ -645,9 +645,6 @@ export default function ConfiguracionPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="iconUrl">Favicon (ícono de pestaña)</Label>
-                <p className="text-xs text-[var(--admin-muted-foreground)]">
-                  Sube un PNG cuadrado ≥512 para que se vea nítido en la pestaña. Si lo dejas vacío, se usa el favicon estático TAO.
-                </p>
                 <div className="flex items-center gap-3">
                   <Input
                     id="iconUrl"
