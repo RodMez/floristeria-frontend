@@ -82,7 +82,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
     const res = await fetch(`${apiUrl}/api/v1/configuracion`, {
       signal: controller.signal,
-      next: { revalidate: 3600 },
+      next: { revalidate: 60, tags: ["config"] },
     });
     clearTimeout(timeout);
 

@@ -322,6 +322,25 @@ export default function ConfiguracionPage() {
 
       toast.success("Configuración actualizada correctamente");
       mutate();
+      // instant favicon update en pestaña actual (sin esperar revalidate server)
+      if (data.iconUrl) {
+        const bust = `${data.iconUrl}${data.iconUrl.includes("?") ? "&" : "?"}v=${Date.now()}`;
+        document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"], link[rel="shortcut icon"]').forEach((l) => l.remove());
+        (
+          [
+            { rel: "icon", href: bust, type: "image/png", sizes: "512x512" },
+            { rel: "apple-touch-icon", href: bust, sizes: "180x180", type: "image/png" },
+            { rel: "shortcut icon", href: bust },
+          ] as Array<{ rel: string; href: string; type?: string; sizes?: string }>
+        ).forEach(({ rel, href, type, sizes }) => {
+          const link = document.createElement("link");
+          link.rel = rel;
+          link.href = href;
+          if (type) link.type = type;
+          if (sizes) (link as HTMLLinkElement).sizes.value = sizes;
+          document.head.appendChild(link);
+        });
+      }
     } catch (err) {
       console.error("Error saving config:", err);
       toast.error(
