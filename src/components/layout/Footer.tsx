@@ -285,7 +285,7 @@ export default function Footer() {
                   src={logoUrl}
                   alt={sitioNombre}
                   fill
-                  className="object-contain p-1.5"
+                  className="object-cover"
                   sizes="112px"
                 />
               </div>
