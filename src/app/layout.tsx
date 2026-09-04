@@ -93,9 +93,28 @@ export async function generateMetadata(): Promise<Metadata> {
     const tagline = config?.tagline || "Flores que cuentan historias";
     const descripcion = config?.descripcion || DEFAULT_METADATA.description!;
     const logoUrl = config?.logoUrl || "/tao-logo.png";
+    const iconUrl = (config?.iconUrl as string | undefined)?.trim() || "";
+
+    const dynamicIcons = iconUrl
+      ? {
+          icons: {
+            icon: [
+              { url: iconUrl, sizes: "512x512", type: "image/png" as const },
+              { url: "/favicon.ico", sizes: "any", type: "image/x-icon" as const },
+              { url: "/icon.png", type: "image/png" as const, sizes: "512x512" },
+            ],
+            apple: [
+              { url: iconUrl, sizes: "180x180", type: "image/png" as const },
+              { url: "/apple-icon.png", sizes: "180x180", type: "image/png" as const },
+            ],
+            shortcut: "/favicon.ico",
+          },
+        }
+      : {};
 
     return {
       ...DEFAULT_METADATA,
+      ...dynamicIcons,
       title: {
         default: `${nombre} | ${tagline}`,
         template: `%s | ${nombre}`,
@@ -124,7 +143,6 @@ export async function generateMetadata(): Promise<Metadata> {
           },
         ],
       },
-      // icons estáticos (favicon) — no usar iconUrl dinámico para evitar 48x48 borroso y CORS con nosniff
     };
   } catch {
     return DEFAULT_METADATA;

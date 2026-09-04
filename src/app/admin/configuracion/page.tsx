@@ -643,46 +643,46 @@ export default function ConfiguracionPage() {
                 )}
               </div>
 
-              {/* deprecated: favicon ahora estático en src/app/icon.png 512 — iconUrl huérfano, se mantiene en schema/payload para no romper back */}
-              <div className="hidden" aria-hidden="true" data-deprecated="favicon-estatico">
-                <div className="space-y-2">
-                  <Label htmlFor="iconUrl">Favicon (ícono de pestaña)</Label>
-                  <div className="flex items-center gap-3">
-                    <Input
-                      id="iconUrl"
-                      type="text"
-                      {...register("iconUrl")}
-                      placeholder="URL del favicon"
-                      disabled={isLoading}
-                      className="flex-1"
-                    />
-                    <Label
-                      htmlFor="iconUpload"
-                      className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md bg-[var(--color-brand-mustard)] px-3 py-2 text-sm font-medium text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]"
-                    >
-                      <ImageIcon className="size-4" />
-                      {uploadingIcon ? "..." : "Subir"}
-                    </Label>
-                    <input
-                      id="iconUpload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleImageUpload(e, "iconUrl")}
-                      disabled={uploadingIcon}
+              <div className="space-y-2">
+                <Label htmlFor="iconUrl">Favicon (ícono de pestaña)</Label>
+                <p className="text-xs text-[var(--admin-muted-foreground)]">
+                  Sube un PNG cuadrado ≥512 para que se vea nítido en la pestaña. Si lo dejas vacío, se usa el favicon estático TAO.
+                </p>
+                <div className="flex items-center gap-3">
+                  <Input
+                    id="iconUrl"
+                    type="text"
+                    {...register("iconUrl")}
+                    placeholder="URL del favicon"
+                    disabled={isLoading}
+                    className="flex-1"
+                  />
+                  <Label
+                    htmlFor="iconUpload"
+                    className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md bg-[var(--color-brand-mustard)] px-3 py-2 text-sm font-medium text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]"
+                  >
+                    <ImageIcon className="size-4" />
+                    {uploadingIcon ? "..." : "Subir"}
+                  </Label>
+                  <input
+                    id="iconUpload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleImageUpload(e, "iconUrl")}
+                    disabled={uploadingIcon}
+                  />
+                </div>
+                {watch("iconUrl") && (
+                  <div className="relative mt-2 h-10 w-10 overflow-hidden rounded border">
+                    <Image
+                      src={watch("iconUrl") || ""}
+                      alt="Favicon preview"
+                      fill
+                      className="object-cover"
                     />
                   </div>
-                  {watch("iconUrl") && (
-                    <div className="relative mt-2 h-10 w-10 overflow-hidden rounded border">
-                      <Image
-                        src={watch("iconUrl") || ""}
-                        alt="Favicon preview"
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
             </div>
 
