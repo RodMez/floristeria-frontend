@@ -341,6 +341,22 @@ export default function ConfiguracionPage() {
           document.head.appendChild(link);
         });
       }
+      // cross-tab + server revalidate para Edge limpio / otras pestañas ya abiertas
+      try {
+        if (data.iconUrl) {
+          localStorage.setItem("tao:iconUrl", data.iconUrl);
+          try {
+            new BroadcastChannel("tao-icons").postMessage({ iconUrl: data.iconUrl });
+          } catch {}
+        } else {
+          localStorage.removeItem("tao:iconUrl");
+        }
+        fetch("/api/revalidate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tag: "config" }),
+        }).catch(() => {});
+      } catch {}
     } catch (err) {
       console.error("Error saving config:", err);
       toast.error(

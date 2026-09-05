@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
 import SessionExpiredListener from "@/components/auth/SessionExpiredListener";
+import FaviconSync from "@/components/FaviconSync";
 import "./globals.css";
 
 const cinzel = Cinzel({
@@ -159,6 +160,7 @@ export default function RootLayout({
       <body className="bg-background text-foreground min-h-screen">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
           <SessionExpiredListener />
+          <FaviconSync />
           {children}
         </ThemeProvider>
         <Toaster position="top-right" richColors closeButton />
