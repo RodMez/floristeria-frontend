@@ -8,24 +8,24 @@ import { ConfiguracionTiendaDTO } from "@/types";
 function applyFavicon(iconUrl: string) {
   if (!iconUrl) return;
   if (typeof document === "undefined") return;
-  const bust = iconUrl.includes("?") ? `${iconUrl}&v=${iconUrl.slice(-8)}` : `${iconUrl}?v=${Date.now()}`;
-  // Remove old dynamic icons (keep static fallback will be re-added if needed, but we replace with dynamic first)
-  document.querySelectorAll<HTMLLinkElement>('link[rel="icon"], link[rel="apple-touch-icon"], link[rel="shortcut icon"]').forEach((el) => {
-    // Keep static fallback if no dynamic? We will re-add, so remove all to avoid duplicates
-    el.remove();
-  });
-  const links: Array<{ rel: string; href: string; type?: string; sizes?: string }> = [
+  const bust = iconUrl.includes("?") ? `${iconUrl}&v=${Date.now()}` : `${iconUrl}?v=${Date.now()}`;
+  const updates: Array<{ rel: string; href: string; type?: string; sizes?: string }> = [
     { rel: "icon", href: bust, type: "image/png", sizes: "512x512" },
     { rel: "apple-touch-icon", href: bust, type: "image/png", sizes: "180x180" },
     { rel: "shortcut icon", href: bust },
   ];
-  links.forEach(({ rel, href, type, sizes }) => {
-    const link = document.createElement("link");
-    link.rel = rel;
+  updates.forEach(({ rel, href, type, sizes }) => {
+    let link = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = rel;
+      document.head.appendChild(link);
+    }
     link.href = href;
     if (type) link.type = type;
+    else link.removeAttribute("type");
     if (sizes) (link as HTMLLinkElement).sizes.value = sizes;
-    document.head.appendChild(link);
+    else (link as HTMLLinkElement).sizes.value = "";
   });
 }
 

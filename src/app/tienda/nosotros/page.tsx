@@ -50,15 +50,13 @@ function useReveal() {
     );
 
     const observeAll = () => {
-      document.querySelectorAll<HTMLElement>("[data-reveal]:not(.is-visible)").forEach((el) => {
-        // evita observar dos veces el mismo
+      const root = document.getElementById("reveal-root") || document.body;
+      root.querySelectorAll<HTMLElement>("[data-reveal]:not(.is-visible)").forEach((el) => {
         if ((el as unknown as { __ioObserved?: boolean }).__ioObserved) return;
         (el as unknown as { __ioObserved?: boolean }).__ioObserved = true;
-        // si ya está en viewport, marcar visible sin esperar (evita quedarse oculto si se inyecta ya visible)
         const rect = el.getBoundingClientRect();
         const inView = rect.top < window.innerHeight - 60 && rect.bottom > 0;
         if (inView && rect.top < window.innerHeight * 0.92) {
-          // pequeña defer para animación
           requestAnimationFrame(() => el.classList.add("is-visible"));
           return;
         }
@@ -67,8 +65,15 @@ function useReveal() {
     };
 
     observeAll();
-    const mo = new MutationObserver(() => observeAll());
-    mo.observe(document.body, { childList: true, subtree: true });
+    const target = document.getElementById("reveal-root") || document.body;
+    const mo = new MutationObserver(() => {
+      // throttle: only run every 200ms
+      const now = Date.now();
+      if ((mo as unknown as { _last?: number })._last && now - (mo as unknown as { _last?: number })._last! < 200) return;
+      (mo as unknown as { _last?: number })._last = now;
+      observeAll();
+    });
+    mo.observe(target, { childList: true, subtree: true });
 
     // fallback: re-observa tras cualquier render tardío (SWR)
     const t = setTimeout(observeAll, 400);
@@ -172,7 +177,7 @@ export default function NosotrosPage() {
   const showSedesTitle = sedesCount >= 2;
 
   return (
-    <div className="min-h-screen bg-[#fffbf8] text-stone-800 selection:bg-brand-mustard/30">
+    <div id="reveal-root" className="min-h-screen bg-[#fffbf8] text-stone-800 selection:bg-brand-mustard/30">
       <style>{`
         html{scroll-behavior:smooth}
         [data-reveal]{opacity:0;transform:translateY(14px);transition:opacity .52s cubic-bezier(.16,1,.3,1),transform .52s cubic-bezier(.16,1,.3,1);will-change:transform,opacity}
