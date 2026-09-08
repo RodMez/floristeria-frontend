@@ -99,16 +99,10 @@ export async function generateMetadata(): Promise<Metadata> {
     const dynamicIcons = iconUrl
       ? {
           icons: {
-            icon: [
-              { url: iconUrl, sizes: "512x512", type: "image/png" as const },
-              { url: "/favicon.ico", sizes: "any", type: "image/x-icon" as const },
-              { url: "/icon.png", type: "image/png" as const, sizes: "512x512" },
-            ],
-            apple: [
-              { url: iconUrl, sizes: "180x180", type: "image/png" as const },
-              { url: "/apple-icon.png", sizes: "180x180", type: "image/png" as const },
-            ],
-            shortcut: "/favicon.ico",
+            // SOLO dinamico: sin /icon.png ni /favicon.ico para que Chromium no prefiera el estatico same-origin
+            icon: [{ url: iconUrl, sizes: "any" }],
+            apple: [{ url: iconUrl, sizes: "180x180", type: "image/png" as const }],
+            shortcut: iconUrl,
           },
         }
       : {};
