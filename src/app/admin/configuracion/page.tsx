@@ -322,27 +322,19 @@ export default function ConfiguracionPage() {
 
       toast.success("Configuración actualizada correctamente");
       mutate();
-      // instant favicon update en pestaña actual (sin esperar revalidate server) — href in-place sin removeChild
+      // instant favicon update en pestaña actual — link propio marcado (React no lo resetea)
       if (data.iconUrl) {
         const bust = `${data.iconUrl}${data.iconUrl.includes("?") ? "&" : "?"}v=${Date.now()}`;
-        (
-          [
-            { rel: "icon", href: bust, type: "image/png", sizes: "512x512" },
-            { rel: "apple-touch-icon", href: bust, sizes: "180x180", type: "image/png" },
-            { rel: "shortcut icon", href: bust },
-          ] as Array<{ rel: string; href: string; type?: string; sizes?: string }>
-        ).forEach(({ rel, href, type, sizes }) => {
-          let link = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+        (["icon", "apple-touch-icon", "shortcut icon"] as const).forEach((rel) => {
+          let link = document.querySelector<HTMLLinkElement>(`link[data-dynamic-favicon][rel="${rel}"]`);
           if (!link) {
             link = document.createElement("link");
             link.rel = rel;
+            link.dataset.dynamicFavicon = "true";
             document.head.appendChild(link);
           }
-          link.href = href;
-          if (type) link.type = type;
-          else link.removeAttribute("type");
-          if (sizes) (link as HTMLLinkElement).sizes.value = sizes;
-          else (link as HTMLLinkElement).sizes.value = "";
+          link.href = bust;
+          if (rel === "icon" || rel === "apple-touch-icon") link.type = "image/png";
         });
       }
       // cross-tab + server revalidate para Edge limpio / otras pestañas ya abiertas
