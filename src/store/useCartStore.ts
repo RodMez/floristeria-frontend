@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { Sede } from "@/types";
+import { trackMetaEvent } from "@/lib/meta-pixel";
 
 export interface CartItem {
   id: string;
@@ -40,7 +41,7 @@ export const useCartStore = create<CartState>()(
       drawerOpen: false,
       setDrawerOpen: (open) => set({ drawerOpen: open }),
       setSedeActual: (sede) => set({ sedeActual: sede }),
-      addItem: (item, sede) =>
+      addItem: (item, sede) => {
         set((state) => {
           // Si hay items en el carrito y la sede es diferente, vaciar el carrito
           if (state.items.length > 0 && state.sedeActual?.id !== sede.id) {
@@ -63,7 +64,15 @@ export const useCartStore = create<CartState>()(
             };
           }
           return { items: [...state.items, item], sedeActual: sede };
-        }),
+        });
+
+        trackMetaEvent("AddToCart", {
+          content_ids: [String(item.id)],
+          content_type: "product",
+          value: getPrecioFinal(item) * item.cantidad,
+          currency: "COP",
+        });
+      },
       removeItem: (id) =>
         set((state) => ({
           items: state.items.filter((i) => i.id !== id),

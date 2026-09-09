@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Script from "next/script";
 import Cookies from "js-cookie";
 import useSWR from "swr";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useCartStore } from "@/store/useCartStore";
+import { useCartStore, getPrecioFinal } from "@/store/useCartStore";
 import { CrearPedidoResponse, DireccionResponse, ZonaDomicilioResponse } from "@/types";
 import { fetcher } from "@/lib/fetcher";
+import { trackMetaEvent } from "@/lib/meta-pixel";
 import DireccionSelector from "@/components/checkout/DireccionSelector";
 import ResumenPedido from "@/components/checkout/ResumenPedido";
 import ZonaExcluidaModal from "@/components/checkout/ZonaExcluidaModal";
@@ -67,6 +68,22 @@ export default function CheckoutPage() {
       router.replace("/tienda/auth?redirect=/tienda/checkout");
     }
   }, [isHydrated, isAuthenticated, rol, router]);
+
+  // ── Meta Pixel: InitiateCheckout (una sola vez al entrar con items) ──
+  // El costo de envío se resuelve async (zonas + dirección), por eso se envía
+  // el subtotal real del carrito, disponible de forma síncrona al montar.
+  const initiateCheckoutSent = useRef(false);
+  useEffect(() => {
+    if (initiateCheckoutSent.current) return;
+    if (!isHydrated || !isAuthenticated || rol !== "CLIENTE" || items.length === 0) return;
+    initiateCheckoutSent.current = true;
+    trackMetaEvent("InitiateCheckout", {
+      value: items.reduce((sum, item) => sum + getPrecioFinal(item) * item.cantidad, 0),
+      currency: "COP",
+      num_items: items.reduce((sum, item) => sum + item.cantidad, 0),
+      content_ids: items.map((item) => String(item.id)),
+    });
+  }, [isHydrated, isAuthenticated, rol, items]);
 
   // ── Guardia de hidratación ───────────────────────────────────
   if (!isHydrated) {
@@ -137,6 +154,14 @@ export default function CheckoutPage() {
     checkout.open(function (result: any) {
       const status = result.transaction?.status;
       if (status === "APPROVED") {
+        // Compra confirmada por Wompi: único punto donde se reporta el Purchase,
+        // con el total real del pedido calculado por el backend.
+        trackMetaEvent("Purchase", {
+          value: data.total,
+          currency: "COP",
+          num_items: items.reduce((sum, item) => sum + item.cantidad, 0),
+          content_ids: items.map((item) => String(item.id)),
+        });
         sessionStorage.removeItem('pedidoPendiente');
         clearCart();
         toast.success("¡Pago aprobado!");
