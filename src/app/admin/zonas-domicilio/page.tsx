@@ -31,11 +31,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MapPin, Plus, Pencil, Trash2, Search, LoaderCircle } from "lucide-react";
+import { MapPin, Plus, Pencil, Trash2, Search, LoaderCircle, FileSpreadsheet } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Cookies from "js-cookie";
+import { downloadExcel } from "@/lib/downloadExcel";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Switch } from "@/components/ui/switch";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
@@ -62,6 +63,8 @@ export default function ZonasDomicilioPage() {
   const { rol, sedeId: adminSedeId } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [estadoFilter, setEstadoFilter] = useState<"todas" | "activas" | "excluidas">("todas");
+  const [filtroSedeId, setFiltroSedeId] = useState<number | null>(null);
+  const [exportandoZonas, setExportandoZonas] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingZona, setEditingZona] = useState<ZonaDomicilioResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -290,6 +293,23 @@ export default function ZonasDomicilioPage() {
     }
   };
 
+  const handleExportZonas = async () => {
+    setExportandoZonas(true);
+    try {
+      await downloadExcel({
+        endpoint: `${API_URL}/api/admin/zonas-domicilio/export-excel`,
+        params: filtroSedeId != null ? { sedeId: filtroSedeId } : {},
+        fallbackFilename: `zonas_domicilio_${new Date().toISOString().slice(0, 10)}.xlsx`,
+      });
+      toast.success("Excel exportado correctamente");
+    } catch (err) {
+      console.error("Error exporting zonas Excel:", err);
+      toast.error(`Error: ${err instanceof Error ? err.message : "Error al exportar Excel"}`);
+    } finally {
+      setExportandoZonas(false);
+    }
+  };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("es-CO", {
       style: "currency",
@@ -328,6 +348,7 @@ export default function ZonasDomicilioPage() {
   const countExcluidas = sortedZonas.filter((z) => z.excluido).length;
 
   const zonasFiltradas = sortedZonas
+    .filter((z) => filtroSedeId == null || z.sedeId === filtroSedeId)
     .filter((z) => {
       if (estadoFilter === "activas") return !z.excluido;
       if (estadoFilter === "excluidas") return z.excluido;
@@ -346,15 +367,33 @@ export default function ZonasDomicilioPage() {
         subtitle="Gestiona las zonas y precios de domicilio"
         icon={MapPin}
         actions={
-          <Button onClick={handleNew} className="bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]">
-            <Plus className="mr-2 h-4 w-4" />
-            Agregar Zona
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              onClick={handleExportZonas}
+              disabled={exportandoZonas}
+              aria-busy={exportandoZonas}
+              aria-label="Exportar zonas de domicilio a Excel"
+              title="El Excel incluye activas y excluidas"
+              className="border-[var(--admin-accent)] text-[var(--admin-muted-foreground)] hover:border-[var(--admin-accent)] hover:text-stone-900 hover:bg-[var(--admin-warning-soft)]"
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-1.5" />
+              {exportandoZonas ? "Exportando..." : "Exportar Excel"}
+            </Button>
+            <Button onClick={handleNew} className="bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]">
+              <Plus className="mr-2 h-4 w-4" />
+              Agregar Zona
+            </Button>
+          </>
         }
       />
 
       <AdminTableShell
         toolbar={
+          <div className="flex flex-col gap-3">
+            <p className="text-xs text-[var(--admin-muted-foreground)] font-heading italic">
+              El Excel incluye activas y excluidas.
+            </p>
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="relative max-w-md flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--admin-muted-foreground)]" />
@@ -366,6 +405,24 @@ export default function ZonasDomicilioPage() {
                 className="pl-10"
               />
             </div>
+            {rol === "SUPERADMIN" && (
+              <Select
+                value={filtroSedeId != null ? String(filtroSedeId) : "__all"}
+                onValueChange={(v) => setFiltroSedeId(v === "__all" ? null : Number(v))}
+              >
+                <SelectTrigger className="w-[200px]" aria-label="Filtrar por sede">
+                  <SelectValue placeholder="Filtrar sede" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">Todas las sedes</SelectItem>
+                  {sedes?.map((sede) => (
+                    <SelectItem key={sede.id} value={String(sede.id)}>
+                      {sede.nombre} — {sede.ciudad}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <div className="flex gap-1 bg-[var(--admin-canvas)] border border-[var(--admin-border)] rounded-lg p-1 w-fit">
               <button
                 onClick={() => setEstadoFilter("todas")}
@@ -398,6 +455,7 @@ export default function ZonasDomicilioPage() {
                 Excluidas <span className="ml-1 text-xs opacity-70">({countExcluidas})</span>
               </button>
             </div>
+          </div>
           </div>
         }
       >

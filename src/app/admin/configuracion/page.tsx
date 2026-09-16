@@ -29,6 +29,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Cookies from "js-cookie";
+import { downloadExcel } from "@/lib/downloadExcel";
 import { validateImageFile } from "@/lib/validation";
 import { useRequireSuperAdmin } from "@/lib/auth";
 
@@ -98,6 +99,7 @@ export default function ConfiguracionPage() {
   const [uploadingHistoria, setUploadingHistoria] = useState(false);
   const [exportandoExcel, setExportandoExcel] = useState(false);
   const [exportandoProductos, setExportandoProductos] = useState(false);
+  const [exportandoZonas, setExportandoZonas] = useState(false);
 
   const {
     data: configuracion,
@@ -246,6 +248,24 @@ export default function ConfiguracionPage() {
       );
     } finally {
       setExportandoProductos(false);
+    }
+  };
+
+  const handleExportZonas = async () => {
+    setExportandoZonas(true);
+    try {
+      await downloadExcel({
+        endpoint: `${API_URL}/api/admin/zonas-domicilio/export-excel`,
+        fallbackFilename: `zonas_domicilio_${new Date().toISOString().slice(0, 10)}.xlsx`,
+      });
+      toast.success("Excel exportado correctamente");
+    } catch (error) {
+      console.error("Error exporting zonas Excel:", error);
+      toast.error(
+        `Error: ${error instanceof Error ? error.message : "Error al exportar Excel"}`
+      );
+    } finally {
+      setExportandoZonas(false);
     }
   };
 
@@ -502,6 +522,15 @@ export default function ConfiguracionPage() {
                   >
                     <FileSpreadsheet className="mr-2 h-4 w-4" />
                     {exportandoProductos ? "Exportando..." : "Productos + Inventario"}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleExportZonas}
+                    disabled={exportandoZonas}
+                    className="w-full justify-start bg-[var(--color-brand-mustard)] text-stone-900 hover:bg-[var(--color-brand-mustard-dark)]"
+                  >
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    {exportandoZonas ? "Exportando..." : "Zonas de domicilio"}
                   </Button>
                 </div>
               </CardContent>
