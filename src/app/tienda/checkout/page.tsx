@@ -391,11 +391,6 @@ export default function CheckoutPage() {
                 <Label htmlFor="fecha-entrega" className="text-sm text-stone-600 font-medium">
                   Fecha y hora de entrega <span className="text-red-500">*</span>
                 </Label>
-                <p className="text-xs text-stone-500 mt-1">
-                  Jornada {entregaConfig?.horaApertura ?? "08:00"}-{entregaConfig?.horaCierre ?? "17:00"}.
-                  Pedidos despues de las {entregaConfig?.horaCorte ?? "15:30"} quedan para el dia siguiente.
-                  Hora solicitada sujeta a ruta.
-                </p>
                 <input
                   id="fecha-entrega"
                   type="date"
