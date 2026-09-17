@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import useSWR from "swr";
@@ -87,8 +87,32 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
+const formatFechaEntrega = (fecha?: string | null) => {
+  if (!fecha) return "";
+  const [y, m, d] = fecha.slice(0, 10).split("-");
+  return y && m && d ? `${d}/${m}/${y}` : fecha;
+};
+
+const formatEntrega = (pedido: PedidoAdminResponse) => {
+  if (!pedido.fechaEntrega) return "Por confirmar";
+  const fecha = formatFechaEntrega(pedido.fechaEntrega);
+  if (!pedido.horaEntrega) return fecha;
+  const inicio = pedido.horaEntrega.slice(0, 5);
+  if (pedido.franjaEntrega) return `${fecha} · ${pedido.franjaEntrega}`;
+  return `${fecha} · ${inicio}`;
+};
+
+const hoyISO = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
 export default function AdminPage() {
   const [filtroEstado, setFiltroEstado] = useState<string>("");
+  const [vista, setVista] = useState<"estado" | "entrega">("estado");
+  const [fechaAgenda, setFechaAgenda] = useState<string>(() => hoyISO());
+  const [verTodasFechas, setVerTodasFechas] = useState(false);
+  const [filtroSede, setFiltroSede] = useState<string>("");
 
   const { data, error, mutate } = useSWR<PedidoAdminResponse[]>(
     `${API_URL}/api/admin/pedidos`,
@@ -110,6 +134,29 @@ export default function AdminPage() {
   const pedidosMostrados = filtroEstado
     ? pedidosActivos.filter((p) => p.estado === filtroEstado)
     : pedidosActivos;
+
+  // Agenda por entrega (excluye PENDIENTE_PAGO: aun no es compromiso de entrega)
+  const sedesEnActivos = Array.from(
+    new Map(pedidosActivos.map((p) => [p.sedeId, p.sedeNombre])).entries()
+  );
+
+  const pedidosAgenda = pedidosActivos
+    .filter((p) => (filtroSede ? String(p.sedeId) === filtroSede : true))
+    .filter((p) => (verTodasFechas ? true : (p.fechaEntrega ?? "").slice(0, 10) === fechaAgenda))
+    .sort((a, b) => {
+      if (!a.fechaEntrega && !b.fechaEntrega) return 0;
+      if (!a.fechaEntrega) return 1;
+      if (!b.fechaEntrega) return -1;
+      const cmpFecha = a.fechaEntrega.localeCompare(b.fechaEntrega);
+      if (cmpFecha !== 0) return cmpFecha;
+      return (a.horaEntrega ?? "").localeCompare(b.horaEntrega ?? "");
+    });
+
+  const pedidosSinFecha = verTodasFechas
+    ? []
+    : pedidosActivos.filter(
+        (p) => !p.fechaEntrega && (filtroSede ? String(p.sedeId) === filtroSede : true)
+      );
 
   const toggleFilter = (estado: string) => {
     setFiltroEstado((prev) => (prev === estado ? "" : estado));
@@ -192,6 +239,59 @@ export default function AdminPage() {
         </Link>
       </div>
 
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="inline-flex rounded-xl border border-[var(--admin-border)] bg-[var(--admin-canvas)] p-1 shadow-sm">
+          <button
+            onClick={() => setVista("estado")}
+            className={`rounded-lg px-3 py-1.5 text-xs font-heading font-semibold transition-all ${vista === "estado" ? "bg-[var(--admin-accent)] text-white shadow-sm" : "text-[var(--admin-muted-foreground)] hover:text-[var(--admin-foreground)]"}`}
+          >
+            Por estado
+          </button>
+          <button
+            onClick={() => setVista("entrega")}
+            className={`rounded-lg px-3 py-1.5 text-xs font-heading font-semibold transition-all ${vista === "entrega" ? "bg-[var(--admin-accent)] text-white shadow-sm" : "text-[var(--admin-muted-foreground)] hover:text-[var(--admin-foreground)]"}`}
+          >
+            Por entrega
+          </button>
+        </div>
+        {vista === "entrega" && (
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="date"
+              value={fechaAgenda}
+              disabled={verTodasFechas}
+              onChange={(e) => setFechaAgenda(e.target.value)}
+              className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-canvas)] px-2.5 py-1.5 text-xs text-[var(--admin-foreground)] disabled:opacity-50"
+            />
+            <label className="inline-flex items-center gap-1.5 text-xs text-[var(--admin-muted-foreground)] cursor-pointer">
+              <input
+                type="checkbox"
+                checked={verTodasFechas}
+                onChange={(e) => setVerTodasFechas(e.target.checked)}
+                className="accent-[var(--admin-accent)]"
+              />
+              Todas
+            </label>
+            {sedesEnActivos.length > 1 && (
+              <select
+                value={filtroSede}
+                onChange={(e) => setFiltroSede(e.target.value)}
+                className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-canvas)] px-2.5 py-1.5 text-xs text-[var(--admin-foreground)]"
+              >
+                <option value="">Todas las sedes</option>
+                {sedesEnActivos.map(([id, nombre]) => (
+                  <option key={id} value={String(id)}>
+                    {nombre}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        )}
+      </div>
+
+      {vista === "estado" && (
+      <>
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <button
           onClick={() => setFiltroEstado("")}
@@ -268,6 +368,12 @@ export default function AdminPage() {
                 <div className="flex justify-between gap-2">
                   <span className="text-[var(--admin-muted-foreground)]">Sede</span>
                   <span className="text-[var(--admin-foreground)]">{pedido.sedeNombre ?? "—"}</span>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <span className="text-[var(--admin-muted-foreground)]">Entrega</span>
+                  <span className="font-medium text-[var(--admin-foreground)]">
+                    {formatEntrega(pedido)}
+                  </span>
                 </div>
                 <div className="flex justify-between gap-2">
                   <span className="text-[var(--admin-muted-foreground)]">Total</span>
@@ -359,6 +465,85 @@ export default function AdminPage() {
               </CardFooter>
             </Card>
           ))}
+        </div>
+      )}
+      </>
+      )}
+
+      {vista === "entrega" && (
+        <div className="space-y-2">
+          <p className="text-xs text-[var(--admin-muted-foreground)] font-heading">
+            {verTodasFechas
+              ? `${pedidosAgenda.length} entregas programadas (todas las fechas, sin pendientes de pago)`
+              : `Entregas del ${formatFechaEntrega(fechaAgenda)} · ${pedidosAgenda.length} pedido(s)`}
+          </p>
+          {pedidosAgenda.length === 0 && pedidosSinFecha.length === 0 ? (
+            <div className="text-center py-16 text-[var(--admin-muted-foreground)]">
+              <div className="inline-flex size-16 items-center justify-center rounded-full bg-[var(--admin-warning-soft)] mb-4">
+                <Package className="h-7 w-7 text-[var(--admin-accent)]" />
+              </div>
+              <p className="font-heading italic text-base">
+                No hay entregas programadas para esta fecha
+              </p>
+            </div>
+          ) : (
+            <>
+              {pedidosAgenda.map((pedido) => (
+                <div
+                  key={pedido.id}
+                  className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 rounded-xl border border-[var(--admin-border)] border-l-4 bg-[var(--admin-card)] px-4 py-3 ${STATUS_BORDER_COLORS[pedido.estado] ?? "border-l-[var(--admin-muted-foreground)]/40"}`}
+                >
+                  <div className="shrink-0 sm:w-40">
+                    <p className="font-mono text-sm font-bold text-[var(--admin-foreground)]">
+                      {pedido.horaEntrega ? pedido.horaEntrega.slice(0, 5) : "—"}
+                    </p>
+                    <p className="text-[11px] text-[var(--admin-muted-foreground)]">
+                      #{pedido.id}
+                    </p>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[var(--admin-foreground)] truncate">
+                      {pedido.clienteNombre ?? "—"}
+                      {pedido.clienteTelefono ? ` · ${pedido.clienteTelefono}` : ""}
+                    </p>
+                    <p className="text-xs text-[var(--admin-muted-foreground)] truncate">
+                      {pedido.direccionEntrega?.direccion ?? "—"}
+                      {pedido.zonaDomicilioNombre ? ` · ${pedido.zonaDomicilioNombre}` : ""}
+                      {sedesEnActivos.length > 1 ? ` · ${pedido.sedeNombre ?? ""}` : ""}
+                    </p>
+                  </div>
+                  <Badge
+                    className={`${DASHBOARD_BADGE_COLORS[pedido.estado] ?? ""} text-xs px-2.5 py-1 font-semibold shrink-0`}
+                  >
+                    {ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado}
+                  </Badge>
+                </div>
+              ))}
+              {pedidosSinFecha.length > 0 && (
+                <div className="pt-2">
+                  <p className="text-xs text-[var(--admin-muted-foreground)] font-heading mb-2">
+                    Por confirmar ({pedidosSinFecha.length} pedido(s) anterior(es) sin fecha)
+                  </p>
+                  {pedidosSinFecha.map((pedido) => (
+                    <div
+                      key={pedido.id}
+                      className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-canvas)] px-4 py-2.5 mb-2"
+                    >
+                      <p className="font-mono text-xs text-[var(--admin-muted-foreground)] shrink-0 sm:w-40">
+                        #{pedido.id}
+                      </p>
+                      <p className="flex-1 min-w-0 text-sm text-[var(--admin-muted-foreground)] truncate">
+                        {pedido.clienteNombre ?? "—"}
+                      </p>
+                      <Badge className={`${DASHBOARD_BADGE_COLORS[pedido.estado] ?? ""} text-xs px-2.5 py-1 font-semibold shrink-0`}>
+                        {ORDER_STATUS_LABELS[pedido.estado as keyof typeof ORDER_STATUS_LABELS] ?? pedido.estado}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
     </div>
