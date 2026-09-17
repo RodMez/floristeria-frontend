@@ -84,8 +84,18 @@ export default function CheckoutPage() {
     [fechaEntrega, entregaConfig]
   );
 
-  const slotsManana = useMemo(() => slots?.filter((s) => s.franja === "Mañana") ?? [], [slots]);
-  const slotsTarde = useMemo(() => slots?.filter((s) => s.franja === "Tarde") ?? [], [slots]);
+  const slotsManana = useMemo(() => slots?.filter((s) => s.inicio < "12:00") ?? [], [slots]);
+  const slotsTarde = useMemo(() => slots?.filter((s) => s.inicio >= "12:00") ?? [], [slots]);
+  const [slotsExpandido, setSlotsExpandido] = useState(true);
+  const slotSeleccionado = useMemo(
+    () => slots?.find((s) => s.inicio === horaEntrega),
+    [slots, horaEntrega]
+  );
+  const fechaEntregaCorta = useMemo(() => {
+    if (!fechaEntrega) return "";
+    const [y, m, d] = fechaEntrega.split("-");
+    return y && m && d ? `${d}/${m}/${y}` : fechaEntrega;
+  }, [fechaEntrega]);
 
   // ── Derivar costoEnvio desde la dirección seleccionada ────
   const direccionSeleccionada = useMemo(
@@ -342,108 +352,6 @@ export default function CheckoutPage() {
             selectedDireccionId={selectedDireccionId}
             onSelect={setSelectedDireccionId}
           />
-
-          {/* ── Fecha y hora de entrega (obligatorio) ── */}
-          <div className="mt-6">
-            <h2 className="font-heading text-lg font-semibold text-[var(--color-brand-rose-dark)] mb-2">
-              Fecha y hora de entrega
-            </h2>
-            <p className="text-xs text-stone-500 mb-3">
-              Jornada {entregaConfig?.horaApertura ?? "08:00"}–{entregaConfig?.horaCierre ?? "17:00"} ·
-              Pedidos después de las {entregaConfig?.horaCorte ?? "15:30"} quedan para el día siguiente.
-              Hora solicitada sujeta a ruta.
-            </p>
-            <Label htmlFor="fecha-entrega" className="text-sm text-stone-600 font-medium">
-              Fecha <span className="text-red-500">*</span>
-            </Label>
-            <input
-              id="fecha-entrega"
-              type="date"
-              value={fechaEntrega}
-              min={fechaMinima}
-              max={fechaMaxima}
-              onChange={(e) => {
-                setFechaEntrega(e.target.value);
-                setHoraEntrega("");
-              }}
-              className="mt-1 w-full rounded-md border border-[var(--color-brand-rose)] px-3 py-2 text-sm focus:border-[var(--color-brand-mustard)] focus:outline-none"
-            />
-            {fechaBloqueada && (
-              <p className="mt-1 text-xs text-red-600">
-                Esa fecha no está disponible para entrega. Elige otra.
-              </p>
-            )}
-
-            {fechaEntrega && (
-              <div className="mt-3">
-                <p className="text-sm text-stone-600 font-medium mb-2">
-                  Horario <span className="text-red-500">*</span>{" "}
-                  <span className="text-xs text-stone-400">(slots de 30 min)</span>
-                </p>
-                {slotsLoading && <p className="text-xs text-stone-500">Cargando horarios...</p>}
-                {!slotsLoading && slots && slots.length > 0 && (
-                  <>
-                    {slotsManana.length > 0 && (
-                      <div className="mb-2">
-                        <p className="text-xs font-semibold text-stone-500 mb-1">Mañana</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {slotsManana.map((s) => (
-                            <button
-                              key={s.inicio}
-                              type="button"
-                              disabled={!s.disponible}
-                              title={s.disponible ? s.etiqueta : s.motivo ?? "No disponible"}
-                              onClick={() => setHoraEntrega(s.inicio)}
-                              className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
-                                horaEntrega === s.inicio
-                                  ? "bg-[var(--color-brand-mustard)] text-stone-900 border-[var(--color-brand-mustard)]"
-                                  : s.disponible
-                                    ? "bg-white text-stone-700 border-stone-300 hover:border-[var(--color-brand-mustard)]"
-                                    : "bg-stone-100 text-stone-400 border-stone-200 line-through cursor-not-allowed"
-                              }`}
-                            >
-                              {s.etiqueta.split(" ")[0]}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {slotsTarde.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold text-stone-500 mb-1">Tarde</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {slotsTarde.map((s) => (
-                            <button
-                              key={s.inicio}
-                              type="button"
-                              disabled={!s.disponible}
-                              title={s.disponible ? s.etiqueta : s.motivo ?? "No disponible"}
-                              onClick={() => setHoraEntrega(s.inicio)}
-                              className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
-                                horaEntrega === s.inicio
-                                  ? "bg-[var(--color-brand-mustard)] text-stone-900 border-[var(--color-brand-mustard)]"
-                                  : s.disponible
-                                    ? "bg-white text-stone-700 border-stone-300 hover:border-[var(--color-brand-mustard)]"
-                                    : "bg-stone-100 text-stone-400 border-stone-200 line-through cursor-not-allowed"
-                              }`}
-                            >
-                              {s.etiqueta.split(" ")[0]}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {slots.every((s) => !s.disponible) && (
-                      <p className="mt-2 text-xs text-red-600">
-                        No quedan horarios hoy. Elige otra fecha (pedidos después de las{" "}
-                        {entregaConfig?.horaCorte ?? "15:30"} van al día siguiente).
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
         </section>
 
         {/* ── Columna 2: Resumen del pedido ─────────────────── */}
@@ -476,6 +384,123 @@ export default function CheckoutPage() {
                   maxLength={255}
                   className="mt-1 border-[var(--color-brand-rose)] focus:border-[var(--color-brand-mustard)] focus:ring-[var(--color-brand-mustard)]/20 break-words"
                 />
+              </div>
+
+              {/* Fecha y hora de entrega (obligatorio) */}
+              <div>
+                <Label htmlFor="fecha-entrega" className="text-sm text-stone-600 font-medium">
+                  Fecha y hora de entrega <span className="text-red-500">*</span>
+                </Label>
+                <p className="text-xs text-stone-500 mt-1">
+                  Jornada {entregaConfig?.horaApertura ?? "08:00"}-{entregaConfig?.horaCierre ?? "17:00"}.
+                  Pedidos despues de las {entregaConfig?.horaCorte ?? "15:30"} quedan para el dia siguiente.
+                  Hora solicitada sujeta a ruta.
+                </p>
+                <input
+                  id="fecha-entrega"
+                  type="date"
+                  value={fechaEntrega}
+                  min={fechaMinima}
+                  max={fechaMaxima}
+                  onChange={(e) => {
+                    setFechaEntrega(e.target.value);
+                    setHoraEntrega("");
+                    setSlotsExpandido(true);
+                  }}
+                  className="mt-1 w-full rounded-md border border-[var(--color-brand-rose)] px-3 py-2 text-sm focus:border-[var(--color-brand-mustard)] focus:outline-none"
+                />
+                {fechaBloqueada && (
+                  <p className="mt-1 text-xs text-red-600">
+                    Esa fecha no esta disponible para entrega. Elige otra.
+                  </p>
+                )}
+
+                {fechaEntrega && !fechaBloqueada && (
+                  <div className="mt-2">
+                    {slotsLoading && <p className="text-xs text-stone-500">Cargando horarios...</p>}
+                    {!slotsLoading && slots && slots.length > 0 && horaEntrega && slotSeleccionado && !slotsExpandido ? (
+                      <div className="flex items-center justify-between gap-2 rounded-md border border-[var(--color-brand-mustard)] bg-[var(--color-brand-mustard)]/10 px-3 py-2">
+                        <p className="text-sm font-medium text-stone-700">
+                          {fechaEntregaCorta} - {slotSeleccionado.etiqueta.split(" ")[0]}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setSlotsExpandido(true)}
+                          className="text-xs font-semibold text-[var(--color-brand-mustard-dark)] underline hover:text-[var(--color-brand-mustard)]"
+                        >
+                          Cambiar
+                        </button>
+                      </div>
+                    ) : (
+                      !slotsLoading && slots && slots.length > 0 && (
+                        <>
+                          {slotsManana.length > 0 && (
+                            <div className="mb-2">
+                              <p className="text-xs font-semibold text-stone-500 mb-1">Manana</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {slotsManana.map((s) => (
+                                  <button
+                                    key={s.inicio}
+                                    type="button"
+                                    disabled={!s.disponible}
+                                    title={s.disponible ? s.etiqueta : s.motivo ?? "No disponible"}
+                                    onClick={() => {
+                                      setHoraEntrega(s.inicio);
+                                      setSlotsExpandido(false);
+                                    }}
+                                    className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                                      horaEntrega === s.inicio
+                                        ? "bg-[var(--color-brand-mustard)] text-stone-900 border-[var(--color-brand-mustard)]"
+                                        : s.disponible
+                                          ? "bg-white text-stone-700 border-stone-300 hover:border-[var(--color-brand-mustard)]"
+                                          : "bg-stone-100 text-stone-400 border-stone-200 line-through cursor-not-allowed"
+                                    }`}
+                                  >
+                                    {s.etiqueta.split(" ")[0]}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {slotsTarde.length > 0 && (
+                            <div>
+                              <p className="text-xs font-semibold text-stone-500 mb-1">Tarde</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {slotsTarde.map((s) => (
+                                  <button
+                                    key={s.inicio}
+                                    type="button"
+                                    disabled={!s.disponible}
+                                    title={s.disponible ? s.etiqueta : s.motivo ?? "No disponible"}
+                                    onClick={() => {
+                                      setHoraEntrega(s.inicio);
+                                      setSlotsExpandido(false);
+                                    }}
+                                    className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                                      horaEntrega === s.inicio
+                                        ? "bg-[var(--color-brand-mustard)] text-stone-900 border-[var(--color-brand-mustard)]"
+                                        : s.disponible
+                                          ? "bg-white text-stone-700 border-stone-300 hover:border-[var(--color-brand-mustard)]"
+                                          : "bg-stone-100 text-stone-400 border-stone-200 line-through cursor-not-allowed"
+                                    }`}
+                                  >
+                                    {s.etiqueta.split(" ")[0]}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {slots.every((s) => !s.disponible) && (
+                            <p className="mt-2 text-xs text-red-600">
+                              No quedan horarios ese dia. Elige otra fecha (pedidos despues de las{" "}
+                              {entregaConfig?.horaCorte ?? "15:30"} van al dia siguiente).
+                            </p>
+                          )}
+                        </>
+                      )
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="flex items-start gap-2">
