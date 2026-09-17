@@ -646,6 +646,12 @@ function PedidosTab() {
               <div className="text-xs text-stone-500 mt-1 space-y-0.5">
                 <p>{formatDate(pedido.creadoEn)}</p>
                 <p className="text-stone-400">{pedido.sedeNombre}</p>
+                <p className="font-medium text-stone-600">
+                  Entrega:{" "}
+                  {pedido.fechaEntrega
+                    ? `${pedido.fechaEntrega}${pedido.horaEntrega ? ` · ${pedido.horaEntrega.slice(0, 5)}` : ""}`
+                    : "Por confirmar"}
+                </p>
               </div>
             </div>
             <Badge

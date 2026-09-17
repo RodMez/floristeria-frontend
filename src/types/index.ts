@@ -7,6 +7,40 @@ export interface Sede {
   facebookUrl?: string;
   tiktokUrl?: string;
   email?: string;
+  horaAperturaEntrega?: string;
+  horaCierreEntrega?: string;
+  horaCorte?: string;
+  ventanaMaxDias?: number;
+  leadMinutos?: number;
+  diasNoEntrega?: string;
+}
+
+export interface EntregaConfigDTO {
+  sedeId: number;
+  horaApertura: string;
+  horaCierre: string;
+  horaCorte: string;
+  ventanaMaxDias: number;
+  leadMinutos: number;
+  duracionSlotMinutos: number;
+  diasNoEntrega: string[];
+  fechasBloqueadas: string[];
+}
+
+export interface SlotEntregaDTO {
+  inicio: string;
+  fin: string;
+  etiqueta: string;
+  franja: string;
+  disponible: boolean;
+  motivo?: string | null;
+}
+
+export interface FechaBloqueadaDTO {
+  id: number;
+  sedeId: number;
+  fecha: string;
+  motivo?: string | null;
 }
 
 export interface ProductoCatalogo {
@@ -238,6 +272,9 @@ export interface PedidoAdminResponse {
   transaccionId: string;
   creadoEn: string;
   notasEntrega: string | null;
+  fechaEntrega?: string | null;
+  horaEntrega?: string | null;
+  franjaEntrega?: string | null;
 }
 
 // Constantes de estados de pedido
@@ -325,6 +362,9 @@ export interface PedidoHistorial {
   clienteTelefono?: string;
   direccionEntrega: DireccionEntregaDTO;
   detalles: DetallePedidoHistorialDTO[];
+  fechaEntrega?: string | null;
+  horaEntrega?: string | null;
+  franjaEntrega?: string | null;
 }
 
 export interface ActualizarPerfilRequest {

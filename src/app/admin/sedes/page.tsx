@@ -28,6 +28,7 @@ import { useRequireSuperAdmin } from "@/lib/auth";
 import { sanitizeUrl } from "@/lib/validation";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
+import FechasBloqueadasManager from "@/components/admin/FechasBloqueadasManager";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -51,6 +52,12 @@ const sedeSchema = z.object({
     "Debe ser una URL de TikTok válida (ej: https://tiktok.com/@tu-cuenta)"
   ).optional().or(z.literal("")),
   email: z.string().email("Correo inválido").optional().or(z.literal("")),
+  horaAperturaEntrega: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Formato HH:mm").optional().or(z.literal("")),
+  horaCierreEntrega: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Formato HH:mm").optional().or(z.literal("")),
+  horaCorte: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Formato HH:mm").optional().or(z.literal("")),
+  ventanaMaxDias: z.coerce.number().int().min(1).max(90).optional(),
+  leadMinutos: z.coerce.number().int().min(30).max(480).optional(),
+  diasNoEntrega: z.string().optional().or(z.literal("")),
 });
 
 interface SedeForm {
@@ -61,6 +68,12 @@ interface SedeForm {
   facebookUrl: string;
   tiktokUrl: string;
   email: string;
+  horaAperturaEntrega: string;
+  horaCierreEntrega: string;
+  horaCorte: string;
+  ventanaMaxDias: number | undefined;
+  leadMinutos: number | undefined;
+  diasNoEntrega: string;
 }
 
 const emptyForm: SedeForm = {
@@ -71,6 +84,12 @@ const emptyForm: SedeForm = {
   facebookUrl: "",
   tiktokUrl: "",
   email: "",
+  horaAperturaEntrega: "08:00",
+  horaCierreEntrega: "17:00",
+  horaCorte: "15:30",
+  ventanaMaxDias: 30,
+  leadMinutos: 60,
+  diasNoEntrega: "",
 };
 
 export default function SedesPage() {
@@ -138,6 +157,12 @@ export default function SedesPage() {
       facebookUrl: sede.facebookUrl || "",
       tiktokUrl: sede.tiktokUrl || "",
       email: sede.email || "",
+      horaAperturaEntrega: sede.horaAperturaEntrega || "08:00",
+      horaCierreEntrega: sede.horaCierreEntrega || "17:00",
+      horaCorte: sede.horaCorte || "15:30",
+      ventanaMaxDias: sede.ventanaMaxDias ?? 30,
+      leadMinutos: sede.leadMinutos ?? 60,
+      diasNoEntrega: sede.diasNoEntrega || "",
     });
     setErrors({});
     setDialogOpen(true);
@@ -439,6 +464,13 @@ export default function SedesPage() {
                     <span className="text-[var(--admin-muted-foreground)] text-xs italic">Sin contacto</span>
                   )}
                 </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-dashed border-[var(--admin-border)] pt-3">
+                  <span className="text-[11px] text-[var(--admin-muted-foreground)]">
+                    Entregas {sede.horaAperturaEntrega ?? "08:00"}–{sede.horaCierreEntrega ?? "17:00"} · corte{" "}
+                    {sede.horaCorte ?? "15:30"} · máx {sede.ventanaMaxDias ?? 30}d
+                  </span>
+                  <FechasBloqueadasManager sedeId={sede.id} sedeNombre={sede.nombre} />
+                </div>
               </CardContent>
             </Card>
           ))
@@ -597,6 +629,49 @@ export default function SedesPage() {
                 {errors.email && (
                   <span id="error-email" className="text-xs text-[var(--admin-danger-foreground)]" role="alert">{errors.email}</span>
                 )}
+              </div>
+
+              <div className="col-span-2 mt-2 rounded-lg border border-[var(--admin-border)] p-3">
+                <p className="text-sm font-semibold text-[var(--color-brand-rose-dark)] mb-2">Configuración de entregas</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="horaAperturaEntrega">Apertura</Label>
+                    <Input id="horaAperturaEntrega" type="time" value={form.horaAperturaEntrega}
+                      onChange={(e) => setForm({ ...form, horaAperturaEntrega: e.target.value })} disabled={isSubmitting} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="horaCierreEntrega">Cierre</Label>
+                    <Input id="horaCierreEntrega" type="time" value={form.horaCierreEntrega}
+                      onChange={(e) => setForm({ ...form, horaCierreEntrega: e.target.value })} disabled={isSubmitting} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="horaCorte">Corte del día</Label>
+                    <Input id="horaCorte" type="time" value={form.horaCorte}
+                      onChange={(e) => setForm({ ...form, horaCorte: e.target.value })} disabled={isSubmitting} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="ventanaMaxDias">Máx días reserva</Label>
+                    <Input id="ventanaMaxDias" type="number" min={1} max={90}
+                      value={form.ventanaMaxDias ?? ""}
+                      onChange={(e) => setForm({ ...form, ventanaMaxDias: e.target.value ? Number(e.target.value) : undefined })} disabled={isSubmitting} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="leadMinutos">Preparación (min)</Label>
+                    <Input id="leadMinutos" type="number" min={30} max={480} step={15}
+                      value={form.leadMinutos ?? ""}
+                      onChange={(e) => setForm({ ...form, leadMinutos: e.target.value ? Number(e.target.value) : undefined })} disabled={isSubmitting} />
+                  </div>
+                  <div className="space-y-1 col-span-2 md:col-span-1">
+                    <Label htmlFor="diasNoEntrega">Días sin entrega</Label>
+                    <Input id="diasNoEntrega" value={form.diasNoEntrega}
+                      onChange={(e) => setForm({ ...form, diasNoEntrega: e.target.value.toUpperCase() })}
+                      placeholder="Ej: SUNDAY o vacío" disabled={isSubmitting} />
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-[var(--admin-muted-foreground)]">
+                  Días sin entrega: MONDAY..SUNDAY separados por coma (vacío = todos los días). Para cerrar fechas
+                  sueltas usa la gestión de fechas bloqueadas de la sede.
+                </p>
               </div>
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t border-[var(--admin-border)] shrink-0 bg-[var(--admin-card)] rounded-b-xl">

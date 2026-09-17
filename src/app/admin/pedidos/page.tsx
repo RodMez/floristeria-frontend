@@ -592,14 +592,15 @@ export default function PedidosPage() {
               <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Método Pago</TableHead>
               <TableHead className="text-right font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Total</TableHead>
               <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Estado</TableHead>
-              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Fecha</TableHead>
+              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Creado</TableHead>
+              <TableHead className="font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Entrega</TableHead>
               <TableHead className="text-right font-heading uppercase tracking-wider text-[var(--admin-muted-foreground)] text-[11px]">Ver</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {pedidosConBusqueda.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={9} className="p-0">
+                <TableCell colSpan={10} className="p-0">
                   <AdminEmptyState
                     icon={Package}
                     title="No hay pedidos que coincidan con los filtros"
@@ -655,6 +656,16 @@ export default function PedidosPage() {
                 </TableCell>
                 <TableCell className="text-sm text-[var(--admin-muted-foreground)]">
                   {formatDateSolo(item.creadoEn)}
+                </TableCell>
+                <TableCell className="text-sm text-[var(--admin-foreground)]">
+                  {item.fechaEntrega ? (
+                    <span>
+                      {formatDateSolo(item.fechaEntrega)}
+                      {item.horaEntrega ? ` · ${item.horaEntrega.slice(0, 5)}` : ""}
+                    </span>
+                  ) : (
+                    <span className="text-[var(--admin-muted-foreground)]">—</span>
+                  )}
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
@@ -779,6 +790,14 @@ export default function PedidosPage() {
                   <span className="text-[var(--admin-muted-foreground)]">Costo de Envío</span>
                   <span className="font-medium text-[var(--admin-foreground)]">
                     {formatCurrency(pedidoSeleccionado?.costoEnvio ?? 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-3 border-t border-[var(--admin-border)] pt-2">
+                  <span className="text-[var(--admin-muted-foreground)]">Fecha de entrega</span>
+                  <span className="font-medium text-[var(--admin-foreground)]">
+                    {pedidoSeleccionado?.fechaEntrega
+                      ? `${formatDateSolo(pedidoSeleccionado.fechaEntrega)}${pedidoSeleccionado.horaEntrega ? ` · ${pedidoSeleccionado.horaEntrega.slice(0, 5)}` : ""}${pedidoSeleccionado.franjaEntrega ? ` (${pedidoSeleccionado.franjaEntrega})` : ""}`
+                      : "No especificada (pedido anterior)"}
                   </span>
                 </div>
                 {pedidoSeleccionado?.notasEntrega && (

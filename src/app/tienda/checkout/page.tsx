@@ -8,7 +8,7 @@ import Cookies from "js-cookie";
 import useSWR from "swr";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCartStore, getPrecioFinal } from "@/store/useCartStore";
-import { CrearPedidoResponse, DireccionResponse, ZonaDomicilioResponse } from "@/types";
+import { CrearPedidoResponse, DireccionResponse, EntregaConfigDTO, SlotEntregaDTO, ZonaDomicilioResponse } from "@/types";
 import { fetcher } from "@/lib/fetcher";
 import { trackMetaEvent } from "@/lib/meta-pixel";
 import DireccionSelector from "@/components/checkout/DireccionSelector";
@@ -34,6 +34,8 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notasEntrega, setNotasEntrega] = useState("");
   const [showZonaExcluida, setShowZonaExcluida] = useState(false);
+  const [fechaEntrega, setFechaEntrega] = useState("");
+  const [horaEntrega, setHoraEntrega] = useState("");
 
   // ── Fetch de zonas (para calcular costoEnvio) ─────────────
   const { data: zonas } = useSWR<ZonaDomicilioResponse[]>(
@@ -48,6 +50,42 @@ export default function CheckoutPage() {
     isAuthenticated && rol === "CLIENTE" ? API_DIRECCIONES_URL : null,
     fetcher
   );
+
+  // ── Config de entrega por sede (corte, ventana, bloqueos) ──
+  const { data: entregaConfig } = useSWR<EntregaConfigDTO>(
+    sedeActual
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1/sedes/${sedeActual.id}/entrega-config`
+      : null,
+    fetcher
+  );
+
+  // ── Slots del día seleccionado ──
+  const { data: slots, isLoading: slotsLoading } = useSWR<SlotEntregaDTO[]>(
+    sedeActual && fechaEntrega
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1/sedes/${sedeActual.id}/slots?fecha=${fechaEntrega}`
+      : null,
+    fetcher
+  );
+
+  const fechaMinima = useMemo(() => {
+    const d = new Date();
+    return d.toISOString().slice(0, 10);
+  }, []);
+
+  const fechaMaxima = useMemo(() => {
+    const ventana = entregaConfig?.ventanaMaxDias ?? 30;
+    const d = new Date();
+    d.setDate(d.getDate() + ventana);
+    return d.toISOString().slice(0, 10);
+  }, [entregaConfig]);
+
+  const fechaBloqueada = useMemo(
+    () => (fechaEntrega ? entregaConfig?.fechasBloqueadas?.includes(fechaEntrega) : false),
+    [fechaEntrega, entregaConfig]
+  );
+
+  const slotsManana = useMemo(() => slots?.filter((s) => s.franja === "Mañana") ?? [], [slots]);
+  const slotsTarde = useMemo(() => slots?.filter((s) => s.franja === "Tarde") ?? [], [slots]);
 
   // ── Derivar costoEnvio desde la dirección seleccionada ────
   const direccionSeleccionada = useMemo(
@@ -180,11 +218,17 @@ export default function CheckoutPage() {
   };
 
   // ── Crear pedido ─────────────────────────────────────────────
-  const isButtonDisabled = !selectedDireccionId || !aceptaTerminos || isSubmitting;
+  const isButtonDisabled =
+    !selectedDireccionId || !aceptaTerminos || isSubmitting || !fechaEntrega || !horaEntrega;
 
   const handleCrearPedido = async () => {
     if (!selectedDireccionId) {
       toast.error("Selecciona una dirección de entrega.");
+      return;
+    }
+
+    if (!fechaEntrega || !horaEntrega) {
+      toast.error("Elige la fecha y hora de entrega (obligatorio).");
       return;
     }
 
@@ -221,6 +265,8 @@ export default function CheckoutPage() {
           direccionId: selectedDireccionId,
           detalles,
           notasEntrega: notasEntrega || undefined,
+          fechaEntrega,
+          horaEntrega,
           aceptaTerminos,
         }),
       });
@@ -239,6 +285,12 @@ export default function CheckoutPage() {
 
         if (errorCodigo === "ZONA_EXCLUIDA") {
           setShowZonaExcluida(true);
+          setIsSubmitting(false);
+          return;
+        }
+
+        if (errorCodigo === "FECHA_ENTREGA_INVALIDA") {
+          toast.error(errorMessage);
           setIsSubmitting(false);
           return;
         }
@@ -290,6 +342,108 @@ export default function CheckoutPage() {
             selectedDireccionId={selectedDireccionId}
             onSelect={setSelectedDireccionId}
           />
+
+          {/* ── Fecha y hora de entrega (obligatorio) ── */}
+          <div className="mt-6">
+            <h2 className="font-heading text-lg font-semibold text-[var(--color-brand-rose-dark)] mb-2">
+              Fecha y hora de entrega
+            </h2>
+            <p className="text-xs text-stone-500 mb-3">
+              Jornada {entregaConfig?.horaApertura ?? "08:00"}–{entregaConfig?.horaCierre ?? "17:00"} ·
+              Pedidos después de las {entregaConfig?.horaCorte ?? "15:30"} quedan para el día siguiente.
+              Hora solicitada sujeta a ruta.
+            </p>
+            <Label htmlFor="fecha-entrega" className="text-sm text-stone-600 font-medium">
+              Fecha <span className="text-red-500">*</span>
+            </Label>
+            <input
+              id="fecha-entrega"
+              type="date"
+              value={fechaEntrega}
+              min={fechaMinima}
+              max={fechaMaxima}
+              onChange={(e) => {
+                setFechaEntrega(e.target.value);
+                setHoraEntrega("");
+              }}
+              className="mt-1 w-full rounded-md border border-[var(--color-brand-rose)] px-3 py-2 text-sm focus:border-[var(--color-brand-mustard)] focus:outline-none"
+            />
+            {fechaBloqueada && (
+              <p className="mt-1 text-xs text-red-600">
+                Esa fecha no está disponible para entrega. Elige otra.
+              </p>
+            )}
+
+            {fechaEntrega && (
+              <div className="mt-3">
+                <p className="text-sm text-stone-600 font-medium mb-2">
+                  Horario <span className="text-red-500">*</span>{" "}
+                  <span className="text-xs text-stone-400">(slots de 30 min)</span>
+                </p>
+                {slotsLoading && <p className="text-xs text-stone-500">Cargando horarios...</p>}
+                {!slotsLoading && slots && slots.length > 0 && (
+                  <>
+                    {slotsManana.length > 0 && (
+                      <div className="mb-2">
+                        <p className="text-xs font-semibold text-stone-500 mb-1">Mañana</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {slotsManana.map((s) => (
+                            <button
+                              key={s.inicio}
+                              type="button"
+                              disabled={!s.disponible}
+                              title={s.disponible ? s.etiqueta : s.motivo ?? "No disponible"}
+                              onClick={() => setHoraEntrega(s.inicio)}
+                              className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                                horaEntrega === s.inicio
+                                  ? "bg-[var(--color-brand-mustard)] text-stone-900 border-[var(--color-brand-mustard)]"
+                                  : s.disponible
+                                    ? "bg-white text-stone-700 border-stone-300 hover:border-[var(--color-brand-mustard)]"
+                                    : "bg-stone-100 text-stone-400 border-stone-200 line-through cursor-not-allowed"
+                              }`}
+                            >
+                              {s.etiqueta.split(" ")[0]}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {slotsTarde.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-stone-500 mb-1">Tarde</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {slotsTarde.map((s) => (
+                            <button
+                              key={s.inicio}
+                              type="button"
+                              disabled={!s.disponible}
+                              title={s.disponible ? s.etiqueta : s.motivo ?? "No disponible"}
+                              onClick={() => setHoraEntrega(s.inicio)}
+                              className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                                horaEntrega === s.inicio
+                                  ? "bg-[var(--color-brand-mustard)] text-stone-900 border-[var(--color-brand-mustard)]"
+                                  : s.disponible
+                                    ? "bg-white text-stone-700 border-stone-300 hover:border-[var(--color-brand-mustard)]"
+                                    : "bg-stone-100 text-stone-400 border-stone-200 line-through cursor-not-allowed"
+                              }`}
+                            >
+                              {s.etiqueta.split(" ")[0]}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {slots.every((s) => !s.disponible) && (
+                      <p className="mt-2 text-xs text-red-600">
+                        No quedan horarios hoy. Elige otra fecha (pedidos después de las{" "}
+                        {entregaConfig?.horaCorte ?? "15:30"} van al día siguiente).
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </section>
 
         {/* ── Columna 2: Resumen del pedido ─────────────────── */}
@@ -362,6 +516,11 @@ export default function CheckoutPage() {
               {!selectedDireccionId && (
                 <p className="text-center text-xs text-[var(--color-brand-rose-dark)]">
                   Selecciona una dirección para continuar.
+                </p>
+              )}
+              {(!fechaEntrega || !horaEntrega) && (
+                <p className="text-center text-xs text-[var(--color-brand-rose-dark)]">
+                  Elige fecha y hora de entrega (obligatorio).
                 </p>
               )}
             </CardContent>
