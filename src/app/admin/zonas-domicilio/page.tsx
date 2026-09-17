@@ -119,7 +119,7 @@ export default function ZonasDomicilioPage() {
     setBarrioSearch("");
   }, [watchedLocalidad, setValue]);
 
-  const { data: sedes } = useSWR<Sede[]>(
+  const { data: sedes, isLoading: sedesLoading } = useSWR<Sede[]>(
     `${API_URL}/api/v1/sedes`,
     fetcher,
     { revalidateOnFocus: false }
@@ -409,6 +409,7 @@ export default function ZonasDomicilioPage() {
               <Select
                 value={filtroSedeId != null ? String(filtroSedeId) : "__all"}
                 onValueChange={(v) => setFiltroSedeId(v === "__all" ? null : Number(v))}
+                disabled={sedesLoading || !sedes}
               >
                 <SelectTrigger className="w-[200px]" aria-label="Filtrar por sede">
                   <SelectValue placeholder="Filtrar sede" />

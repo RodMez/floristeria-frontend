@@ -12,6 +12,7 @@ import { ConfiguracionTiendaDTO } from "@/types";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
 import { loginCliente, registerCliente } from "@/lib/fetcher";
+import { getErrorMessage } from "@/lib/apiError";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -48,7 +49,7 @@ function AuthContent() {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { setClienteAuth } = useAuthStore();
+  const { setClienteAuth, isHydrated } = useAuthStore();
   const { items } = useCartStore();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -88,30 +89,41 @@ function AuthContent() {
   });
 
   const handleLogin = async (data: LoginFormData) => {
+    if (!isHydrated) {
+      toast.error("Cargando sesión, intenta de nuevo en un momento");
+      return;
+    }
     setIsLoading(true);
     try {
       const response = await loginCliente(data.email, data.password);
       setClienteAuth(response);
       toast.success(`¡Bienvenido, ${response.nombre}!`);
-      router.refresh();
+      // Sin router.refresh(): el refresh concurrente navegaba con cookies stale
+      // y el middleware devolvía al login (doble login). replace basta: la cookie
+      // ya quedó persistida de forma síncrona en setClienteAuth.
+      await new Promise((r) => setTimeout(r, 50));
       router.replace(redirectTo);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Error al iniciar sesión");
+      toast.error(getErrorMessage(error, "Error al iniciar sesión"));
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleRegister = async (data: RegisterFormData) => {
+    if (!isHydrated) {
+      toast.error("Cargando sesión, intenta de nuevo en un momento");
+      return;
+    }
     setIsLoading(true);
     try {
       const response = await registerCliente(data);
       setClienteAuth(response);
       toast.success(`¡Bienvenido, ${response.nombre}! Tu cuenta ha sido creada.`);
-      router.refresh();
+      await new Promise((r) => setTimeout(r, 50));
       router.replace(redirectTo);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Error al registrarse");
+      toast.error(getErrorMessage(error, "Error al registrarse"));
     } finally {
       setIsLoading(false);
     }
@@ -248,7 +260,7 @@ function AuthContent() {
                 <Button
                   type="submit"
                   className="w-full h-12 bg-brand-rose-dark hover:bg-brand-mustard text-white hover:text-stone-900 font-bold text-base transition-all duration-200"
-                  disabled={isLoading}
+                  disabled={isLoading || !isHydrated}
                 >
                   {isLoading ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
@@ -403,7 +415,7 @@ function AuthContent() {
                 <Button
                   type="submit"
                   className="w-full h-12 bg-brand-rose-dark hover:bg-brand-mustard text-white hover:text-stone-900 font-bold text-base transition-all duration-200"
-                  disabled={isLoading}
+                  disabled={isLoading || !isHydrated}
                 >
                   {isLoading ? (
                     <Loader2 className="h-5 w-5 animate-spin" />

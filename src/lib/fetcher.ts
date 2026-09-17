@@ -2,6 +2,7 @@ import Cookies from 'js-cookie';
 import { toast } from 'sonner';
 import { ClienteAuthResponse, RegisterClienteRequest, PedidoHistorial, DireccionRequest, DireccionResponse, ActualizarPerfilRequest, ClientePerfilResponse } from '@/types';
 import { useAuthStore } from '@/store/useAuthStore';
+import { throwApiError } from './apiError';
 
 /**
  * Flag global basado en timestamp para evitar múltiples redirecciones/toasts
@@ -120,8 +121,7 @@ export async function loginCliente(email: string, password: string): Promise<Cli
   }
 
   if (!res.ok) {
-    const errorBody = await res.text().catch(() => '');
-    throw new Error(errorBody || `Error ${res.status}`);
+    await throwApiError(res, `Error ${res.status}`);
   }
 
   return res.json() as Promise<ClienteAuthResponse>;
@@ -142,13 +142,11 @@ export async function registerCliente(data: RegisterClienteRequest): Promise<Cli
   });
 
   if (res.status === 400 || res.status === 409) {
-    const errorBody = await res.text().catch(() => '');
-    throw new Error(errorBody || 'Error en el registro');
+    await throwApiError(res, 'Error en el registro');
   }
 
   if (!res.ok) {
-    const errorBody = await res.text().catch(() => '');
-    throw new Error(errorBody || `Error ${res.status}`);
+    await throwApiError(res, `Error ${res.status}`);
   }
 
   return res.json() as Promise<ClienteAuthResponse>;

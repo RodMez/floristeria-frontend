@@ -103,9 +103,27 @@ export const useAuthStore = create<AuthState>()(
         telefono: state.telefono,
         isAuthenticated: state.isAuthenticated,
       }),
-      onRehydrateStorage: () => (state) => {
-        // Marcar como hidratado cuando Zustand termine de restaurar
-        if (state) state.isHydrated = true;
+      onRehydrateStorage: () => () => {
+        // Marcar como hidratado con setState para notificar suscriptores
+        useAuthStore.setState({ isHydrated: true });
+      },
+      merge: (persistedState, currentState) => {
+        const persisted = (persistedState ?? {}) as Partial<AuthState>;
+        // No pisar una sesion iniciada mientras la rehidratacion estaba en vuelo
+        // (login rapido antes de que termine rehydrate). Sin esto, el snapshot
+        // viejo (isAuthenticated:false) borra el login y el guard devuelve a /tienda/auth.
+        if (currentState.isAuthenticated) {
+          return { ...currentState, isHydrated: true };
+        }
+        // La cookie es la fuente de verdad del token: sin ella no hay sesion valida
+        const token = Cookies.get('token') ?? null;
+        return {
+          ...currentState,
+          ...persisted,
+          token,
+          isAuthenticated: token ? !!persisted.isAuthenticated : false,
+          isHydrated: true,
+        };
       },
     }
   )
