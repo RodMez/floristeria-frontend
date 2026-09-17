@@ -84,6 +84,16 @@ export default function CheckoutPage() {
     [fechaEntrega, entregaConfig]
   );
 
+  const diaSemanaCerrado = useMemo(() => {
+    if (!fechaEntrega || !entregaConfig?.diasNoEntrega?.length) return false;
+    const [y, m, d] = fechaEntrega.split("-").map(Number);
+    if (!y || !m || !d) return false;
+    const dow = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"][
+      new Date(y, m - 1, d).getDay()
+    ];
+    return entregaConfig.diasNoEntrega.includes(dow);
+  }, [fechaEntrega, entregaConfig]);
+
   const slotsManana = useMemo(() => slots?.filter((s) => s.inicio < "12:00") ?? [], [slots]);
   const slotsTarde = useMemo(() => slots?.filter((s) => s.inicio >= "12:00") ?? [], [slots]);
   const [slotsExpandido, setSlotsExpandido] = useState(true);
@@ -409,8 +419,13 @@ export default function CheckoutPage() {
                     Esa fecha no esta disponible para entrega. Elige otra.
                   </p>
                 )}
+                {!fechaBloqueada && diaSemanaCerrado && (
+                  <p className="mt-1 text-xs text-red-600">
+                    Ese dia la sede no entrega a domicilio. Elige otra fecha.
+                  </p>
+                )}
 
-                {fechaEntrega && !fechaBloqueada && (
+                {fechaEntrega && !fechaBloqueada && !diaSemanaCerrado && (
                   <div className="mt-2">
                     {slotsLoading && <p className="text-xs text-stone-500">Cargando horarios...</p>}
                     {!slotsLoading && slots && slots.length > 0 && horaEntrega && slotSeleccionado && !slotsExpandido ? (

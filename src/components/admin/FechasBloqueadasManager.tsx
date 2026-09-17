@@ -19,7 +19,29 @@ import { CalendarOff, Plus, Trash2 } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
-export default function FechasBloqueadasManager({ sedeId, sedeNombre }: { sedeId: number; sedeNombre: string }) {
+const DIA_LABEL: Record<string, string> = {
+  MONDAY: "Lunes",
+  TUESDAY: "Martes",
+  WEDNESDAY: "Miércoles",
+  THURSDAY: "Jueves",
+  FRIDAY: "Viernes",
+  SATURDAY: "Sábados",
+  SUNDAY: "Domingos",
+};
+
+export default function FechasBloqueadasManager({
+  sedeId,
+  sedeNombre,
+  diasNoEntrega,
+}: {
+  sedeId: number;
+  sedeNombre: string;
+  diasNoEntrega?: string | null;
+}) {
+  const diasSemanales = (diasNoEntrega ?? "")
+    .split(",")
+    .map((d) => d.trim().toUpperCase())
+    .filter((d) => d in DIA_LABEL);
   const [open, setOpen] = useState(false);
   const [nuevaFecha, setNuevaFecha] = useState("");
   const [motivo, setMotivo] = useState("");
@@ -88,9 +110,23 @@ export default function FechasBloqueadasManager({ sedeId, sedeNombre }: { sedeId
           <DialogTitle>Días cerrados — {sedeNombre}</DialogTitle>
           <DialogDescription>
             Bloquea fechas puntuales (inventario, festivos propios). El checkout no permitirá elegirlas.
-            Jornada configurada por sede; domingos se trabajan salvo que los bloquees aquí o en “días sin entrega”.
           </DialogDescription>
         </DialogHeader>
+        <div className="rounded-md border bg-stone-50 px-3 py-2">
+          <p className="text-xs font-semibold text-stone-600">Cierre semanal</p>
+          {diasSemanales.length > 0 ? (
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {diasSemanales.map((d) => (
+                <span key={d} className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                  {DIA_LABEL[d]} cerrado
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-0.5 text-xs text-stone-500">Sin cierre semanal: se entrega todos los días.</p>
+          )}
+          <p className="mt-1 text-[11px] text-stone-400">Se configura en Editar sede.</p>
+        </div>
         <div className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
           <div className="space-y-1">
             <Label htmlFor={`fecha-${sedeId}`}>Fecha</Label>

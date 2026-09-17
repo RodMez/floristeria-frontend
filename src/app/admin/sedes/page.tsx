@@ -57,8 +57,30 @@ const sedeSchema = z.object({
   horaCorte: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Formato HH:mm").optional().or(z.literal("")),
   ventanaMaxDias: z.coerce.number().int().min(1).max(90).optional(),
   leadMinutos: z.coerce.number().int().min(30).max(480).optional(),
-  diasNoEntrega: z.string().optional().or(z.literal("")),
+  diasNoEntrega: z.string().refine(
+    (v) => {
+      if (!v) return true;
+      const validos = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
+      return v.split(",").every((d) => validos.includes(d.trim().toUpperCase()));
+    },
+    { message: "Día inválido (usa el selector)" }
+  ).optional().or(z.literal("")),
 });
+
+const DIAS_SEMANA = [
+  { value: "MONDAY", label: "Lunes" },
+  { value: "TUESDAY", label: "Martes" },
+  { value: "WEDNESDAY", label: "Miércoles" },
+  { value: "THURSDAY", label: "Jueves" },
+  { value: "FRIDAY", label: "Viernes" },
+  { value: "SATURDAY", label: "Sábado" },
+  { value: "SUNDAY", label: "Domingo" },
+] as const;
+
+export function parseDiasNoEntrega(csv: string | null | undefined): string[] {
+  if (!csv) return [];
+  return csv.split(",").map((d) => d.trim().toUpperCase()).filter(Boolean);
+}
 
 interface SedeForm {
   nombre: string;
@@ -469,7 +491,7 @@ export default function SedesPage() {
                     Entregas {sede.horaAperturaEntrega ?? "08:00"}–{sede.horaCierreEntrega ?? "17:00"} · corte{" "}
                     {sede.horaCorte ?? "15:30"} · máx {sede.ventanaMaxDias ?? 30}d
                   </span>
-                  <FechasBloqueadasManager sedeId={sede.id} sedeNombre={sede.nombre} />
+                  <FechasBloqueadasManager sedeId={sede.id} sedeNombre={sede.nombre} diasNoEntrega={sede.diasNoEntrega} />
                 </div>
               </CardContent>
             </Card>
@@ -661,17 +683,46 @@ export default function SedesPage() {
                       value={form.leadMinutos ?? ""}
                       onChange={(e) => setForm({ ...form, leadMinutos: e.target.value ? Number(e.target.value) : undefined })} disabled={isSubmitting} />
                   </div>
-                  <div className="space-y-1 col-span-2 md:col-span-1">
-                    <Label htmlFor="diasNoEntrega">Días sin entrega</Label>
-                    <Input id="diasNoEntrega" value={form.diasNoEntrega}
-                      onChange={(e) => setForm({ ...form, diasNoEntrega: e.target.value.toUpperCase() })}
-                      placeholder="Ej: SUNDAY o vacío" disabled={isSubmitting} />
+                  <div className="space-y-1 col-span-2">
+                    <Label>Días sin entrega semanal</Label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {DIAS_SEMANA.map((d) => {
+                        const seleccionados = parseDiasNoEntrega(form.diasNoEntrega);
+                        const activo = seleccionados.includes(d.value);
+                        return (
+                          <button
+                            key={d.value}
+                            type="button"
+                            disabled={isSubmitting}
+                            onClick={() => {
+                              const next: string[] = activo
+                                ? seleccionados.filter((x) => x !== d.value)
+                                : [...seleccionados, d.value];
+                              const orden: string[] = DIAS_SEMANA.map((x) => x.value);
+                              next.sort((a, b) => orden.indexOf(a) - orden.indexOf(b));
+                              const value = next.join(",");
+                              setForm({ ...form, diasNoEntrega: value });
+                              validateField("diasNoEntrega", value);
+                            }}
+                            className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                              activo
+                                ? "bg-[var(--admin-danger)]/15 text-[var(--admin-danger-foreground)] border-[var(--admin-danger)]/50"
+                                : "bg-white text-stone-600 border-stone-300 hover:border-[var(--color-brand-mustard)]"
+                            }`}
+                          >
+                            {d.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {errors.diasNoEntrega && (
+                      <span className="text-xs text-[var(--admin-danger-foreground)]" role="alert">{errors.diasNoEntrega}</span>
+                    )}
+                    <p className="text-[11px] text-[var(--admin-muted-foreground)]">
+                      Vacío = se entrega todos los días. Para cerrar fechas sueltas usa “Días cerrados” de la sede.
+                    </p>
                   </div>
                 </div>
-                <p className="mt-2 text-xs text-[var(--admin-muted-foreground)]">
-                  Días sin entrega: MONDAY..SUNDAY separados por coma (vacío = todos los días). Para cerrar fechas
-                  sueltas usa la gestión de fechas bloqueadas de la sede.
-                </p>
               </div>
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t border-[var(--admin-border)] shrink-0 bg-[var(--admin-card)] rounded-b-xl">
