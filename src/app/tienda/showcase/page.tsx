@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useDeferredValue } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
+import { Input } from "@/components/ui/input";
 import { useSedes } from "@/hooks/useSedes";
 import { ProductoShowcase, ShowcaseVariante, ConfiguracionTiendaDTO } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,11 @@ import {
   Gift,
   Heart,
   ArrowRight,
+  Search,
 } from "lucide-react";
+
+const normalizeText = (text: string) =>
+  text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
 function formatPrecio(value: number): string {
   return new Intl.NumberFormat("es-CO", {
@@ -49,6 +54,8 @@ export default function ShowcasePage() {
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<ProductoShowcase | null>(null);
+  const [searchInput, setSearchInput] = useState("");
+  const searchTerm = useDeferredValue(searchInput);
 
   const allCategories = useMemo(() => {
     if (!data) return [];
@@ -59,11 +66,23 @@ export default function ShowcasePage() {
 
   const filteredProducts = useMemo(() => {
     if (!data) return [];
-    if (!selectedCategory) return data;
-    return data.filter((p) =>
-      p.categoriasNombres?.includes(selectedCategory)
-    );
-  }, [data, selectedCategory]);
+    const term = normalizeText(searchTerm);
+    return data.filter((p) => {
+      if (term) {
+        const haystack = normalizeText(
+          `${p.nombre ?? ""} ${p.descripcion ?? ""} ${p.sku ?? ""}`
+        );
+        if (!haystack.includes(term)) return false;
+      }
+      if (!selectedCategory) return true;
+      return p.categoriasNombres?.includes(selectedCategory);
+    });
+  }, [data, selectedCategory, searchTerm]);
+
+  const limpiarBusqueda = () => {
+    setSearchInput("");
+    setSelectedCategory(null);
+  };
 
   if (isLoading) {
     return <ShowcaseSkeleton />;
@@ -133,6 +152,36 @@ export default function ShowcasePage() {
       {/* Banners Showcase Modal */}
       <ShowcaseBannerModal />
 
+      {/* Buscador */}
+      <section className="container mx-auto px-4 mb-6">
+        <div className="relative max-w-md mx-auto" role="search">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+          <Input
+            type="text"
+            placeholder="Buscar por nombre, descripción o SKU..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            aria-label="Buscar productos"
+            className="pl-10 pr-10 rounded-full bg-white border-stone-200"
+          />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => setSearchInput("")}
+              aria-label="Limpiar búsqueda"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        {searchTerm.trim() && (
+          <p className="text-center text-sm text-stone-500 mt-3">
+            {filteredProducts.length} resultado{filteredProducts.length !== 1 ? "s" : ""} para “{searchTerm.trim()}”
+          </p>
+        )}
+      </section>
+
       {/* Category Filters */}
       <section className="container mx-auto px-4 mb-10">
         <div className="flex flex-wrap justify-center gap-2">
@@ -186,8 +235,19 @@ export default function ShowcasePage() {
           <div className="text-center py-20">
             <Gift className="mx-auto h-12 w-12 text-stone-300 mb-4" />
             <p className="text-stone-500">
-              No hay productos en esta categoría aún.
+              {searchTerm.trim()
+                ? `Sin resultados para “${searchTerm.trim()}”.`
+                : "No hay productos en esta categoría aún."}
             </p>
+            {(searchTerm.trim() || selectedCategory) && (
+              <button
+                type="button"
+                onClick={limpiarBusqueda}
+                className="mt-4 px-4 py-2 rounded-full text-sm font-medium bg-brand-mustard text-white hover:opacity-90 transition-opacity"
+              >
+                Limpiar búsqueda
+              </button>
+            )}
           </div>
         )}
       </section>
