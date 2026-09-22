@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { ConfiguracionTiendaDTO } from "@/types";
 import { FaWhatsapp } from "@/components/icons/SocialIcons";
+import { buildWaLink, normalizeWhatsappNumber } from "@/lib/whatsapp";
 
 export default function WhatsAppButton() {
   const [showTooltip, setShowTooltip] = useState(false);
@@ -15,13 +16,12 @@ export default function WhatsAppButton() {
     { revalidateOnFocus: false }
   );
 
-  const numero = config?.whatsappGeneral?.replace(/\D/g, "");
+  const numero = normalizeWhatsappNumber(config?.whatsappGeneral);
   if (!numero) return null;
 
-  const mensaje = encodeURIComponent(
-    "Hola! Me gustaría recibir ayuda para elegir un arreglo floral. Podrían orientarme?"
-  );
-  const href = `https://wa.me/${numero}?text=${mensaje}`;
+  const mensaje =
+    "Hola! Me gustaría recibir ayuda para elegir un arreglo floral. Podrían orientarme?";
+  const href = buildWaLink(numero, mensaje);
 
   return (
     <div className="fixed bottom-6 right-6 z-40 flex flex-row items-center gap-2">

@@ -8,7 +8,7 @@ import Cookies from "js-cookie";
 import useSWR from "swr";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCartStore, getPrecioFinal } from "@/store/useCartStore";
-import { CrearPedidoResponse, DireccionResponse, EntregaConfigDTO, SlotEntregaDTO, ZonaDomicilioResponse } from "@/types";
+import { CrearPedidoResponse, ConfiguracionTiendaDTO, DireccionResponse, EntregaConfigDTO, Sede, SlotEntregaDTO, ZonaDomicilioResponse } from "@/types";
 import { fetcher } from "@/lib/fetcher";
 import { hoyLocalISO, parseFecha } from "@/lib/fechas";
 import { trackMetaEvent } from "@/lib/meta-pixel";
@@ -45,6 +45,22 @@ export default function CheckoutPage() {
       : null,
     fetcher
   );
+
+  // ── Sedes frescas + config general: el número de sedeActual puede ser
+  // stale (persistido en localStorage antes de corregir la BD). Se usa el
+  // fresco para el modal de WhatsApp, con fallback al general.
+  const { data: sedes } = useSWR<Sede[]>(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/sedes`,
+    fetcher
+  );
+  const { data: configuracion } = useSWR<ConfiguracionTiendaDTO>(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/configuracion`,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+  const sedeFresca = sedeActual
+    ? sedes?.find((s) => s.id === sedeActual.id) ?? sedeActual
+    : null;
 
   // ── Fetch de direcciones (SWR deduplica con DireccionSelector) ─
   const { data: direcciones } = useSWR<DireccionResponse[]>(
@@ -569,7 +585,8 @@ export default function CheckoutPage() {
         open={showZonaExcluida}
         onOpenChange={setShowZonaExcluida}
         direccion={direccionSeleccionada ?? null}
-        whatsappNumber={sedeActual?.telefonoWhatsapp || ""}
+        whatsappNumber={sedeFresca?.telefonoWhatsapp || ""}
+        fallbackWhatsappNumber={configuracion?.whatsappGeneral}
         notasEntrega={notasEntrega}
       />
     </>

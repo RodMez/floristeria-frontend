@@ -10,6 +10,7 @@ import PaymentMethods from "./PaymentMethods";
 import Image from "next/image";
 import Link from "next/link";
 import { sanitizeUrl } from "@/lib/validation";
+import { buildWaLink, normalizeWhatsappNumber } from "@/lib/whatsapp";
 
 export default function Footer() {
   const { sedes, error: sedesError, esUnicaSede } = useSedes();
@@ -34,6 +35,9 @@ export default function Footer() {
   const sitiNombreParts = sitioNombre.split(" ");
   const nombreBase = sitiNombreParts[0];
   const nombreAcento = sitiNombreParts.slice(1).join(" ");
+  const whatsappGeneralNormalizado = normalizeWhatsappNumber(
+    config?.whatsappGeneral
+  );
 
   return (
     <footer className="bg-stone-950 text-stone-400">
@@ -76,16 +80,20 @@ export default function Footer() {
             )}
             {sedes && sedes.length > 0 ? (
               <ul className="space-y-4">
-                {sedes.map((sede) => (
+                {sedes.map((sede) => {
+                  const numeroSede =
+                    normalizeWhatsappNumber(sede.telefonoWhatsapp) ??
+                    whatsappGeneralNormalizado;
+                  return (
                   <li key={sede.id}>
                     <p className="text-sm font-medium text-stone-200">
                       {sede.nombre}
                     </p>
                     <p className="text-xs text-stone-500">{sede.ciudad}</p>
                     <div className="mt-1.5 flex items-center gap-2">
-                      {sede.telefonoWhatsapp && (
+                      {numeroSede && (
                         <a
-                          href={`https://wa.me/${sede.telefonoWhatsapp.replace(/[^0-9]/g, "")}`}
+                          href={buildWaLink(numeroSede)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-stone-500 hover:text-emerald-400 transition-colors"
@@ -138,7 +146,8 @@ export default function Footer() {
                       )}
                     </div>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             ) : sedesError ? (
               <p className="text-sm text-stone-600 italic">No se pudieron cargar las sedes</p>
@@ -207,16 +216,16 @@ export default function Footer() {
                   {config?.correoMaestro || "taoboutiquefloral@gmail.com"}
                 </a>
               </li>
-              {config?.whatsappGeneral && (
+              {whatsappGeneralNormalizado && (
                 <li>
                   <a
-                    href={`https://wa.me/${config.whatsappGeneral.replace(/[^0-9]/g, "")}`}
+                    href={buildWaLink(whatsappGeneralNormalizado)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 hover:text-emerald-400 transition-colors"
                   >
                     <FaWhatsapp className="size-4 shrink-0 text-emerald-400" />
-                    {config.whatsappGeneral}
+                    {config?.whatsappGeneral}
                   </a>
                 </li>
               )}

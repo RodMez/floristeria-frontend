@@ -26,6 +26,7 @@ import Cookies from "js-cookie";
 import { z } from "zod";
 import { useRequireSuperAdmin } from "@/lib/auth";
 import { sanitizeUrl } from "@/lib/validation";
+import { buildWaLink, normalizeWhatsappNumber } from "@/lib/whatsapp";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
 import FechasBloqueadasManager from "@/components/admin/FechasBloqueadasManager";
@@ -426,9 +427,11 @@ export default function SedesPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 pt-3 border-t border-dashed border-[var(--admin-border)]">
-                  {sede.telefonoWhatsapp && (
+                  {(() => {
+                    const numeroNormalizado = normalizeWhatsappNumber(sede.telefonoWhatsapp);
+                    return numeroNormalizado ? (
                     <a
-                      href={`https://wa.me/${sede.telefonoWhatsapp.replace(/[^0-9]/g, "")}`}
+                      href={buildWaLink(numeroNormalizado)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex flex-col items-center gap-0.5 group/icon"
@@ -439,7 +442,18 @@ export default function SedesPage() {
                       </span>
                       <span className="text-[10px] font-heading text-[var(--admin-muted-foreground)] group-hover/icon:text-[#25D366] transition-colors">WhatsApp</span>
                     </a>
-                  )}
+                    ) : sede.telefonoWhatsapp ? (
+                      <span
+                        className="flex flex-col items-center gap-0.5 opacity-60"
+                        title={`Número inválido para WhatsApp: ${sede.telefonoWhatsapp}`}
+                      >
+                        <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-stone-300 text-white">
+                          <FaWhatsapp className="h-4 w-4" />
+                        </span>
+                        <span className="text-[10px] font-heading text-[var(--admin-danger-foreground)]">Número inválido</span>
+                      </span>
+                    ) : null;
+                  })()}
                   {sede.instagramUrl && (
                     <a
                       href={sanitizeUrl(sede.instagramUrl ?? "")}
@@ -482,7 +496,7 @@ export default function SedesPage() {
                       <span className="text-[10px] font-heading text-[var(--admin-muted-foreground)] group-hover/icon:text-[#000000] transition-colors">TikTok</span>
                     </a>
                   )}
-                  {!sede.telefonoWhatsapp && !sede.instagramUrl && !sede.facebookUrl && !sede.tiktokUrl && (
+                  {!normalizeWhatsappNumber(sede.telefonoWhatsapp) && !sede.instagramUrl && !sede.facebookUrl && !sede.tiktokUrl && (
                     <span className="text-[var(--admin-muted-foreground)] text-xs italic">Sin contacto</span>
                   )}
                 </div>

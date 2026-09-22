@@ -32,6 +32,7 @@ import {
   FaTiktok,
 } from "@/components/icons/SocialIcons";
 import { sanitizeUrl } from "@/lib/validation";
+import { buildWaLink, normalizeWhatsappNumber } from "@/lib/whatsapp";
 import { useEffect } from "react";
 
 // ── reveal hook ── observa también nodos inyectados tras fetch (has* cambia)
@@ -132,6 +133,9 @@ export default function NosotrosPage() {
     fetcher
   );
   const { sedes, isLoading: sedesLoading } = useSedes();
+  const whatsappGeneralNormalizado = normalizeWhatsappNumber(
+    config?.whatsappGeneral
+  );
 
   const sitioNombre = config?.nombreSitio || "TAO Boutique Floral";
   const logoUrl = config?.logoUrl || "/tao-logo-header.png";
@@ -919,9 +923,9 @@ export default function NosotrosPage() {
                 <ChevronRight className="ml-auto size-4 text-stone-300 transition group-hover:translate-x-0.5 group-hover:text-stone-500" />
               </a>
             )}
-            {config?.whatsappGeneral && (
+            {whatsappGeneralNormalizado && (
               <a
-                href={`https://wa.me/${config.whatsappGeneral.replace(/[^0-9]/g, "")}`}
+                href={buildWaLink(whatsappGeneralNormalizado)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex items-center gap-4 rounded-[20px] border border-stone-200 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-[0_12px_32px_-16px_rgba(0,0,0,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
@@ -934,7 +938,7 @@ export default function NosotrosPage() {
                     WhatsApp
                   </span>
                   <span className="block truncate text-sm font-medium text-stone-700 group-hover:text-emerald-700">
-                    {config.whatsappGeneral}
+                    {config?.whatsappGeneral}
                   </span>
                 </span>
                 <ChevronRight className="ml-auto size-4 text-stone-300 transition group-hover:translate-x-0.5 group-hover:text-stone-500" />
@@ -1048,9 +1052,9 @@ export default function NosotrosPage() {
                 >
                   Explorar catálogo <ArrowRight className="size-4" />
                 </Link>
-                {config?.whatsappGeneral && (
+                {whatsappGeneralNormalizado && (
                   <a
-                    href={`https://wa.me/${config.whatsappGeneral.replace(/[^0-9]/g, "")}`}
+                    href={buildWaLink(whatsappGeneralNormalizado)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-3.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1c1917]"

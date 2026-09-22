@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { buildWaLink, resolveWhatsappNumber } from "@/lib/whatsapp";
 import { AlertTriangle, MessageCircle, MapPin, ShoppingBag } from "lucide-react";
 
 interface ZonaExcluidaModalProps {
@@ -23,6 +24,7 @@ interface ZonaExcluidaModalProps {
   onOpenChange: (open: boolean) => void;
   direccion: DireccionResponse | null;
   whatsappNumber: string;
+  fallbackWhatsappNumber?: string | null;
   notasEntrega?: string;
 }
 
@@ -39,6 +41,7 @@ export default function ZonaExcluidaModal({
   onOpenChange,
   direccion,
   whatsappNumber,
+  fallbackWhatsappNumber,
   notasEntrega,
 }: ZonaExcluidaModalProps) {
   const items = useCartStore((state) => state.items);
@@ -66,7 +69,13 @@ export default function ZonaExcluidaModal({
 
   const zonaNombre = direccion?.zonaDomicilioNombre || "Zona excluida";
 
-  const cleanNumber = whatsappNumber.replace(/\D/g, "");
+  // Normaliza (antepone 57 a móviles de 10 dígitos) y cae al WhatsApp
+  // general si el de la sede es inválido/vacío/stale. Si ninguno es
+  // válido, el botón se deshabilita en vez de abrir un chat inexistente.
+  const numeroNormalizado = resolveWhatsappNumber(
+    whatsappNumber,
+    fallbackWhatsappNumber
+  );
 
   const emojisFlores = ["🌺", "🌿", "🌷", "🌹", "🌻", "💐"];
 
@@ -110,9 +119,12 @@ export default function ZonaExcluidaModal({
     `_Pedido generado desde la tienda - zona sin domicilio disponible_ ✨`
   ].filter(l => l !== null).join('\n');
 
-  const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanNumber}&text=${encodeURIComponent(mensaje)}`;
+  const whatsappUrl = numeroNormalizado
+    ? buildWaLink(numeroNormalizado, mensaje)
+    : null;
 
   const handleWhatsApp = () => {
+    if (!whatsappUrl) return;
     window.open(whatsappUrl, "_blank");
   };
 
@@ -167,11 +179,18 @@ export default function ZonaExcluidaModal({
         <DialogFooter className="flex-col gap-2 sm:flex-col">
           <Button
             onClick={handleWhatsApp}
+            disabled={!whatsappUrl}
             className="w-full bg-brand-mustard hover:bg-brand-mustard-dark text-stone-900 gap-2"
           >
             <MessageCircle className="size-4" />
             Enviar pedido por WhatsApp
           </Button>
+          {!whatsappUrl && (
+            <p className="text-center text-xs text-red-600">
+              WhatsApp de la sede no disponible. Elige otra dirección o
+              contáctanos por el botón flotante.
+            </p>
+          )}
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}

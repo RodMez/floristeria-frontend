@@ -6,6 +6,7 @@ import { MapPin } from "lucide-react";
 import { FaWhatsapp, FaInstagram, FaFacebook, FaTiktok, MdEmail } from "@/components/icons/SocialIcons";
 import { Sede } from "@/types";
 import { sanitizeUrl } from "@/lib/validation";
+import { buildWaLink, normalizeWhatsappNumber } from "@/lib/whatsapp";
 
 interface SedeCardProps {
   sede: Sede;
@@ -27,6 +28,8 @@ export default function SedeCard({ sede, variant = "navigable" }: SedeCardProps)
       router.push(`/tienda/sede/${sede.id}`);
     }
   };
+
+  const numeroWhatsapp = normalizeWhatsappNumber(sede.telefonoWhatsapp);
 
   return (
     <div
@@ -53,10 +56,10 @@ export default function SedeCard({ sede, variant = "navigable" }: SedeCardProps)
             )}
           </div>
 
-          {sede.telefonoWhatsapp && (
+          {numeroWhatsapp && (
             <div className="flex items-center justify-center gap-2">
               <a
-                href={`https://wa.me/${sede.telefonoWhatsapp.replace(/[^0-9]/g, "")}`}
+                href={buildWaLink(numeroWhatsapp)}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
