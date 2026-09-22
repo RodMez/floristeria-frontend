@@ -153,7 +153,7 @@ export default function ShowcasePage() {
       <ShowcaseBannerModal />
 
       {/* Buscador */}
-      <section className="container mx-auto px-4 mb-6">
+      <section className="container mx-auto px-4 mt-10 mb-6">
         <div className="relative max-w-md mx-auto" role="search">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
           <Input

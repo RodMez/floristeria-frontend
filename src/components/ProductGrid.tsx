@@ -11,14 +11,20 @@ interface ProductGridProps {
   productos: ProductoCatalogo[];
   categorias: CategoriaResponse[];
   sede: Sede;
+  /** Si se provee, el buscador lo renderiza el padre (ej. cabecera) y el grid solo filtra. */
+  searchInput?: string;
+  onSearchInputChange?: (value: string) => void;
 }
 
 const normalizeText = (text: string) =>
   text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
-export function ProductGrid({ productos, categorias, sede }: ProductGridProps) {
+export function ProductGrid({ productos, categorias, sede, searchInput: externalSearchInput, onSearchInputChange }: ProductGridProps) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
-  const [searchInput, setSearchInput] = useState("");
+  const [internalSearchInput, setInternalSearchInput] = useState("");
+  const controlled = onSearchInputChange !== undefined;
+  const searchInput = controlled ? (externalSearchInput ?? "") : internalSearchInput;
+  const setSearchInput = onSearchInputChange ?? setInternalSearchInput;
   const searchTerm = useDeferredValue(searchInput);
 
   // Mapa para buscar ID real por nombre de categoría
@@ -63,28 +69,30 @@ export function ProductGrid({ productos, categorias, sede }: ProductGridProps) {
 
   return (
     <div className="space-y-6">
-      {/* Buscador */}
-      <div className="relative max-w-md" role="search">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
-        <Input
-          type="text"
-          placeholder="Buscar por nombre, descripción o SKU..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          aria-label="Buscar productos"
-          className="pl-10 pr-10 rounded-full bg-white border-stone-200 focus-visible:ring-[var(--color-brand-mustard)]/40"
-        />
-        {searchInput && (
-          <button
-            type="button"
-            onClick={() => setSearchInput("")}
-            aria-label="Limpiar búsqueda"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
-      </div>
+      {/* Buscador (solo si el padre no lo renderiza, ej. en la cabecera) */}
+      {!controlled && (
+        <div className="relative max-w-md" role="search">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+          <Input
+            type="text"
+            placeholder="Buscar por nombre, descripción o SKU..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            aria-label="Buscar productos"
+            className="pl-10 pr-10 rounded-full bg-white border-stone-200 focus-visible:ring-[var(--color-brand-mustard)]/40"
+          />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => setSearchInput("")}
+              aria-label="Limpiar búsqueda"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Barra de filtros - Pills */}
       <div className="flex flex-wrap gap-2">
