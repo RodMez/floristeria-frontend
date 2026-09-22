@@ -2,6 +2,7 @@
 
 import useSWR from "swr";
 import { fetcher, authFetch } from "@/lib/fetcher";
+import { parseFecha } from "@/lib/fechas";
 import { ReseñaResponse } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +30,7 @@ import { StatusBadge } from "@/components/admin/StatusBadge";
 const API = process.env.NEXT_PUBLIC_API_URL;
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("es-CO", {
+  return parseFecha(dateStr).toLocaleDateString("es-CO", {
     year: "numeric",
     month: "short",
     day: "numeric",

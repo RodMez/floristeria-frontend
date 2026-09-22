@@ -3,6 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { authFetch, fetcher } from "@/lib/fetcher";
+import { hoyLocalISO } from "@/lib/fechas";
 import { FechaBloqueadaDTO } from "@/types";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -134,7 +135,7 @@ export default function FechasBloqueadasManager({
               id={`fecha-${sedeId}`}
               type="date"
               value={nuevaFecha}
-              min={new Date().toISOString().slice(0, 10)}
+              min={hoyLocalISO()}
               onChange={(e) => setNuevaFecha(e.target.value)}
             />
           </div>

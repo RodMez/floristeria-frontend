@@ -10,6 +10,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useCartStore, getPrecioFinal } from "@/store/useCartStore";
 import { CrearPedidoResponse, DireccionResponse, EntregaConfigDTO, SlotEntregaDTO, ZonaDomicilioResponse } from "@/types";
 import { fetcher } from "@/lib/fetcher";
+import { hoyLocalISO, parseFecha } from "@/lib/fechas";
 import { trackMetaEvent } from "@/lib/meta-pixel";
 import DireccionSelector from "@/components/checkout/DireccionSelector";
 import ResumenPedido from "@/components/checkout/ResumenPedido";
@@ -67,16 +68,15 @@ export default function CheckoutPage() {
     fetcher
   );
 
-  const fechaMinima = useMemo(() => {
-    const d = new Date();
-    return d.toISOString().slice(0, 10);
-  }, []);
+  const fechaMinima = useMemo(() => hoyLocalISO(), []);
 
   const fechaMaxima = useMemo(() => {
     const ventana = entregaConfig?.ventanaMaxDias ?? 30;
-    const d = new Date();
+    const d = parseFecha(hoyLocalISO());
     d.setDate(d.getDate() + ventana);
-    return d.toISOString().slice(0, 10);
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${mm}-${dd}`;
   }, [entregaConfig]);
 
   const fechaBloqueada = useMemo(

@@ -19,6 +19,7 @@ import {
   ReseñaResponse,
 } from "@/types";
 import { fetcher, authFetch } from "@/lib/fetcher";
+import { parseFecha } from "@/lib/fechas";
 import StarDisplay from "./StarDisplay";
 import StarSelector from "./StarSelector";
 import { toast } from "sonner";
@@ -141,7 +142,7 @@ export default function ReseñasModal({
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("es-CO", {
+    return parseFecha(dateStr).toLocaleDateString("es-CO", {
       year: "numeric",
       month: "long",
       day: "numeric",

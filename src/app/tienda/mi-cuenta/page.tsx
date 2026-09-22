@@ -9,6 +9,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/useAuthStore";
 import { fetcher, authFetch, obtenerPerfil } from "@/lib/fetcher";
+import { parseFecha } from "@/lib/fechas";
 import { useSedes } from "@/hooks/useSedes";
 import {
   crearDireccion,
@@ -97,7 +98,7 @@ function formatCurrency(value: number): string {
 }
 
 function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("es-CO", {
+  return parseFecha(dateString).toLocaleDateString("es-CO", {
     year: "numeric",
     month: "long",
     day: "numeric",

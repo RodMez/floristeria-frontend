@@ -37,6 +37,7 @@ import jsPDF from "jspdf";
 import { loadCinzelFonts } from "@/lib/pdfFonts";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminTableShell } from "@/components/admin/AdminTableShell";
+import { parseFecha } from "@/lib/fechas";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
 import { StatusBadge, type AdminStatusVariant } from "@/components/admin/StatusBadge";
 import type { OrderStatus } from "@/types";
@@ -219,7 +220,7 @@ export default function PedidosPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString("es-CO", {
+    return parseFecha(dateString).toLocaleString("es-CO", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -229,7 +230,7 @@ export default function PedidosPage() {
   };
 
   const formatDateSolo = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-CO", {
+    return parseFecha(dateString).toLocaleDateString("es-CO", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -654,8 +655,8 @@ export default function PedidosPage() {
                     </SelectContent>
                   </Select>
                 </TableCell>
-                <TableCell className="text-sm text-[var(--admin-muted-foreground)]">
-                  {formatDateSolo(item.creadoEn)}
+                <TableCell className="text-sm text-[var(--admin-muted-foreground)] whitespace-nowrap">
+                  {formatDate(item.creadoEn)}
                 </TableCell>
                 <TableCell className="text-sm text-[var(--admin-foreground)]">
                   {item.fechaEntrega ? (
