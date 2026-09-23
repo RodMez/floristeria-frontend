@@ -63,7 +63,6 @@ export default function ZonasDomicilioPage() {
   const { rol, sedeId: adminSedeId } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [estadoFilter, setEstadoFilter] = useState<"todas" | "activas" | "excluidas">("todas");
-  const [filtroSedeId, setFiltroSedeId] = useState<number | null>(null);
   const [exportandoZonas, setExportandoZonas] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingZona, setEditingZona] = useState<ZonaDomicilioResponse | null>(null);
@@ -119,7 +118,7 @@ export default function ZonasDomicilioPage() {
     setBarrioSearch("");
   }, [watchedLocalidad, setValue]);
 
-  const { data: sedes, isLoading: sedesLoading } = useSWR<Sede[]>(
+  const { data: sedes } = useSWR<Sede[]>(
     `${API_URL}/api/v1/sedes`,
     fetcher,
     { revalidateOnFocus: false }
@@ -298,7 +297,6 @@ export default function ZonasDomicilioPage() {
     try {
       await downloadExcel({
         endpoint: `${API_URL}/api/admin/zonas-domicilio/export-excel`,
-        params: filtroSedeId != null ? { sedeId: filtroSedeId } : {},
         fallbackFilename: `zonas_domicilio_${new Date().toISOString().slice(0, 10)}.xlsx`,
       });
       toast.success("Excel exportado correctamente");
@@ -348,7 +346,6 @@ export default function ZonasDomicilioPage() {
   const countExcluidas = sortedZonas.filter((z) => z.excluido).length;
 
   const zonasFiltradas = sortedZonas
-    .filter((z) => filtroSedeId == null || z.sedeId === filtroSedeId)
     .filter((z) => {
       if (estadoFilter === "activas") return !z.excluido;
       if (estadoFilter === "excluidas") return z.excluido;
@@ -405,25 +402,6 @@ export default function ZonasDomicilioPage() {
                 className="pl-10"
               />
             </div>
-            {rol === "SUPERADMIN" && (
-              <Select
-                value={filtroSedeId != null ? String(filtroSedeId) : "__all"}
-                onValueChange={(v) => setFiltroSedeId(v === "__all" ? null : Number(v))}
-                disabled={sedesLoading || !sedes}
-              >
-                <SelectTrigger className="w-[200px]" aria-label="Filtrar por sede">
-                  <SelectValue placeholder="Filtrar sede" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all">Todas las sedes</SelectItem>
-                  {sedes?.map((sede) => (
-                    <SelectItem key={sede.id} value={String(sede.id)}>
-                      {sede.nombre} — {sede.ciudad}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
             <div className="flex gap-1 bg-[var(--admin-canvas)] border border-[var(--admin-border)] rounded-lg p-1 w-fit">
               <button
                 onClick={() => setEstadoFilter("todas")}
