@@ -33,6 +33,7 @@ import {
 import { Plus, Pencil, Trash2, Search, Users, ShieldAlert, Store, LoaderCircle } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import Cookies from "js-cookie";
 import { useRequireSuperAdmin } from "@/lib/auth";
 
@@ -72,6 +73,12 @@ export default function UsuariosPage() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filtroRol, setFiltroRol] = useState<string>("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, filtroRol]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUsuario, setEditingUsuario] =
     useState<UsuarioAdminResponse | null>(null);
@@ -298,6 +305,13 @@ export default function UsuariosPage() {
         u.id.toString().includes(searchTerm)
     );
 
+  const totalPagesUsuarios = Math.max(1, Math.ceil(usuariosFiltrados.length / pageSize));
+  const safePageUsuarios = Math.min(Math.max(1, page), totalPagesUsuarios);
+  const usuariosPaginados = usuariosFiltrados.slice(
+    (safePageUsuarios - 1) * pageSize,
+    safePageUsuarios * pageSize
+  );
+
   return (
     <div className="p-6">
       <AdminPageHeader
@@ -357,7 +371,7 @@ export default function UsuariosPage() {
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {usuariosFiltrados.map((usuario, index) => {
+          {usuariosPaginados.map((usuario, index) => {
             const esSuperAdmin = usuario.rol === "SUPERADMIN";
             const avatarBg = esSuperAdmin
               ? "bg-[var(--color-brand-mustard)]"
@@ -430,6 +444,19 @@ export default function UsuariosPage() {
               </Card>
             );
           })}
+        </div>
+      )}
+
+      {totalPagesUsuarios > 1 && (
+        <div className="mt-4 overflow-hidden rounded-xl border border-[var(--admin-border)]">
+          <AdminPagination
+            page={safePageUsuarios}
+            totalPages={totalPagesUsuarios}
+            totalElements={usuariosFiltrados.length}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+          />
         </div>
       )}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { CategoriaResponse, CategoriaRequest } from "@/types";
@@ -38,6 +38,7 @@ import { useRequireSuperAdmin } from "@/lib/auth";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminTableShell } from "@/components/admin/AdminTableShell";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -50,6 +51,12 @@ function ordenLabel(n: number) {
 export default function CategoriasPage() {
   const { isLoading: isCheckingPermissions } = useRequireSuperAdmin();
   const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCategoria, setEditingCategoria] = useState<CategoriaResponse | null>(null);
   const [nombre, setNombre] = useState("");
@@ -197,6 +204,13 @@ export default function CategoriasPage() {
     c.id.toString().includes(searchTerm)
   );
 
+  const totalPagesCategorias = Math.max(1, Math.ceil(categoriasFiltradas.length / pageSize));
+  const safePageCategorias = Math.min(Math.max(1, page), totalPagesCategorias);
+  const categoriasPaginadas = categoriasFiltradas.slice(
+    (safePageCategorias - 1) * pageSize,
+    safePageCategorias * pageSize
+  );
+
   return (
     <div className="p-6">
       <AdminPageHeader
@@ -248,7 +262,7 @@ export default function CategoriasPage() {
                 </TableCell>
               </TableRow>
             )}
-            {categoriasFiltradas.map((categoria) => (
+            {categoriasPaginadas.map((categoria) => (
               <TableRow key={categoria.id} className="border-[var(--admin-border)] hover:bg-[var(--admin-warning-soft)]/40 transition-colors">
                 <TableCell className="text-[var(--admin-muted-foreground)]">{categoria.id}</TableCell>
                 <TableCell className="font-medium text-[var(--admin-foreground)]">{categoria.nombre}</TableCell>
@@ -302,6 +316,14 @@ export default function CategoriasPage() {
             ))}
           </TableBody>
         </Table>
+        <AdminPagination
+          page={safePageCategorias}
+          totalPages={totalPagesCategorias}
+          totalElements={categoriasFiltradas.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+        />
       </AdminTableShell>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

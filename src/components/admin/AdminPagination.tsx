@@ -29,7 +29,7 @@ export function AdminPagination({
   onPageSizeChange,
   pageSizeOptions = [10, 20, 50],
 }: AdminPaginationProps) {
-  if (totalElements === 0) return null;
+  if (totalPages <= 1) return null;
   const safeTotalPages = Math.max(1, totalPages);
   const safePage = Math.min(Math.max(1, page), safeTotalPages);
   const from = (safePage - 1) * pageSize + 1;

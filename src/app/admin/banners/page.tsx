@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import useSWR from "swr";
 import { fetcher, authFetch } from "@/lib/fetcher";
 import { BannerDTO, BannerRequest, UbicacionBanner, Sede } from "@/types";
@@ -44,6 +44,7 @@ import { useRequireSuperAdmin } from "@/lib/auth";
 import { Textarea } from "@/components/ui/textarea";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -105,6 +106,12 @@ export default function BannersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filtroUbicacion, setFiltroUbicacion] = useState<string>("TODAS");
   const [filtroEstado, setFiltroEstado] = useState<string>("TODOS");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, filtroUbicacion, filtroEstado]);
 
   const { data: banners, error, mutate } = useSWR<BannerDTO[]>(
     `${API_URL}/api/admin/banners`,
@@ -134,6 +141,13 @@ export default function BannersPage() {
       return matchSearch && matchUbicacion && matchEstado;
     });
   }, [banners, searchTerm, filtroUbicacion, filtroEstado]);
+
+  const totalPagesBanners = Math.max(1, Math.ceil(filteredBanners.length / pageSize));
+  const safePageBanners = Math.min(Math.max(1, page), totalPagesBanners);
+  const bannersPaginados = filteredBanners.slice(
+    (safePageBanners - 1) * pageSize,
+    safePageBanners * pageSize
+  );
 
   const resetForm = () => {
     setForm(emptyForm);
@@ -380,7 +394,7 @@ export default function BannersPage() {
             />
           </div>
         ) : (
-          filteredBanners.map((banner) => (
+          bannersPaginados.map((banner) => (
             <Card key={banner.id} className="overflow-hidden group bg-[var(--admin-card)] border-[var(--admin-border)] shadow-sm hover:shadow-md transition-shadow">
               <div className="relative aspect-[3/1] bg-[var(--admin-canvas)]">
                 <Image
@@ -434,6 +448,20 @@ export default function BannersPage() {
           ))
         )}
       </div>
+
+      {totalPagesBanners > 1 && (
+        <div className="mt-4 overflow-hidden rounded-xl border border-[var(--admin-border)]">
+          <AdminPagination
+            page={safePageBanners}
+            totalPages={totalPagesBanners}
+            totalElements={filteredBanners.length}
+            pageSize={pageSize}
+            pageSizeOptions={[12, 24, 48]}
+            onPageChange={setPage}
+            onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+          />
+        </div>
+      )}
 
       {/* Dialog: Crear/Editar */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
