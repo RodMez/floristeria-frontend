@@ -20,11 +20,12 @@ import {
   Trash2,
   MessageSquare,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useRequireSuperAdmin } from "@/lib/auth";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
@@ -46,6 +47,12 @@ export default function AdminReseñasPage() {
   const [tab, setTab] = useState<"pendientes" | "todas">("pendientes");
   const [actionLoading, setActionLoading] = useState<Record<number, string | null>>({});
   const [reviewToDelete, setReviewToDelete] = useState<ReseñaResponse | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  useEffect(() => {
+    setPage(1);
+  }, [tab]);
 
   const apiUrl = tab === "pendientes"
     ? `${API}/api/admin/resenas/pendientes`
@@ -166,7 +173,11 @@ export default function AdminReseñasPage() {
         />
       )}
 
-      {!isLoadingResenas && reseñas && reseñas.length > 0 && (
+      {!isLoadingResenas && reseñas && reseñas.length > 0 && (() => {
+        const totalPages = Math.max(1, Math.ceil(reseñas.length / pageSize));
+        const safePage = Math.min(Math.max(1, page), totalPages);
+        const paginadas = reseñas.slice((safePage - 1) * pageSize, safePage * pageSize);
+        return (
         <div className="overflow-x-auto rounded-xl border border-[var(--admin-border)] bg-[var(--admin-card)] shadow-sm">
           <table className="w-full text-sm">
             <thead>
@@ -181,7 +192,7 @@ export default function AdminReseñasPage() {
               </tr>
             </thead>
             <tbody>
-              {reseñas.map((r) => {
+              {paginadas.map((r) => {
                 const loading = actionLoading[r.id];
                 return (
                   <tr key={r.id} className="border-b border-[var(--admin-border)] last:border-0 transition-colors duration-150 hover:bg-[var(--admin-warning-soft)]/40">
@@ -239,8 +250,17 @@ export default function AdminReseñasPage() {
               })}
             </tbody>
           </table>
+          <AdminPagination
+            page={safePage}
+            totalPages={totalPages}
+            totalElements={reseñas.length}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+          />
         </div>
-      )}
+        );
+      })()}
 
       <Dialog open={reviewToDelete !== null} onOpenChange={(open) => { if (!open) setReviewToDelete(null); }}>
         <DialogContent className="sm:max-w-md border-t-4 border-t-[var(--admin-danger)]">

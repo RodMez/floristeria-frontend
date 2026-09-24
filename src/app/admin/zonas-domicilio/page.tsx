@@ -42,6 +42,7 @@ import { Switch } from "@/components/ui/switch";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminTableShell } from "@/components/admin/AdminTableShell";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -63,6 +64,12 @@ export default function ZonasDomicilioPage() {
   const { rol, sedeId: adminSedeId } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [estadoFilter, setEstadoFilter] = useState<"todas" | "activas" | "excluidas">("todas");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, estadoFilter]);
   const [exportandoZonas, setExportandoZonas] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingZona, setEditingZona] = useState<ZonaDomicilioResponse | null>(null);
@@ -357,6 +364,13 @@ export default function ZonasDomicilioPage() {
       z.id.toString().includes(searchTerm)
     );
 
+  const totalPagesZonas = Math.max(1, Math.ceil(zonasFiltradas.length / pageSize));
+  const safePageZonas = Math.min(Math.max(1, page), totalPagesZonas);
+  const zonasPaginadas = zonasFiltradas.slice(
+    (safePageZonas - 1) * pageSize,
+    safePageZonas * pageSize
+  );
+
   return (
     <div className="p-6">
       <AdminPageHeader
@@ -467,7 +481,7 @@ export default function ZonasDomicilioPage() {
                 </TableCell>
               </TableRow>
             )}
-            {zonasFiltradas.map((zona) => (
+            {zonasPaginadas.map((zona) => (
               <TableRow key={zona.id} className="border-[var(--admin-border)] hover:bg-[var(--admin-warning-soft)]/40 transition-colors">
                 {rol === "SUPERADMIN" && (
                   <TableCell className="text-[var(--admin-foreground)]">{sedes?.find(s => s.id === zona.sedeId)?.nombre || `Sede #${zona.sedeId}`}</TableCell>
@@ -505,6 +519,14 @@ export default function ZonasDomicilioPage() {
             ))}
           </TableBody>
         </Table>
+        <AdminPagination
+          page={safePageZonas}
+          totalPages={totalPagesZonas}
+          totalElements={zonasFiltradas.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+        />
       </AdminTableShell>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

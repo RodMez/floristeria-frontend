@@ -277,6 +277,14 @@ export interface PedidoAdminResponse {
   franjaEntrega?: string | null;
 }
 
+export interface PageResponse<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  number: number;
+  size: number;
+}
+
 // Constantes de estados de pedido
 export const ORDER_STATUSES = [
   "PENDIENTE_PAGO",

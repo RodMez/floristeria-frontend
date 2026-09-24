@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { ProductoResponse, CategoriaResponse } from "@/types";
@@ -32,6 +32,7 @@ import { useRequireSuperAdmin } from "@/lib/auth";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminTableShell } from "@/components/admin/AdminTableShell";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -39,6 +40,12 @@ export default function ProductosPage() {
   const { isLoading } = useRequireSuperAdmin();
   const [searchTerm, setSearchTerm] = useState("");
   const [exportando, setExportando] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [productoToEdit, setProductoToEdit] = useState<ProductoResponse | null>(null);
   const [productoToDelete, setProductoToDelete] = useState<ProductoResponse | null>(null);
@@ -177,6 +184,13 @@ export default function ProductosPage() {
     (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  const totalPagesProductos = Math.max(1, Math.ceil(productosFiltrados.length / pageSize));
+  const safePageProductos = Math.min(Math.max(1, page), totalPagesProductos);
+  const productosPaginados = productosFiltrados.slice(
+    (safePageProductos - 1) * pageSize,
+    safePageProductos * pageSize
+  );
+
   return (
     <div className="p-6">
       <AdminPageHeader
@@ -235,7 +249,7 @@ export default function ProductosPage() {
                 </TableCell>
               </TableRow>
             )}
-            {productosFiltrados.map((producto) => (
+            {productosPaginados.map((producto) => (
               <TableRow key={producto.id} className="border-[var(--admin-border)] hover:bg-[var(--admin-warning-soft)]/40 transition-colors">
                 <TableCell className="font-mono text-sm text-[var(--admin-foreground)]">{producto.sku || "Sin SKU"}</TableCell>
                 <TableCell>
@@ -298,6 +312,14 @@ className="border-[var(--admin-border)] text-[var(--admin-muted-foreground)] hov
             ))}
           </TableBody>
         </Table>
+        <AdminPagination
+          page={safePageProductos}
+          totalPages={totalPagesProductos}
+          totalElements={productosFiltrados.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+        />
       </AdminTableShell>
 
       <ProductDialog

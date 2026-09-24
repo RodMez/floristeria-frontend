@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { InventarioResponse } from "@/types";
@@ -29,6 +29,7 @@ import Cookies from "js-cookie";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminTableShell } from "@/components/admin/AdminTableShell";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -37,6 +38,12 @@ export default function InventarioPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filtroEstado, setFiltroEstado] = useState<string>("");
   const [exportando, setExportando] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, filtroEstado]);
 
   const { data, error, mutate } = useSWR<InventarioResponse[]>(
     `${API_URL}/api/admin/inventario`,
@@ -120,6 +127,13 @@ export default function InventarioPage() {
     return matchesSearch && matchesEstado;
   });
 
+  const totalPagesInventario = Math.max(1, Math.ceil(inventarioFiltrado.length / pageSize));
+  const safePageInventario = Math.min(Math.max(1, page), totalPagesInventario);
+  const inventarioPaginado = inventarioFiltrado.slice(
+    (safePageInventario - 1) * pageSize,
+    safePageInventario * pageSize
+  );
+
   return (
     <div className="p-6">
       <AdminPageHeader
@@ -187,7 +201,7 @@ export default function InventarioPage() {
                 </TableCell>
               </TableRow>
             )}
-            {inventarioFiltrado.map((item) => {
+            {inventarioPaginado.map((item) => {
               const disponible = item.disponible && item.stock > 0;
               return (
                 <TableRow key={item.id} className="border-[var(--admin-border)] hover:bg-[var(--admin-warning-soft)]/40 transition-colors">
@@ -240,6 +254,14 @@ export default function InventarioPage() {
             })}
           </TableBody>
         </Table>
+        <AdminPagination
+          page={safePageInventario}
+          totalPages={totalPagesInventario}
+          totalElements={inventarioFiltrado.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+        />
       </AdminTableShell>
     </div>
   );

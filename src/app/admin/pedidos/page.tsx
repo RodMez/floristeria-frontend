@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
-import { PedidoAdminResponse, ORDER_STATUSES, ORDER_STATUS_LABELS } from "@/types";
+import { PedidoAdminResponse, PageResponse, Sede, ORDER_STATUSES, ORDER_STATUS_LABELS } from "@/types";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import {
@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
 import { loadCinzelFonts } from "@/lib/pdfFonts";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import { AdminTableShell } from "@/components/admin/AdminTableShell";
 import { parseFecha } from "@/lib/fechas";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
@@ -96,21 +97,52 @@ function getOpcionesPermitidas(estadoActual: string): string[] {
 
 export default function PedidosPage() {
   const [filtroEstado, setFiltroEstado] = useState<string>("");
-  const [filtroSede, setFiltroSede] = useState<string>("");
+  const [filtroSedeId, setFiltroSedeId] = useState<string>("");
+  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [pedidoACancelar, setPedidoACancelar] = useState<string | null>(null);
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState<PedidoAdminResponse | null>(null);
   const [exportandoExcel, setExportandoExcel] = useState(false);
 
-  const { data, error, mutate } = useSWR<PedidoAdminResponse[]>(
-    `${API_URL}/api/admin/pedidos`,
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearchTerm(searchInput.trim());
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filtroEstado, filtroSedeId]);
+
+  const pedidosParams = new URLSearchParams();
+  pedidosParams.append("page", String(page - 1));
+  pedidosParams.append("size", String(pageSize));
+  if (filtroEstado) pedidosParams.append("estado", filtroEstado);
+  if (filtroSedeId) pedidosParams.append("sedeId", filtroSedeId);
+  if (searchTerm) pedidosParams.append("search", searchTerm);
+
+  const { data, error, mutate } = useSWR<PageResponse<PedidoAdminResponse>>(
+    `${API_URL}/api/admin/pedidos/paginado?${pedidosParams.toString()}`,
     fetcher,
     {
       revalidateOnFocus: false,
+      keepPreviousData: true,
     }
   );
 
-  const sedesUnicas = [...new Set((data ?? []).map((p) => p.sedeNombre))].sort();
+  const { data: sedes } = useSWR<Sede[]>(
+    `${API_URL}/api/v1/sedes`,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const pedidos = data?.content ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const totalElements = data?.totalElements ?? 0;
 
   const handleStatusChange = async (pedidoId: string, nuevoEstado: string) => {
     const toastId = toast.loading("Actualizando estado...");
@@ -150,12 +182,7 @@ export default function PedidosPage() {
       const token = Cookies.get("token");
       const params = new URLSearchParams();
       if (filtroEstado) params.append("estado", filtroEstado);
-      if (filtroSede) {
-        const sedePedido = data?.find(p => p.sedeNombre === filtroSede);
-        if (sedePedido) {
-          params.append("sedeId", String(sedePedido.sedeId));
-        }
-      }
+      if (filtroSedeId) params.append("sedeId", filtroSedeId);
 
       const res = await fetch(
         `${API_URL}/api/admin/pedidos/export-excel?${params}`,
@@ -508,17 +535,7 @@ export default function PedidosPage() {
     doc.save(`pedido-${pedido.id}.pdf`);
   };
 
-  const pedidosFiltrados = [...(data ?? [])]
-    .filter((p) => filtroEstado === "" || p.estado === filtroEstado)
-    .filter((p) => filtroSede === "" || p.sedeNombre === filtroSede)
-    .sort((a, b) => new Date(b.creadoEn).getTime() - new Date(a.creadoEn).getTime());
-
-  // Filtro de búsqueda local
-  const pedidosConBusqueda = pedidosFiltrados.filter((p) =>
-    p.clienteNombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.clienteTelefono?.includes(searchTerm) ||
-    p.metodoPago?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const pedidosConBusqueda = pedidos;
 
   return (
     <div className="p-6">
@@ -547,8 +564,8 @@ export default function PedidosPage() {
               <Input
                 type="text"
                 placeholder="Buscar por cliente, teléfono o método de pago..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 className="pl-10"
               />
             </div>
@@ -566,15 +583,15 @@ export default function PedidosPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={filtroSede} onValueChange={(v) => { if (v !== null) setFiltroSede(v); }}>
+              <Select value={filtroSedeId} onValueChange={(v) => { if (v !== null) setFiltroSedeId(v); }}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Filtrar sede" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Todas las sedes</SelectItem>
-                  {sedesUnicas.map((sede) => (
-                    <SelectItem key={sede} value={sede}>
-                      {sede}
+                  {(sedes ?? []).map((sede) => (
+                    <SelectItem key={sede.id} value={String(sede.id)}>
+                      {sede.nombre}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -683,6 +700,14 @@ export default function PedidosPage() {
             ))}
           </TableBody>
         </Table>
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          totalElements={totalElements}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+        />
       </AdminTableShell>
 
       <Dialog
